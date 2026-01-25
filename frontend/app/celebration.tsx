@@ -16,7 +16,7 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 const { width, height } = Dimensions.get('window');
 
 const MEMORIES_FLOATING = [
-  'Every argument is never that serious',
+  'Click the blue heart heheheh',
   'I will always love you',
   "You're not that dumb",
   'Wanna fuck',
