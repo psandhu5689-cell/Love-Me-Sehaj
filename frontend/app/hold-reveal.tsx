@@ -169,6 +169,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF5F7',
   },
+  backButton: {
+    position: 'absolute',
+    top: 50,
+    left: 16,
+    zIndex: 10,
+    padding: 8,
+  },
   content: {
     flex: 1,
     alignItems: 'center',
