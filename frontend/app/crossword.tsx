@@ -326,7 +326,7 @@ export default function Crossword() {
                   style={styles.continueButton}
                   onPress={() => {
                     playComplete();
-                    router.push('/poems');
+                    router.push('/card-match');
                   }}
                   activeOpacity={0.8}
                 >
@@ -342,7 +342,7 @@ export default function Crossword() {
                 style={styles.skipButton}
                 onPress={() => {
                   playClick();
-                  router.push('/poems');
+                  router.push('/card-match');
                 }}
                 activeOpacity={0.8}
               >
