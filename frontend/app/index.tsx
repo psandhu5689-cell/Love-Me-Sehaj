@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAudio } from './_layout';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,6 +19,7 @@ const STICKER_GOLD_DRESS = 'https://customer-assets.emergentagent.com/job_love-a
 
 export default function EntryGate() {
   const router = useRouter();
+  const { playPop } = useAudio();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const heartAnim = useRef(new Animated.Value(0)).current;
