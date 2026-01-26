@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAudio } from './_layout';
+import * as Haptics from 'expo-haptics';
 
 export default function Surprise() {
   const [hasPressed, setHasPressed] = useState(false);
@@ -23,6 +24,7 @@ export default function Surprise() {
   const glowAnim = useRef(new Animated.Value(0.3)).current;
   const messageAnim = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
+  const vibrationInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Gentle pulsing animation for the fingerprint
@@ -56,9 +58,15 @@ export default function Surprise() {
         }),
       ])
     ).start();
+
+    return () => {
+      if (vibrationInterval.current) {
+        clearInterval(vibrationInterval.current);
+      }
+    };
   }, []);
 
-  const handleFingerprintPress = () => {
+  const handleFingerprintPress = async () => {
     if (hasPressed) return; // Prevent spam
     
     setHasPressed(true);
@@ -67,59 +75,83 @@ export default function Surprise() {
     // Play kiss sound
     playKiss();
     
-    // Vibration pattern (only on mobile)
-    if (Platform.OS !== 'web') {
-      // Vibrate for ~5 seconds with pattern
-      const pattern = [0, 500, 100, 500, 100, 500, 100, 500, 100, 500, 100, 500, 100, 500, 100, 500, 100, 500];
-      Vibration.vibrate(pattern);
+    // Vibration - use expo-haptics for better compatibility
+    try {
+      // Start repeated haptic feedback for 5 seconds
+      let count = 0;
+      vibrationInterval.current = setInterval(async () => {
+        if (count < 25) { // 25 * 200ms = 5 seconds
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          count++;
+        } else {
+          if (vibrationInterval.current) {
+            clearInterval(vibrationInterval.current);
+          }
+        }
+      }, 200);
+
+      // Also try native Vibration API as backup
+      if (Platform.OS !== 'web') {
+        Vibration.vibrate([0, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200], false);
+      }
+    } catch (e) {
+      console.log('Vibration error:', e);
     }
     
     // Faster pulsing during vibration
-    Animated.loop(
+    const fastPulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.15,
-          duration: 200,
+          toValue: 1.2,
+          duration: 150,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnim, {
-          toValue: 0.95,
-          duration: 200,
+          toValue: 0.9,
+          duration: 150,
           useNativeDriver: true,
         }),
       ])
-    ).start();
+    );
+    fastPulse.start();
     
     // Intense glow during vibration
     Animated.timing(glowAnim, {
       toValue: 1,
-      duration: 500,
+      duration: 300,
       useNativeDriver: true,
     }).start();
     
     // After 5 seconds, show message
     setTimeout(() => {
       setIsVibrating(false);
+      if (vibrationInterval.current) {
+        clearInterval(vibrationInterval.current);
+      }
       Vibration.cancel();
+      fastPulse.stop();
       
-      // Stop fast pulsing, return to gentle
+      // Return to gentle pulse
       pulseAnim.setValue(1);
       
       // Show message with bounce
       setShowMessage(true);
       
-      Animated.sequence([
+      Animated.parallel([
         Animated.timing(messageAnim, {
           toValue: 1,
-          duration: 500,
+          duration: 600,
           useNativeDriver: true,
         }),
-        Animated.spring(bounceAnim, {
-          toValue: 1,
-          tension: 100,
-          friction: 5,
-          useNativeDriver: true,
-        }),
+        Animated.sequence([
+          Animated.delay(200),
+          Animated.spring(bounceAnim, {
+            toValue: 1,
+            tension: 80,
+            friction: 6,
+            useNativeDriver: true,
+          }),
+        ]),
       ]).start();
     }, 5000);
   };
@@ -138,7 +170,7 @@ export default function Surprise() {
             </Animated.Text>
           )}
           
-          {/* Heart glow background */}
+          {/* Heart glow background - positioned behind */}
           <Animated.View
             style={[
               styles.heartGlow,
@@ -147,15 +179,33 @@ export default function Surprise() {
                 transform: [{ scale: isVibrating ? 1.3 : 1.1 }],
               },
             ]}
+            pointerEvents="none"
           >
             <Ionicons name="heart" size={220} color="#FF6B9D" />
           </Animated.View>
           
-          {/* Fingerprint button */}
+          {/* Heart outline - positioned behind */}
+          <Animated.View
+            style={[
+              styles.heartOutline,
+              {
+                opacity: glowAnim.interpolate({
+                  inputRange: [0.3, 1],
+                  outputRange: [0.5, 1],
+                }),
+              },
+            ]}
+            pointerEvents="none"
+          >
+            <Ionicons name="heart-outline" size={200} color="#FF6B9D" />
+          </Animated.View>
+          
+          {/* Fingerprint button - on TOP */}
           <TouchableOpacity
             onPress={handleFingerprintPress}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
             disabled={hasPressed}
+            style={styles.touchArea}
           >
             <Animated.View
               style={[
@@ -170,21 +220,6 @@ export default function Surprise() {
               </View>
             </Animated.View>
           </TouchableOpacity>
-          
-          {/* Heart outline */}
-          <Animated.View
-            style={[
-              styles.heartOutline,
-              {
-                opacity: glowAnim.interpolate({
-                  inputRange: [0.3, 1],
-                  outputRange: [0.5, 1],
-                }),
-              },
-            ]}
-          >
-            <Ionicons name="heart-outline" size={200} color="#FF6B9D" />
-          </Animated.View>
           
           {/* Message after vibration */}
           {showMessage && (
@@ -213,7 +248,9 @@ export default function Surprise() {
               <Text style={styles.messageText}>
                 hah I tricked you...{"\n"}I just wanted to kiss your finger
               </Text>
-              <Ionicons name="heart" size={30} color="#FF6B9D" style={styles.messageHeart} />
+              <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
+                <Ionicons name="heart" size={30} color="#FF6B9D" style={styles.messageHeart} />
+              </Animated.View>
             </Animated.View>
           )}
         </View>
@@ -245,43 +282,47 @@ const styles = StyleSheet.create({
   },
   heartGlow: {
     position: 'absolute',
-    opacity: 0.3,
+    zIndex: 1,
+  },
+  heartOutline: {
+    position: 'absolute',
+    zIndex: 2,
+  },
+  touchArea: {
+    zIndex: 100,
+    padding: 20,
   },
   fingerprintContainer: {
-    zIndex: 10,
+    zIndex: 100,
   },
   fingerprintCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#FF6B9D',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 15,
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: '#FFD6E6',
-  },
-  heartOutline: {
-    position: 'absolute',
-    zIndex: 5,
   },
   messageContainer: {
     position: 'absolute',
-    bottom: 120,
+    bottom: 100,
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    padding: 24,
-    borderRadius: 24,
+    padding: 28,
+    borderRadius: 28,
     shadowColor: '#FF6B9D',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 10,
-    marginHorizontal: 20,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 12,
+    marginHorizontal: 24,
   },
   messageText: {
     fontSize: 20,
@@ -291,6 +332,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   messageHeart: {
-    marginTop: 12,
+    marginTop: 16,
   },
 });
