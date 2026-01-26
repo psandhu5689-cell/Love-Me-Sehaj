@@ -39,6 +39,7 @@ export default function Crossword() {
   const [showSolution, setShowSolution] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const solutionAnim = useRef(new Animated.Value(0)).current;
+  const { playClick, playSuccess, playComplete } = useAudio();
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -62,7 +63,9 @@ export default function Crossword() {
 
   const handleCheckAnswers = () => {
     Keyboard.dismiss();
+    playClick();
     if (checkAllCorrect()) {
+      playComplete();
       setShowSolution(true);
       Animated.spring(solutionAnim, {
         toValue: 1,
@@ -161,7 +164,10 @@ export default function Crossword() {
                 <Text style={styles.solutionText}>{SOLUTION_MESSAGE}</Text>
                 <TouchableOpacity
                   style={styles.continueButton}
-                  onPress={() => router.push('/poems')}
+                  onPress={() => {
+                    playSuccess();
+                    router.push('/poems');
+                  }}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.continueButtonText}>Continue</Text>
