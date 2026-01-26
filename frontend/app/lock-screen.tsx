@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
   keypad: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: 280,
-    justifyContent: 'center',
+    width: 270,
+    justifyContent: 'space-between',
   },
   key: {
     width: 80,
@@ -228,6 +228,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 15,
     margin: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
