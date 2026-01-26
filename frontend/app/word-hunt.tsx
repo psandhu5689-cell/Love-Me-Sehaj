@@ -307,8 +307,12 @@ export default function WordHunt() {
 
           {/* Word Grid */}
           <View 
+            ref={gridRef}
             style={styles.gridContainer}
-            onTouchEnd={handleSelectionEnd}
+            onLayout={handleGridLayout}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {grid.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.gridRow}>
@@ -317,16 +321,13 @@ export default function WordHunt() {
                   const isHighlighted = isCellHighlighted(rowIndex, colIndex);
                   
                   return (
-                    <TouchableOpacity
+                    <View
                       key={colIndex}
                       style={[
                         styles.cell,
                         isSelected && styles.selectedCell,
                         isHighlighted && styles.highlightedCell,
                       ]}
-                      onPress={() => handleCellPress(rowIndex, colIndex)}
-                      onPressIn={() => handleCellPress(rowIndex, colIndex)}
-                      activeOpacity={0.7}
                     >
                       <Text
                         style={[
@@ -337,7 +338,7 @@ export default function WordHunt() {
                       >
                         {letter}
                       </Text>
-                    </TouchableOpacity>
+                    </View>
                   );
                 })}
               </View>
@@ -346,7 +347,7 @@ export default function WordHunt() {
 
           {/* Instruction */}
           <Text style={styles.instruction}>
-            Tap letters to select, tap last letter again to confirm
+            Drag across letters to select words 💕
           </Text>
 
           {/* Word List */}
