@@ -285,6 +285,7 @@ export default function WordHunt() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={!isSelecting}
       >
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           <Text style={styles.pageLabel}>Word Search</Text>
