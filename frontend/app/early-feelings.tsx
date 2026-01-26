@@ -77,6 +77,14 @@ export default function EarlyFeelings() {
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           <Text style={styles.pageLabel}>Early Feelings</Text>
 
+          {/* Baby Photo Sticker */}
+          <View style={styles.stickerContainer}>
+            <Image
+              source={{ uri: STICKER_BABY }}
+              style={styles.sticker}
+            />
+          </View>
+
           <Animated.View
             style={[
               styles.iconContainer,
