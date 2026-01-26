@@ -160,6 +160,8 @@ export default function RootLayout() {
   const playSuccess = () => soundManager.playSuccess();
   const playMagic = () => soundManager.playMagic();
   const playComplete = () => soundManager.playComplete();
+  const playDrumroll = () => soundManager.playDrumroll();
+  const playKiss = () => soundManager.playKiss();
 
   return (
     <UserContext.Provider value={{ userName, setUserName }}>
@@ -170,7 +172,9 @@ export default function RootLayout() {
         playClick, 
         playSuccess, 
         playMagic, 
-        playComplete 
+        playComplete,
+        playDrumroll,
+        playKiss
       }}>
         <SafeAreaProvider>
           <StatusBar style="dark" />
