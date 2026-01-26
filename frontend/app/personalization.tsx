@@ -84,7 +84,7 @@ export default function Personalization() {
                 <TextInput
                   style={styles.input}
                   value={name}
-                  onChangeText={setName}
+                  onChangeText={(text) => { if (text.length > name.length) playClick(); setName(text); }}
                   placeholder="Your name..."
                   placeholderTextColor="#C9A7C9"
                   autoCapitalize="words"
