@@ -262,9 +262,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   keyEmpty: {
+    width: 75,
+    height: 75,
     backgroundColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
   },
   keyText: {
     fontSize: 32,
