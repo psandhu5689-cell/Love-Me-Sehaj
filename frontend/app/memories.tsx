@@ -219,7 +219,10 @@ export default function Memories() {
           <Animated.View style={styles.continueContainer}>
             <TouchableOpacity
               style={styles.button}
-              onPress={() => router.push('/word-hunt')}
+              onPress={() => {
+                playComplete();
+                router.push('/word-hunt');
+              }}
               activeOpacity={0.8}
             >
               <Text style={styles.buttonText}>Continue</Text>
