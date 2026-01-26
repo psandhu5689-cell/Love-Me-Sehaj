@@ -88,7 +88,7 @@ export default function EntryGate() {
           ))}
         </View>
 
-        {/* Photo Sticker */}
+        {/* Photo Sticker - Heart Shaped */}
         <Animated.View
           style={[
             styles.stickerContainer,
@@ -97,10 +97,16 @@ export default function EntryGate() {
             },
           ]}
         >
-          <Image
-            source={{ uri: STICKER_GOLD_DRESS }}
-            style={styles.sticker}
-          />
+          <View style={styles.heartSticker}>
+            <View style={styles.heartMain}>
+              <Image
+                source={{ uri: STICKER_GOLD_DRESS }}
+                style={styles.stickerImage}
+              />
+            </View>
+            <View style={styles.heartLeft} />
+            <View style={styles.heartRight} />
+          </View>
         </Animated.View>
 
         <Animated.View
