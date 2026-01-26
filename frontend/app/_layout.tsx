@@ -39,6 +39,8 @@ const AudioContext = createContext<AudioContextType>({
   playSuccess: () => {},
   playMagic: () => {},
   playComplete: () => {},
+  playDrumroll: () => {},
+  playKiss: () => {},
 });
 
 export const useUser = () => useContext(UserContext);
