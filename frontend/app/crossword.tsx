@@ -140,18 +140,18 @@ export default function Crossword() {
       
       if (direction === 'across') {
         nextCol = col + 1;
-        while (nextCol < 10 && grid[row]?.[nextCol] === null) {
+        while (nextCol < 6 && grid[row]?.[nextCol] === null) {
           nextCol++;
         }
-        if (nextCol >= 10 || grid[row]?.[nextCol] === null) {
+        if (nextCol >= 6 || grid[row]?.[nextCol] === null) {
           nextCol = col;
         }
       } else {
         nextRow = row + 1;
-        while (nextRow < 12 && grid[nextRow]?.[col] === null) {
+        while (nextRow < 11 && grid[nextRow]?.[col] === null) {
           nextRow++;
         }
-        if (nextRow >= 12 || grid[nextRow]?.[col] === null) {
+        if (nextRow >= 11 || grid[nextRow]?.[col] === null) {
           nextRow = row;
         }
       }
