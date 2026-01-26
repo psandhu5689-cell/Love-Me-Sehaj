@@ -22,6 +22,8 @@ interface AudioContextType {
   playSuccess: () => void;
   playMagic: () => void;
   playComplete: () => void;
+  playDrumroll: () => void;
+  playKiss: () => void;
 }
 
 const UserContext = createContext<UserContextType>({
