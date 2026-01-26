@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useAudio } from './_layout';
 
 const { width } = Dimensions.get('window');
 
