@@ -6,11 +6,16 @@ import {
   TouchableOpacity,
   Animated,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser, useAudio } from './_layout';
+
+// New stickers from user
+const STICKER_1 = 'https://customer-assets.emergentagent.com/job_sehaj-love/artifacts/c4js402r_IMG_2322.jpeg';
+const STICKER_2 = 'https://customer-assets.emergentagent.com/job_sehaj-love/artifacts/f4wz0r37_IMG_2420.jpeg';
 
 export default function Confession() {
   const router = useRouter();
@@ -18,6 +23,7 @@ export default function Confession() {
   const { playClick } = useAudio();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const line1Anim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
   const line2Anim = useRef(new Animated.Value(0)).current;
   const line3Anim = useRef(new Animated.Value(0)).current;
   const heartPulse = useRef(new Animated.Value(1)).current;
