@@ -326,11 +326,21 @@ export default function Crossword() {
                   },
                 ]}
               >
-                <Ionicons name="heart" size={50} color="#FF6B9D" />
-                <Text style={styles.completeTitle}>Perfect! 🎉</Text>
+                <View style={styles.celebrationEmojis}>
+                  <Text style={styles.emoji}>🎉</Text>
+                  <Text style={styles.emoji}>💕</Text>
+                  <Text style={styles.emoji}>🎉</Text>
+                </View>
+                <Ionicons name="heart" size={60} color="#FF6B9D" />
+                <Text style={styles.completeTitle}>You Did It! 🎉</Text>
                 <Text style={styles.completeText}>
                   You know our love story by heart!
                 </Text>
+                <View style={styles.starRow}>
+                  <Ionicons name="star" size={24} color="#FFD700" />
+                  <Ionicons name="star" size={24} color="#FFD700" />
+                  <Ionicons name="star" size={24} color="#FFD700" />
+                </View>
                 <TouchableOpacity
                   style={styles.continueButton}
                   onPress={() => {
