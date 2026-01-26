@@ -144,13 +144,25 @@ export default function OriginStory() {
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              playPop();
+              playKiss();
               router.push('/early-feelings');
             }}
             activeOpacity={0.8}
           >
             <Text style={styles.buttonText}>Next</Text>
             <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => {
+              playClick();
+              router.push('/crossword');
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.skipButtonText}>Skip</Text>
+            <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
