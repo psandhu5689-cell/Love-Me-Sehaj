@@ -121,8 +121,11 @@ export default function WordHunt() {
   const [selectedCells, setSelectedCells] = useState<{row: number, col: number}[]>([]);
   const [highlightedCells, setHighlightedCells] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
+  const [startCell, setStartCell] = useState<{row: number, col: number} | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const celebrateAnim = useRef(new Animated.Value(0)).current;
+  const gridRef = useRef<View>(null);
+  const [gridLayout, setGridLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const { playSuccess, playComplete, playClick } = useAudio();
 
   const allWordsFound = foundWords.size === WORDS_TO_FIND.length;
@@ -172,35 +175,95 @@ export default function WordHunt() {
     return false;
   };
 
-  const handleCellPress = (row: number, col: number) => {
-    playClick(); // Sound on every cell tap
-    if (isSelecting) {
-      // Add to selection
-      const lastCell = selectedCells[selectedCells.length - 1];
-      if (lastCell) {
-        // Check if adjacent or in line
-        const rowDiff = row - lastCell.row;
-        const colDiff = col - lastCell.col;
-        
-        // Allow horizontal, vertical, or diagonal selection
-        if (Math.abs(rowDiff) <= 1 && Math.abs(colDiff) <= 1) {
-          const newCells = [...selectedCells, { row, col }];
-          setSelectedCells(newCells);
-        }
+  // Calculate cells between start and current position (line selection)
+  const getCellsInLine = (start: {row: number, col: number}, end: {row: number, col: number}) => {
+    const cells: {row: number, col: number}[] = [];
+    const rowDiff = end.row - start.row;
+    const colDiff = end.col - start.col;
+    
+    // Determine direction
+    const steps = Math.max(Math.abs(rowDiff), Math.abs(colDiff));
+    if (steps === 0) {
+      cells.push(start);
+      return cells;
+    }
+    
+    const rowStep = rowDiff === 0 ? 0 : rowDiff / Math.abs(rowDiff);
+    const colStep = colDiff === 0 ? 0 : colDiff / Math.abs(colDiff);
+    
+    // Only allow straight lines (horizontal, vertical, diagonal)
+    if (rowDiff !== 0 && colDiff !== 0 && Math.abs(rowDiff) !== Math.abs(colDiff)) {
+      // Not a valid line, just return start cell
+      cells.push(start);
+      return cells;
+    }
+    
+    for (let i = 0; i <= steps; i++) {
+      const row = start.row + Math.round(i * rowStep);
+      const col = start.col + Math.round(i * colStep);
+      if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+        cells.push({ row, col });
       }
-    } else {
-      // Start new selection
+    }
+    
+    return cells;
+  };
+
+  const getCellFromPosition = (pageX: number, pageY: number) => {
+    if (gridLayout.width === 0) return null;
+    
+    const relativeX = pageX - gridLayout.x;
+    const relativeY = pageY - gridLayout.y;
+    
+    const col = Math.floor(relativeX / CELL_SIZE);
+    const row = Math.floor(relativeY / CELL_SIZE);
+    
+    if (row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE) {
+      return { row, col };
+    }
+    return null;
+  };
+
+  const handleTouchStart = (event: any) => {
+    const touch = event.nativeEvent;
+    const cell = getCellFromPosition(touch.pageX, touch.pageY);
+    if (cell) {
+      playClick();
       setIsSelecting(true);
-      setSelectedCells([{ row, col }]);
+      setStartCell(cell);
+      setSelectedCells([cell]);
     }
   };
 
-  const handleSelectionEnd = () => {
+  const handleTouchMove = (event: any) => {
+    if (!isSelecting || !startCell) return;
+    
+    const touch = event.nativeEvent;
+    const currentCell = getCellFromPosition(touch.pageX, touch.pageY);
+    
+    if (currentCell) {
+      const newCells = getCellsInLine(startCell, currentCell);
+      if (JSON.stringify(newCells) !== JSON.stringify(selectedCells)) {
+        playClick();
+        setSelectedCells(newCells);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
     if (selectedCells.length > 1) {
       checkSelection(selectedCells);
     }
     setIsSelecting(false);
+    setStartCell(null);
     setSelectedCells([]);
+  };
+
+  const handleGridLayout = (event: any) => {
+    const { x, y, width, height } = event.nativeEvent.layout;
+    gridRef.current?.measureInWindow((pageX, pageY) => {
+      setGridLayout({ x: pageX, y: pageY, width, height });
+    });
   };
 
   const isCellSelected = (row: number, col: number) => {
