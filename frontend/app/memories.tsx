@@ -220,7 +220,7 @@ export default function Memories() {
             <TouchableOpacity
               style={styles.button}
               onPress={() => {
-                playComplete();
+                playKiss();
                 router.push('/crossword');
               }}
               activeOpacity={0.8}
