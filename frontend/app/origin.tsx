@@ -18,6 +18,7 @@ const STICKER_CITY = 'https://customer-assets.emergentagent.com/job_love-adventu
 export default function OriginStory() {
   const router = useRouter();
   const { userName } = useUser();
+  const { playPop } = useAudio();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const heartPulse = useRef(new Animated.Value(1)).current;
