@@ -179,6 +179,7 @@ export default function Crossword() {
 
   const handleKeyPress = (e: any, row: number, col: number) => {
     if (e.nativeEvent.key === 'Backspace' && !grid[row]?.[col]) {
+      playClick(); // Cute sound on backspace
       // Move back on backspace if cell is empty
       let prevRow = row;
       let prevCol = col;
