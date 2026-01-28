@@ -298,6 +298,363 @@ export default function DailyLove() {
     setShowTimeTogether(true)
   }
 
+  // ============ WOULD YOU RATHER ============
+  if (showWouldYouRather) {
+    const wyr = WOULD_YOU_RATHER[wyrIndex]
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: colors.background,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        position: 'relative',
+      }}>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          onClick={() => setShowWouldYouRather(false)}
+          style={{
+            position: 'absolute',
+            top: 50,
+            right: 20,
+            background: colors.card,
+            border: 'none',
+            borderRadius: 20,
+            padding: 8,
+            cursor: 'pointer',
+          }}
+        >
+          <IoClose size={28} color={colors.primary} />
+        </motion.button>
+
+        <span style={{ fontSize: 60 }}>🎲</span>
+        <h1 style={{ color: colors.textPrimary, fontSize: 24, fontWeight: 600, marginTop: 16, marginBottom: 30 }}>
+          Would You Rather?
+        </h1>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 350 }}>
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            style={{
+              background: `linear-gradient(135deg, ${colors.primary}, #ff8fab)`,
+              borderRadius: 16,
+              padding: 20,
+              cursor: 'pointer',
+            }}
+          >
+            <p style={{ color: 'white', fontSize: 18, textAlign: 'center', fontWeight: 500 }}>
+              {wyr.a}
+            </p>
+          </motion.div>
+
+          <p style={{ color: colors.textMuted, textAlign: 'center', fontSize: 14 }}>OR</p>
+
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            style={{
+              background: `linear-gradient(135deg, ${colors.secondary}, #9d4edd)`,
+              borderRadius: 16,
+              padding: 20,
+              cursor: 'pointer',
+            }}
+          >
+            <p style={{ color: 'white', fontSize: 18, textAlign: 'center', fontWeight: 500 }}>
+              {wyr.b}
+            </p>
+          </motion.div>
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleNextWYR}
+          style={{
+            marginTop: 30,
+            background: colors.card,
+            border: `2px solid ${colors.primary}`,
+            color: colors.primary,
+            padding: '12px 24px',
+            borderRadius: 25,
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          Next Question
+          <IoRefresh size={18} />
+        </motion.button>
+      </div>
+    )
+  }
+
+  // ============ HEART TO HEART ============
+  if (showHeartToHeart) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: isDark ? '#1A0D1A' : colors.background,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        position: 'relative',
+      }}>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          onClick={() => setShowHeartToHeart(false)}
+          style={{
+            position: 'absolute',
+            top: 50,
+            right: 20,
+            background: colors.card,
+            border: 'none',
+            borderRadius: 20,
+            padding: 8,
+            cursor: 'pointer',
+          }}
+        >
+          <IoClose size={28} color={colors.primary} />
+        </motion.button>
+
+        <IoHeart size={60} color={colors.primary} />
+        <h1 style={{ color: colors.textPrimary, fontSize: 24, fontWeight: 600, marginTop: 16 }}>
+          Heart to Heart 💕
+        </h1>
+        <p style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 30 }}>
+          Our repair & connection space
+        </p>
+
+        <motion.div
+          key={hthIndex}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: colors.card,
+            border: `2px solid ${colors.primary}`,
+            borderRadius: 20,
+            padding: 24,
+            maxWidth: 350,
+            boxShadow: `0 0 40px ${colors.primaryGlow}`,
+          }}
+        >
+          <p style={{
+            color: colors.textPrimary,
+            fontSize: 20,
+            textAlign: 'center',
+            lineHeight: 1.6,
+            fontStyle: 'italic',
+          }}>
+            {HEART_TO_HEART[hthIndex]}
+          </p>
+        </motion.div>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleNextHTH}
+          style={{
+            marginTop: 30,
+            background: colors.primary,
+            border: 'none',
+            color: 'white',
+            padding: '12px 24px',
+            borderRadius: 25,
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          Next Prompt
+          <IoRefresh size={18} />
+        </motion.button>
+      </div>
+    )
+  }
+
+  // ============ COIN FLIP ============
+  if (showCoinFlip) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: colors.background,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        position: 'relative',
+      }}>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          onClick={() => setShowCoinFlip(false)}
+          style={{
+            position: 'absolute',
+            top: 50,
+            right: 20,
+            background: colors.card,
+            border: 'none',
+            borderRadius: 20,
+            padding: 8,
+            cursor: 'pointer',
+          }}
+        >
+          <IoClose size={28} color={colors.primary} />
+        </motion.button>
+
+        <h1 style={{ color: colors.textPrimary, fontSize: 24, fontWeight: 600, marginBottom: 30 }}>
+          Who's Right? 🪙
+        </h1>
+
+        <motion.div
+          animate={isFlipping ? { rotateY: [0, 1800] } : {}}
+          transition={{ duration: 1.5 }}
+          style={{
+            width: 150,
+            height: 150,
+            borderRadius: 75,
+            background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 60,
+            boxShadow: '0 10px 30px rgba(255, 215, 0, 0.4)',
+            marginBottom: 30,
+          }}
+        >
+          🪙
+        </motion.div>
+
+        <AnimatePresence>
+          {coinResult && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                background: colors.card,
+                border: `2px solid #FFD700`,
+                borderRadius: 16,
+                padding: 20,
+                marginBottom: 20,
+              }}
+            >
+              <p style={{ color: colors.textPrimary, fontSize: 22, fontWeight: 600, textAlign: 'center' }}>
+                {coinResult}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={flipCoin}
+          disabled={isFlipping}
+          style={{
+            background: isFlipping ? colors.textMuted : 'linear-gradient(135deg, #FFD700, #FFA500)',
+            border: 'none',
+            color: '#000',
+            padding: '14px 28px',
+            borderRadius: 25,
+            fontSize: 18,
+            fontWeight: 600,
+            cursor: isFlipping ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {isFlipping ? 'Flipping...' : 'Flip the Coin!'}
+        </motion.button>
+      </div>
+    )
+  }
+
+  // ============ TIME TOGETHER ============
+  if (showTimeTogether) {
+    const months = Math.floor(daysTogether / 30)
+    const weeks = Math.floor((daysTogether % 30) / 7)
+    const days = daysTogether % 7
+    
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: isDark ? '#0D0D1A' : colors.background,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        position: 'relative',
+      }}>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          onClick={() => setShowTimeTogether(false)}
+          style={{
+            position: 'absolute',
+            top: 50,
+            right: 20,
+            background: colors.card,
+            border: 'none',
+            borderRadius: 20,
+            padding: 8,
+            cursor: 'pointer',
+          }}
+        >
+          <IoClose size={28} color={colors.primary} />
+        </motion.button>
+
+        <span style={{ fontSize: 60 }}>🕯️</span>
+        <h1 style={{ color: colors.textPrimary, fontSize: 24, fontWeight: 600, marginTop: 16 }}>
+          Together For
+        </h1>
+
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          style={{
+            background: colors.card,
+            border: `2px solid ${colors.primary}`,
+            borderRadius: 20,
+            padding: 30,
+            marginTop: 30,
+            textAlign: 'center',
+            boxShadow: `0 0 50px ${colors.primaryGlow}`,
+          }}
+        >
+          <p style={{ color: colors.primary, fontSize: 60, fontWeight: 700 }}>
+            {daysTogether}
+          </p>
+          <p style={{ color: colors.textSecondary, fontSize: 18 }}>days</p>
+          
+          <div style={{ marginTop: 20, display: 'flex', gap: 20, justifyContent: 'center' }}>
+            <div>
+              <p style={{ color: colors.textPrimary, fontSize: 24, fontWeight: 600 }}>{months}</p>
+              <p style={{ color: colors.textMuted, fontSize: 12 }}>months</p>
+            </div>
+            <div>
+              <p style={{ color: colors.textPrimary, fontSize: 24, fontWeight: 600 }}>{weeks}</p>
+              <p style={{ color: colors.textMuted, fontSize: 12 }}>weeks</p>
+            </div>
+            <div>
+              <p style={{ color: colors.textPrimary, fontSize: 24, fontWeight: 600 }}>{days}</p>
+              <p style={{ color: colors.textMuted, fontSize: 12 }}>days</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <p style={{ color: colors.textSecondary, fontSize: 14, marginTop: 30, fontStyle: 'italic', textAlign: 'center' }}>
+          And counting... forever to go 💕
+        </p>
+      </div>
+    )
+  }
+
   // ============ SAD MODE ============
   if (showSadMode) {
     return (
