@@ -12,7 +12,11 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAudio } from './_layout';
+import { useTheme } from './theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from './components/themed';
+import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 80;
@@ -29,11 +33,10 @@ const NICKNAMES = [
   { name: 'My Painting', emoji: '🎨', color: '#FF6347' },
   { name: 'Babe', emoji: '💋', color: '#FF4500' },
   { name: 'Snowflake', emoji: '❄️', color: '#87CEEB' },
-  { name: 'Sehajpal', emoji: '💖', color: '#FF6B9D' },
+  { name: 'Sehajpal', emoji: '💖', color: '#E8638F' },
   { name: 'Mrs. Sandhu', emoji: '👰', color: '#E6E6FA' },
 ];
 
-// User photos for random display
 const PHOTOS = [
   'https://customer-assets.emergentagent.com/job_sehaj-love/artifacts/c4js402r_IMG_2322.jpeg',
   'https://customer-assets.emergentagent.com/job_sehaj-love/artifacts/f4wz0r37_IMG_2420.jpeg',
@@ -43,7 +46,8 @@ const PHOTOS = [
 
 export default function NicknameCarousel() {
   const router = useRouter();
-  const { playClick, playSuccess, playComplete } = useAudio();
+  const { colors, isDark } = useTheme();
+  const { playClick, playComplete } = useAudio();
   const [currentIndex, setCurrentIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const cardAnims = useRef(NICKNAMES.map(() => new Animated.Value(0))).current;
@@ -56,7 +60,6 @@ export default function NicknameCarousel() {
       useNativeDriver: true,
     }).start();
 
-    // Animate cards sequentially
     Animated.stagger(
       100,
       cardAnims.map((anim) =>
@@ -74,154 +77,156 @@ export default function NicknameCarousel() {
     const contentOffset = event.nativeEvent.contentOffset.x;
     const index = Math.round(contentOffset / CARD_WIDTH);
     if (index !== currentIndex && index >= 0 && index < NICKNAMES.length) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       playClick();
       setCurrentIndex(index);
     }
   };
 
   const scrollToIndex = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     playClick();
     scrollRef.current?.scrollTo({ x: index * CARD_WIDTH, animated: true });
     setCurrentIndex(index);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => { playClick(); router.back(); }}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
-      </TouchableOpacity>
+    <ThemedBackground showFloatingElements={false}>
+      <SafeAreaView style={styles.container}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { playClick(); router.back(); }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
 
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        <Text style={styles.title}>All My Names For You 💕</Text>
-        <Text style={styles.subtitle}>Scroll through your nicknames!</Text>
-        
-        {/* Counter */}
-        <Text style={styles.counter}>
-          {currentIndex + 1} / {NICKNAMES.length}
-        </Text>
-        
-        {/* Carousel */}
-        <ScrollView
-          ref={scrollRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          contentContainerStyle={styles.carouselContainer}
-          snapToInterval={CARD_WIDTH}
-          decelerationRate="fast"
-        >
-          {NICKNAMES.map((nickname, index) => (
-            <Animated.View
-              key={index}
-              style={[
-                styles.card,
-                { 
-                  backgroundColor: nickname.color + '20',
-                  borderColor: nickname.color,
-                  opacity: cardAnims[index],
-                  transform: [{ 
-                    scale: cardAnims[index].interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.8, 1],
-                    })
-                  }],
-                },
-              ]}
-            >
-              <View style={styles.photoContainer}>
-                <Ionicons name="heart" size={80} color={nickname.color} style={styles.heartBg} />
-                <Image 
-                  source={{ uri: PHOTOS[index % PHOTOS.length] }} 
-                  style={styles.photo} 
-                />
-              </View>
-              <Text style={styles.emoji}>{nickname.emoji}</Text>
-              <Text style={[styles.nickname, { color: nickname.color }]}>
-                {nickname.name}
-              </Text>
-            </Animated.View>
-          ))}
-        </ScrollView>
-        
-        {/* Dots Indicator */}
-        <View style={styles.dotsContainer}>
-          {NICKNAMES.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => scrollToIndex(index)}
-              activeOpacity={0.7}
-            >
-              <View
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>All My Names For You 💕</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Scroll through your nicknames!</Text>
+          
+          <Text style={[styles.counter, { color: colors.primary }]}>
+            {currentIndex + 1} / {NICKNAMES.length}
+          </Text>
+          
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            contentContainerStyle={styles.carouselContainer}
+            snapToInterval={CARD_WIDTH}
+            decelerationRate="fast"
+          >
+            {NICKNAMES.map((nickname, index) => (
+              <Animated.View
+                key={index}
                 style={[
-                  styles.dot,
-                  currentIndex === index && styles.dotActive,
+                  styles.card,
+                  { 
+                    backgroundColor: colors.card,
+                    borderColor: nickname.color,
+                    opacity: cardAnims[index],
+                    transform: [{ 
+                      scale: cardAnims[index].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.8, 1],
+                      })
+                    }],
+                  },
                 ]}
-              />
-            </TouchableOpacity>
-          ))}
-        </View>
-        
-        {/* Continue Button */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => { playComplete(); router.push('/poems'); }}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Continue</Text>
-          <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={() => { playClick(); router.push('/poems'); }}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.skipButtonText}>Skip</Text>
-          <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
-        </TouchableOpacity>
-      </Animated.View>
-    </SafeAreaView>
+              >
+                <View style={styles.photoContainer}>
+                  <Ionicons name="heart" size={80} color={nickname.color} style={styles.heartBg} />
+                  <Image 
+                    source={{ uri: PHOTOS[index % PHOTOS.length] }} 
+                    style={[styles.photo, { borderColor: colors.card }]} 
+                  />
+                </View>
+                <Text style={styles.emoji}>{nickname.emoji}</Text>
+                <Text style={[styles.nickname, { color: nickname.color }]}>
+                  {nickname.name}
+                </Text>
+              </Animated.View>
+            ))}
+          </ScrollView>
+          
+          <View style={styles.dotsContainer}>
+            {NICKNAMES.map((_, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => scrollToIndex(index)}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.dot,
+                    { backgroundColor: colors.border },
+                    currentIndex === index && { backgroundColor: colors.primary, width: 24 },
+                  ]}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+          
+          <TouchableOpacity
+            onPress={() => { playComplete(); router.push('/poems'); }}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={colors.gradientPrimary as any}
+              style={[styles.button, { shadowColor: colors.primary }]}
+            >
+              <Text style={styles.buttonText}>Continue</Text>
+              <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+            </LinearGradient>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => { playClick(); router.push('/poems'); }}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </Animated.View>
+      </SafeAreaView>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F7',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 16,
     zIndex: 10,
-    padding: 8,
+    padding: 10,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   content: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 40,
+    paddingTop: 80,
   },
   title: {
     fontSize: 26,
     fontWeight: '600',
-    color: '#4A1942',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#9B7FA7',
     marginBottom: 16,
   },
   counter: {
     fontSize: 14,
-    color: '#FF6B9D',
     fontWeight: '600',
     marginBottom: 20,
   },
@@ -235,12 +240,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 0,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
   },
   photoContainer: {
     position: 'relative',
@@ -256,7 +255,6 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     borderWidth: 3,
-    borderColor: '#FFFFFF',
   },
   emoji: {
     fontSize: 60,
@@ -279,21 +277,19 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FFD6E6',
-  },
-  dotActive: {
-    backgroundColor: '#FF6B9D',
-    width: 24,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF6B9D',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 25,
     gap: 8,
     marginTop: 24,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -310,7 +306,6 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: '#9B7FA7',
     fontWeight: '500',
   },
 });

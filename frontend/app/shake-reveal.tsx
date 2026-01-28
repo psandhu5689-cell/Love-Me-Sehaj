@@ -11,12 +11,17 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Accelerometer } from 'expo-sensors';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAudio } from './_layout';
+import { useTheme } from './theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from './components/themed';
+import * as Haptics from 'expo-haptics';
 
 const SHAKE_THRESHOLD = 1.5;
 
 export default function ShakeReveal() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { playClick, playSuccess, playComplete } = useAudio();
   const [isRevealed, setIsRevealed] = useState(false);
   const [shakeCount, setShakeCount] = useState(0);
@@ -32,7 +37,6 @@ export default function ShakeReveal() {
       useNativeDriver: true,
     }).start();
 
-    // Phone shake animation hint
     Animated.loop(
       Animated.sequence([
         Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
@@ -43,7 +47,6 @@ export default function ShakeReveal() {
       ])
     ).start();
 
-    // Set up accelerometer for shake detection
     let subscription: any;
     
     const setupAccelerometer = async () => {
@@ -77,6 +80,7 @@ export default function ShakeReveal() {
   const handleShake = () => {
     if (isRevealed) return;
     
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     playClick();
     setShakeCount(prev => {
       const newCount = prev + 1;
@@ -88,6 +92,7 @@ export default function ShakeReveal() {
   };
 
   const revealMessage = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     playSuccess();
     setIsRevealed(true);
     Animated.spring(revealAnim, {
@@ -98,9 +103,9 @@ export default function ShakeReveal() {
     }).start();
   };
 
-  // Manual reveal button for web
   const handleManualReveal = () => {
     if (!isRevealed) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       playClick();
       setShakeCount(prev => {
         const newCount = prev + 1;
@@ -113,101 +118,119 @@ export default function ShakeReveal() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Back Button */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => { playClick(); router.back(); }}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="chevron-back" size={28} color="#FF6B9D" />
-      </TouchableOpacity>
+    <ThemedBackground>
+      <SafeAreaView style={styles.container}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { playClick(); router.back(); }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.primary} />
+        </TouchableOpacity>
 
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        {!isRevealed ? (
-          <>
-            <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
-              <Ionicons name="phone-portrait-outline" size={100} color="#FF6B9D" />
-            </Animated.View>
-            
-            <Text style={styles.title}>Shake To Reveal 📱</Text>
-            <Text style={styles.subtitle}>Shake your phone to reveal a secret!</Text>
-            
-            <View style={styles.progressContainer}>
-              {[0, 1, 2].map((i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.shakeDot,
-                    shakeCount > i && styles.shakeDotFilled,
-                  ]}
-                />
-              ))}
-            </View>
-            <Text style={styles.progressText}>{shakeCount} / 3 shakes</Text>
-            
-            {/* Manual button for web */}
-            {Platform.OS === 'web' && (
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          {!isRevealed ? (
+            <>
+              <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.primaryGlow }]}>
+                  <Ionicons name="phone-portrait-outline" size={80} color={colors.primary} />
+                </View>
+              </Animated.View>
+              
+              <Text style={[styles.title, { color: colors.textPrimary }]}>Shake To Reveal 📱</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Shake your phone to reveal a secret!</Text>
+              
+              <View style={styles.progressContainer}>
+                {[0, 1, 2].map((i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.shakeDot,
+                      { borderColor: colors.primary },
+                      shakeCount > i && { backgroundColor: colors.primary },
+                    ]}
+                  />
+                ))}
+              </View>
+              <Text style={[styles.progressText, { color: colors.textSecondary }]}>{shakeCount} / 3 shakes</Text>
+              
+              {Platform.OS === 'web' && (
+                <TouchableOpacity
+                  onPress={handleManualReveal}
+                  activeOpacity={0.9}
+                  style={{ marginTop: 20 }}
+                >
+                  <LinearGradient
+                    colors={colors.gradientPrimary as any}
+                    style={[styles.shakeButton, { shadowColor: colors.primary }]}
+                  >
+                    <Text style={styles.shakeButtonText}>Tap to Shake!</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              )}
+              
               <TouchableOpacity
-                style={styles.shakeButton}
-                onPress={handleManualReveal}
+                style={styles.skipButton}
+                onPress={() => { playClick(); router.push('/nickname-carousel'); }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.shakeButtonText}>Tap to Shake!</Text>
+                <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
-            )}
-            
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={() => { playClick(); router.push('/nickname-carousel'); }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.skipButtonText}>Skip</Text>
-              <Ionicons name="chevron-forward" size={16} color="#9B7FA7" />
-            </TouchableOpacity>
-          </>
-        ) : (
-          <Animated.View style={[styles.revealedContainer, { opacity: revealAnim, transform: [{ scale: revealAnim }] }]}>
-            <Ionicons name="sparkles" size={80} color="#FFD700" />
-            <Text style={styles.revealedTitle}>Secret Revealed! ✨</Text>
-            
-            <View style={styles.messageCard}>
-              <Ionicons name="heart" size={40} color="#FF6B9D" />
-              <Text style={styles.messageText}>
-                You shook things up in my life —{"\n"}
-                in the best way possible.{"\n\n"}
-                Before you, everything was still.{"\n"}
-                Now, my heart beats for you.{"\n\n"}
-                💕 I love you, always 💕
-              </Text>
-            </View>
-            
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => { playComplete(); router.push('/nickname-carousel'); }}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.buttonText}>Continue</Text>
-              <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </Animated.View>
-        )}
-      </Animated.View>
-    </SafeAreaView>
+            </>
+          ) : (
+            <Animated.View style={[styles.revealedContainer, { opacity: revealAnim, transform: [{ scale: revealAnim }] }]}>
+              <View style={[styles.iconContainer, { backgroundColor: isDark ? 'rgba(255, 215, 0, 0.15)' : '#FFF9E6' }]}>
+                <Ionicons name="sparkles" size={80} color="#FFD700" />
+              </View>
+              <Text style={[styles.revealedTitle, { color: colors.textPrimary }]}>Secret Revealed! ✨</Text>
+              
+              <ThemedCard variant="glow" glowColor={colors.primary}>
+                <View style={{ alignItems: 'center' }}>
+                  <Ionicons name="heart" size={40} color={colors.primary} />
+                  <Text style={[styles.messageText, { color: colors.textPrimary }]}>
+                    You shook things up in my life —{"\n"}
+                    in the best way possible.{"\n\n"}
+                    Before you, everything was still.{"\n"}
+                    Now, my heart beats for you.{"\n\n"}
+                    💕 I love you, always 💕
+                  </Text>
+                </View>
+              </ThemedCard>
+              
+              <TouchableOpacity
+                onPress={() => { playComplete(); router.push('/nickname-carousel'); }}
+                activeOpacity={0.9}
+                style={{ marginTop: 24 }}
+              >
+                <LinearGradient
+                  colors={colors.gradientPrimary as any}
+                  style={[styles.button, { shadowColor: colors.primary }]}
+                >
+                  <Text style={styles.buttonText}>Continue</Text>
+                  <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </Animated.View>
+      </SafeAreaView>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5F7',
   },
   backButton: {
     position: 'absolute',
     top: 50,
     left: 16,
     zIndex: 10,
-    padding: 8,
+    padding: 10,
+    borderRadius: 20,
+    borderWidth: 1,
   },
   content: {
     flex: 1,
@@ -215,16 +238,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
+  iconContainer: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   title: {
     fontSize: 28,
     fontWeight: '600',
-    color: '#4A1942',
-    marginTop: 20,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#9B7FA7',
     marginBottom: 30,
   },
   progressContainer: {
@@ -237,23 +265,20 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 3,
-    borderColor: '#FF6B9D',
     backgroundColor: 'transparent',
-  },
-  shakeDotFilled: {
-    backgroundColor: '#FF6B9D',
   },
   progressText: {
     fontSize: 16,
-    color: '#9B7FA7',
     marginBottom: 20,
   },
   shakeButton: {
-    backgroundColor: '#FF6B9D',
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 25,
-    marginTop: 20,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   shakeButtonText: {
     color: '#FFFFFF',
@@ -263,41 +288,30 @@ const styles = StyleSheet.create({
   revealedContainer: {
     alignItems: 'center',
     padding: 20,
+    width: '100%',
   },
   revealedTitle: {
     fontSize: 28,
     fontWeight: '600',
-    color: '#4A1942',
-    marginTop: 16,
     marginBottom: 24,
-  },
-  messageCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 30,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
   },
   messageText: {
     fontSize: 17,
     lineHeight: 28,
-    color: '#4A1942',
     textAlign: 'center',
     marginTop: 16,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF6B9D',
     paddingHorizontal: 32,
     paddingVertical: 14,
     borderRadius: 25,
     gap: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   buttonText: {
     color: '#FFFFFF',
@@ -314,7 +328,6 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 14,
-    color: '#9B7FA7',
     fontWeight: '500',
   },
 });
