@@ -1,6 +1,5 @@
 import React, { ReactNode } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '../../theme/ThemeContext';
 
 interface ThemedCardProps {

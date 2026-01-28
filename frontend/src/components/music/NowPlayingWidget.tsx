@@ -6,12 +6,11 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
-  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import { useTheme } from '../theme/ThemeContext';
-import { useMusic, PLAYLIST, ALBUM_ART_URL } from '../context/MusicContext';
+import { useTheme } from '../../theme/ThemeContext';
+import { useMusic, PLAYLIST, ALBUM_ART_URL } from '../../context/MusicContext';
 import * as Haptics from 'expo-haptics';
 
 interface NowPlayingWidgetProps {

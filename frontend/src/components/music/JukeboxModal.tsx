@@ -8,9 +8,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { useTheme } from '../theme/ThemeContext';
-import { useMusic, PLAYLIST } from '../context/MusicContext';
+import { useTheme } from '../../theme/ThemeContext';
+import { useMusic, PLAYLIST } from '../../context/MusicContext';
 import * as Haptics from 'expo-haptics';
 
 interface JukeboxModalProps {
