@@ -160,6 +160,37 @@ const CATEGORIES = [
   { id: 'moment', title: 'Memories', icon: IoCamera, color: '#4CAF50', data: SPECIAL_MOMENTS, emoji: '📸' },
 ]
 
+// Video for the jukebox CD art
+const JUKEBOX_VIDEO = 'https://customer-assets.emergentagent.com/job_romance-theme/artifacts/04jb8vk3_5744FE7D-DE20-40FB-94A9-C39CB3EDC595.MOV'
+
+// Would You Rather questions
+const WOULD_YOU_RATHER = [
+  { a: "Go on a fancy dinner date", b: "Have a cozy movie night at home" },
+  { a: "Receive a handwritten love letter", b: "Get a surprise gift" },
+  { a: "Spend a day at the beach together", b: "Go on a mountain hike" },
+  { a: "Have breakfast in bed", b: "Have a midnight snack run" },
+  { a: "Dance in the rain together", b: "Watch the sunset" },
+  { a: "Travel the world together", b: "Build our dream home" },
+  { a: "Get matching tattoos", b: "Have matching outfits" },
+  { a: "Have a surprise party thrown for you", b: "Plan a surprise for me" },
+  { a: "Rewatch our first date", b: "Fast forward to our wedding" },
+  { a: "Kiss under the stars", b: "Kiss in the rain" },
+]
+
+// Heart to Heart prompts
+const HEART_TO_HEART = [
+  "What made you smile today?",
+  "Is there anything on your mind you want to talk about?",
+  "What's one thing I can do to make you feel more loved?",
+  "What's something you appreciate about us?",
+  "Is there anything you've been wanting to tell me?",
+  "How are you feeling about us lately?",
+  "What's your favorite memory of us?",
+  "What do you need from me right now?",
+  "Is there anything I did that hurt you that we haven't talked about?",
+  "What are you grateful for today?",
+]
+
 export default function DailyLove() {
   const navigate = useNavigate()
   const { colors, isDark } = useTheme()
