@@ -18,29 +18,36 @@ import LieDetector from './pages/LieDetector'
 import RelationshipEmergency from './pages/RelationshipEmergency'
 import TortureChamber from './pages/TortureChamber'
 import TryNotToSmile from './pages/TryNotToSmile'
+import { UserSetupModal, PresenceCheckModal } from './components/PresenceModals'
 
 export default function App() {
   return (
-    <AnimatePresence mode="wait">
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/first-intro" element={<FirstIntro />} />
-        <Route path="/personalization" element={<Personalization />} />
-        <Route path="/origin" element={<Origin />} />
-        <Route path="/crossword" element={<Crossword />} />
-        <Route path="/card-match" element={<CardMatch />} />
-        <Route path="/hold-reveal" element={<HoldReveal />} />
-        <Route path="/quiet-stars" element={<QuietStars />} />
-        <Route path="/question" element={<Question />} />
-        <Route path="/celebration" element={<Celebration />} />
-        <Route path="/daily-love" element={<DailyLove />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/hub" element={<Hub />} />
-        <Route path="/lie-detector" element={<LieDetector />} />
-        <Route path="/relationship-emergency" element={<RelationshipEmergency />} />
-        <Route path="/torture-chamber" element={<TortureChamber />} />
-        <Route path="/try-not-to-smile" element={<TryNotToSmile />} />
-      </Routes>
-    </AnimatePresence>
+    <>
+      {/* Global Presence Modals */}
+      <UserSetupModal />
+      <PresenceCheckModal />
+      
+      <AnimatePresence mode="wait">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/first-intro" element={<FirstIntro />} />
+          <Route path="/personalization" element={<Personalization />} />
+          <Route path="/origin" element={<Origin />} />
+          <Route path="/crossword" element={<Crossword />} />
+          <Route path="/card-match" element={<CardMatch />} />
+          <Route path="/hold-reveal" element={<HoldReveal />} />
+          <Route path="/quiet-stars" element={<QuietStars />} />
+          <Route path="/question" element={<Question />} />
+          <Route path="/celebration" element={<Celebration />} />
+          <Route path="/daily-love" element={<DailyLove />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/hub" element={<Hub />} />
+          <Route path="/lie-detector" element={<LieDetector />} />
+          <Route path="/relationship-emergency" element={<RelationshipEmergency />} />
+          <Route path="/torture-chamber" element={<TortureChamber />} />
+          <Route path="/try-not-to-smile" element={<TryNotToSmile />} />
+        </Routes>
+      </AnimatePresence>
+    </>
   )
 }
