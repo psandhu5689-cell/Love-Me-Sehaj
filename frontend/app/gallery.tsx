@@ -13,7 +13,6 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio, Video, ResizeMode } from 'expo-av';
-import Slider from '@react-native-community/slider';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemedBackground } from '../src/components/themed';
 import { useMusic } from '../src/context/MusicContext';
