@@ -964,14 +964,16 @@ export default function DailyLove() {
         </p>
 
         {[
-          { title: 'Heart to Heart 💕', subtitle: 'Our apology & repair space', icon: IoChatbubbles, color: colors.primary },
-          { title: 'Would You Rather 🎲', subtitle: 'Fun couples game', icon: IoHelpCircle, color: colors.secondary },
-          { title: "Who's Right? 🪙", subtitle: 'Flip a coin to decide', icon: null, emoji: '🪙', color: '#FFD700' },
-          { title: 'Together For 🕯', subtitle: 'Our time together', icon: null, emoji: '🕯', color: colors.primary },
+          { title: 'Heart to Heart 💕', subtitle: 'Our apology & repair space', icon: IoChatbubbles, color: colors.primary, onClick: handleOpenHTH },
+          { title: 'Would You Rather 🎲', subtitle: 'Fun couples game', icon: IoHelpCircle, color: colors.secondary, onClick: handleOpenWYR },
+          { title: "Who's Right? 🪙", subtitle: 'Flip a coin to decide', icon: null, emoji: '🪙', color: '#FFD700', onClick: handleCoinFlip },
+          { title: 'Together For 🕯', subtitle: 'Our time together', icon: null, emoji: '🕯', color: colors.primary, onClick: handleOpenTimeTogether },
         ].map((item, index) => (
           <motion.div
             key={index}
             whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={item.onClick}
             style={{
               background: colors.card,
               border: `1px solid ${colors.border}`,
