@@ -193,20 +193,22 @@ export default function TortureChamber() {
           <div style={{
             width: '100%',
             height: 28,
-            background: 'rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(10px)',
             borderRadius: 14,
             overflow: 'hidden',
             position: 'relative',
-            border: hp > 100 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
-            boxShadow: hp > 100 ? '0 0 15px rgba(255,105,180,0.5)' : 'none',
+            border: hp > 1500 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
+            boxShadow: hp > 1500 ? '0 0 25px rgba(255,105,180,0.5)' : '0 4px 20px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.05)',
           }}>
             <motion.div
               animate={{ width: `${Math.min((hp / maxHp) * 100, 120)}%` }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               style={{
                 height: '100%',
-                background: getHpColor(),
+                background: `linear-gradient(90deg, ${getHpColor()}, ${getHpColor()}cc)`,
                 borderRadius: 14,
+                boxShadow: `0 0 20px ${getHpColor()}50`,
               }}
             />
             <span style={{
@@ -217,7 +219,7 @@ export default function TortureChamber() {
               color: '#fff',
               fontWeight: 'bold',
               fontSize: 14,
-              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
             }}>
               {hp} / {maxHp} HP
             </span>
