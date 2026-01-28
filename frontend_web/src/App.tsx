@@ -17,6 +17,7 @@ import Hub from './pages/Hub'
 import LieDetector from './pages/LieDetector'
 import RelationshipEmergency from './pages/RelationshipEmergency'
 import TortureChamber from './pages/TortureChamber'
+import TryNotToSmile from './pages/TryNotToSmile'
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/lie-detector" element={<LieDetector />} />
         <Route path="/relationship-emergency" element={<RelationshipEmergency />} />
         <Route path="/torture-chamber" element={<TortureChamber />} />
+        <Route path="/try-not-to-smile" element={<TryNotToSmile />} />
       </Routes>
     </AnimatePresence>
   )
