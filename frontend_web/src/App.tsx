@@ -14,6 +14,9 @@ import Celebration from './pages/Celebration'
 import DailyLove from './pages/DailyLove'
 import Gallery from './pages/Gallery'
 import Hub from './pages/Hub'
+import LieDetector from './pages/LieDetector'
+import RelationshipEmergency from './pages/RelationshipEmergency'
+import TortureChamber from './pages/TortureChamber'
 
 export default function App() {
   return (
@@ -32,6 +35,9 @@ export default function App() {
         <Route path="/daily-love" element={<DailyLove />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/hub" element={<Hub />} />
+        <Route path="/lie-detector" element={<LieDetector />} />
+        <Route path="/relationship-emergency" element={<RelationshipEmergency />} />
+        <Route path="/torture-chamber" element={<TortureChamber />} />
       </Routes>
     </AnimatePresence>
   )
