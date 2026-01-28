@@ -13,10 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAudio } from './_layout';
+import { useTheme } from './theme/ThemeContext';
+import { ThemedBackground, ThemedCard } from './components/themed';
 import * as Haptics from 'expo-haptics';
 
 export default function Surprise() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [hasPressed, setHasPressed] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const [isVibrating, setIsVibrating] = useState(false);
@@ -29,7 +32,6 @@ export default function Surprise() {
   const vibrationInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // Gentle pulsing animation for the fingerprint
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -45,7 +47,6 @@ export default function Surprise() {
       ])
     ).start();
 
-    // Glow animation for the heart
     Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, {
@@ -69,20 +70,17 @@ export default function Surprise() {
   }, []);
 
   const handleFingerprintPress = async () => {
-    if (hasPressed) return; // Prevent spam
+    if (hasPressed) return;
     
     setHasPressed(true);
     setIsVibrating(true);
     
-    // Play kiss sound
     playKiss();
     
-    // Vibration - use expo-haptics for better compatibility
     try {
-      // Start repeated haptic feedback for 5 seconds
       let count = 0;
       vibrationInterval.current = setInterval(async () => {
-        if (count < 25) { // 25 * 200ms = 5 seconds
+        if (count < 25) {
           await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           count++;
         } else {
@@ -92,7 +90,6 @@ export default function Surprise() {
         }
       }, 200);
 
-      // Also try native Vibration API as backup
       if (Platform.OS !== 'web') {
         Vibration.vibrate([0, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200, 100, 200], false);
       }
@@ -100,7 +97,6 @@ export default function Surprise() {
       console.log('Vibration error:', e);
     }
     
-    // Faster pulsing during vibration
     const fastPulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -117,14 +113,12 @@ export default function Surprise() {
     );
     fastPulse.start();
     
-    // Intense glow during vibration
     Animated.timing(glowAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
     }).start();
     
-    // After 5 seconds, show message
     setTimeout(() => {
       setIsVibrating(false);
       if (vibrationInterval.current) {
@@ -133,10 +127,8 @@ export default function Surprise() {
       Vibration.cancel();
       fastPulse.stop();
       
-      // Return to gentle pulse
       pulseAnim.setValue(1);
       
-      // Show message with bounce
       setShowMessage(true);
       
       Animated.parallel([
@@ -159,34 +151,29 @@ export default function Surprise() {
   };
 
   return (
-    <LinearGradient
-      colors={['#FFE4EC', '#FFF5F7', '#FFFAF0']}
-      style={styles.gradient}
-    >
+    <ThemedBackground>
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
-          {/* Instruction text */}
           {!hasPressed && (
-            <Animated.Text style={[styles.instructionText, { opacity: pulseAnim }]}>
+            <Animated.Text style={[styles.instructionText, { color: colors.textSecondary, opacity: pulseAnim }]}>
               Touch to feel the love...
             </Animated.Text>
           )}
           
-          {/* Heart glow background - positioned behind */}
           <Animated.View
             style={[
               styles.heartGlow,
               {
+                backgroundColor: colors.primaryGlow,
                 opacity: glowAnim,
                 transform: [{ scale: isVibrating ? 1.3 : 1.1 }],
               },
             ]}
             pointerEvents="none"
           >
-            <Ionicons name="heart" size={220} color="#FF6B9D" />
+            <Ionicons name="heart" size={220} color={colors.primary} />
           </Animated.View>
           
-          {/* Heart outline - positioned behind */}
           <Animated.View
             style={[
               styles.heartOutline,
@@ -199,10 +186,9 @@ export default function Surprise() {
             ]}
             pointerEvents="none"
           >
-            <Ionicons name="heart-outline" size={200} color="#FF6B9D" />
+            <Ionicons name="heart-outline" size={200} color={colors.primary} />
           </Animated.View>
           
-          {/* Fingerprint button - on TOP */}
           <TouchableOpacity
             onPress={handleFingerprintPress}
             activeOpacity={0.7}
@@ -217,13 +203,12 @@ export default function Surprise() {
                 },
               ]}
             >
-              <View style={styles.fingerprintCircle}>
-                <Ionicons name="finger-print" size={100} color="#FF6B9D" />
+              <View style={[styles.fingerprintCircle, { backgroundColor: colors.card, borderColor: colors.primaryLight, shadowColor: colors.primary }]}>
+                <Ionicons name="finger-print" size={100} color={colors.primary} />
               </View>
             </Animated.View>
           </TouchableOpacity>
           
-          {/* Message after vibration */}
           {showMessage && (
             <Animated.View
               style={[
@@ -247,34 +232,41 @@ export default function Surprise() {
                 },
               ]}
             >
-              <Text style={styles.messageText}>
-                hah I tricked you...{"\n"}I just wanted to kiss your finger
-              </Text>
-              <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
-                <Ionicons name="heart" size={30} color="#FF6B9D" style={styles.messageHeart} />
-              </Animated.View>
-              
-              {/* Continue Button */}
-              <TouchableOpacity
-                style={styles.continueButton}
-                onPress={() => { playClick(); router.push('/quiet-stars'); }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.continueButtonText}>one lassssst thing I promise</Text>
-                <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
+              <ThemedCard variant="glow" glowColor={colors.primary}>
+                <Text style={[styles.messageText, { color: colors.textPrimary }]}>
+                  hah I tricked you...{"\n"}I just wanted to kiss your finger
+                </Text>
+                <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
+                  <Ionicons name="heart" size={30} color={colors.primary} style={styles.messageHeart} />
+                </Animated.View>
+                
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    playClick();
+                    router.push('/quiet-stars');
+                  }}
+                  activeOpacity={0.9}
+                  style={{ marginTop: 20 }}
+                >
+                  <LinearGradient
+                    colors={colors.gradientPrimary as any}
+                    style={[styles.continueButton, { shadowColor: colors.primary }]}
+                  >
+                    <Text style={styles.continueButtonText}>one lassssst thing I promise</Text>
+                    <Ionicons name="chevron-forward" size={20} color="#FFFFFF" />
+                  </LinearGradient>
+                </TouchableOpacity>
+              </ThemedCard>
             </Animated.View>
           )}
         </View>
       </SafeAreaView>
-    </LinearGradient>
+    </ThemedBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   container: {
     flex: 1,
   },
@@ -288,13 +280,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 100,
     fontSize: 18,
-    color: '#9B7FA7',
     fontStyle: 'italic',
     letterSpacing: 0.5,
   },
   heartGlow: {
     position: 'absolute',
     zIndex: 1,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   heartOutline: {
     position: 'absolute',
@@ -311,50 +307,41 @@ const styles = StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
-    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FF6B9D',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 15,
     borderWidth: 4,
-    borderColor: '#FFD6E6',
   },
   messageContainer: {
     position: 'absolute',
-    bottom: 100,
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 28,
-    borderRadius: 28,
-    shadowColor: '#FF6B9D',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 12,
+    bottom: 80,
     marginHorizontal: 24,
+    width: '100%',
   },
   messageText: {
     fontSize: 20,
-    color: '#4A1942',
     textAlign: 'center',
     lineHeight: 32,
     fontStyle: 'italic',
   },
   messageHeart: {
     marginTop: 16,
+    alignSelf: 'center',
   },
   continueButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF6B9D',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 25,
-    marginTop: 20,
     gap: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   continueButtonText: {
     color: '#FFFFFF',
