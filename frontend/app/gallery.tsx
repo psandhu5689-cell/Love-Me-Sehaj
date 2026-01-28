@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,19 @@ import {
   FlatList,
   Dimensions,
   Animated,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio, Video, ResizeMode } from 'expo-av';
+import { BlurView } from 'expo-blur';
 import { useTheme } from '../src/theme/ThemeContext';
 import { ThemedBackground } from '../src/components/themed';
 import { useMusic } from '../src/context/MusicContext';
 import * as Haptics from 'expo-haptics';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const TILE_WIDTH = (width - 48) / 2;
 
 // Video URLs from HeartVideo component
@@ -105,28 +107,21 @@ interface GalleryItemType {
   };
 }
 
-interface MusicPlayerState {
-  [key: string]: {
-    sound: Audio.Sound | null;
-    isPlaying: boolean;
-    position: number;
-    duration: number;
-  };
-}
-
 export default function Gallery() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { toggleMute, isMuted } = useMusic();
   
-  const [playerStates, setPlayerStates] = useState<MusicPlayerState>({});
-  const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(null);
-  const [lastPlayedId, setLastPlayedId] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<GalleryItemType | null>(null);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const modalAnim = useRef(new Animated.Value(0)).current;
   const wasMutedRef = useRef(isMuted);
 
   useEffect(() => {
-    // Store original mute state and mute background music
     wasMutedRef.current = isMuted;
     if (!isMuted) {
       toggleMute();
@@ -139,14 +134,10 @@ export default function Gallery() {
     }).start();
 
     return () => {
-      // Cleanup all sounds on unmount
-      Object.values(playerStates).forEach(async (state) => {
-        if (state.sound) {
-          await state.sound.stopAsync();
-          await state.sound.unloadAsync();
-        }
-      });
-      // Restore music when leaving
+      if (sound) {
+        sound.stopAsync();
+        sound.unloadAsync();
+      }
       if (!wasMutedRef.current) {
         toggleMute();
       }
@@ -160,115 +151,99 @@ export default function Gallery() {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const loadSound = async (item: GalleryItemType): Promise<Audio.Sound | null> => {
+  const openFullscreen = async (item: GalleryItemType) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedItem(item);
+    
+    // Animate modal in
+    Animated.spring(modalAnim, {
+      toValue: 1,
+      tension: 50,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+
+    // Load and play the song
     try {
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: item.song.uri },
-        { shouldPlay: false }
-      );
-      return sound;
-    } catch (error) {
-      console.log('Error loading sound:', error);
-      return null;
-    }
-  };
-
-  const handlePlayPause = async (item: GalleryItemType) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    const currentState = playerStates[item.id];
-    
-    // If another tile is playing, pause it first
-    if (currentlyPlayingId && currentlyPlayingId !== item.id) {
-      const otherState = playerStates[currentlyPlayingId];
-      if (otherState?.sound) {
-        await otherState.sound.pauseAsync();
-        setPlayerStates(prev => ({
-          ...prev,
-          [currentlyPlayingId]: { ...prev[currentlyPlayingId], isPlaying: false }
-        }));
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
       }
-    }
 
-    // If sound not loaded yet, load it
-    if (!currentState?.sound) {
-      const sound = await loadSound(item);
-      if (!sound) return;
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: item.song.uri },
+        { shouldPlay: true }
+      );
 
-      sound.setOnPlaybackStatusUpdate((status: any) => {
+      newSound.setOnPlaybackStatusUpdate((status: any) => {
         if (status.isLoaded) {
-          setPlayerStates(prev => ({
-            ...prev,
-            [item.id]: {
-              ...prev[item.id],
-              position: status.positionMillis || 0,
-              duration: status.durationMillis || 0,
-              isPlaying: status.isPlaying,
-            }
-          }));
+          setPosition(status.positionMillis || 0);
+          setDuration(status.durationMillis || 0);
+          setIsPlaying(status.isPlaying);
           
           if (status.didJustFinish) {
-            setCurrentlyPlayingId(null);
+            setIsPlaying(false);
           }
         }
       });
 
-      await sound.playAsync();
-      setPlayerStates(prev => ({
-        ...prev,
-        [item.id]: {
-          sound,
-          isPlaying: true,
-          position: 0,
-          duration: 0,
-        }
-      }));
-      setCurrentlyPlayingId(item.id);
-      setLastPlayedId(item.id);
-      return;
-    }
-
-    // Toggle play/pause for existing sound
-    if (currentState.isPlaying) {
-      await currentState.sound.pauseAsync();
-      setCurrentlyPlayingId(null);
-    } else {
-      await currentState.sound.playAsync();
-      setCurrentlyPlayingId(item.id);
-      setLastPlayedId(item.id);
+      setSound(newSound);
+      setIsPlaying(true);
+    } catch (error) {
+      console.log('Error playing sound:', error);
     }
   };
 
-  const handleSeek = async (item: GalleryItemType, value: number) => {
-    const currentState = playerStates[item.id];
-    if (currentState?.sound && currentState.duration > 0) {
-      const position = value * currentState.duration;
-      await currentState.sound.setPositionAsync(position);
+  const closeFullscreen = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    // Stop music
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
+      setSound(null);
+    }
+    setIsPlaying(false);
+    setPosition(0);
+    setDuration(0);
+
+    // Animate out
+    Animated.timing(modalAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setSelectedItem(null);
+    });
+  };
+
+  const togglePlayPause = async () => {
+    if (!sound) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    
+    if (isPlaying) {
+      await sound.pauseAsync();
+    } else {
+      await sound.playAsync();
     }
   };
 
   const handleBack = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    
-    // Pause current playing
-    if (currentlyPlayingId) {
-      const state = playerStates[currentlyPlayingId];
-      if (state?.sound) {
-        await state.sound.pauseAsync();
-      }
+    if (sound) {
+      await sound.stopAsync();
+      await sound.unloadAsync();
     }
-    
     router.back();
   };
 
   const renderItem = ({ item }: { item: GalleryItemType }) => {
-    const state = playerStates[item.id] || { isPlaying: false, position: 0, duration: 0 };
-    const isPlaying = state.isPlaying;
-    const progress = state.duration > 0 ? state.position / state.duration : 0;
-
     return (
-      <View style={[styles.tile, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        {/* Video tile - always looping */}
+      <TouchableOpacity 
+        style={[styles.tile, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => openFullscreen(item)}
+        activeOpacity={0.9}
+      >
         <View style={styles.mediaContainer}>
           <Video
             source={{ uri: item.media }}
@@ -279,59 +254,26 @@ export default function Gallery() {
             isMuted={true}
           />
           
-          {/* Play overlay for music */}
-          <TouchableOpacity 
-            style={styles.playOverlay}
-            onPress={() => handlePlayPause(item)}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.playCircle, { backgroundColor: isPlaying ? colors.secondary : colors.primary }]}>
-              <Ionicons 
-                name={isPlaying ? "pause" : "play"} 
-                size={24} 
-                color="#FFFFFF" 
-                style={isPlaying ? {} : { marginLeft: 3 }}
-              />
+          <View style={styles.playOverlay}>
+            <View style={[styles.playCircle, { backgroundColor: colors.primary }]}>
+              <Ionicons name="play" size={20} color="#FFFFFF" style={{ marginLeft: 2 }} />
             </View>
-          </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Music Player Bar */}
-        <View style={styles.playerBar}>
-          <Text style={[styles.songTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            {item.song.title}
+        <View style={styles.tileInfo}>
+          <Text style={[styles.tileTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+            {item.title}
           </Text>
-          
-          {/* Simple Progress Bar */}
-          <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
-            <View 
-              style={[
-                styles.progressBarFill, 
-                { 
-                  backgroundColor: colors.primary,
-                  width: `${progress * 100}%` 
-                }
-              ]} 
-            />
-          </View>
-          
-          <View style={styles.timeRow}>
-            <Text style={[styles.timeText, { color: colors.textMuted }]}>
-              {formatTime(state.position)}
-            </Text>
-            <Text style={[styles.timeText, { color: colors.textMuted }]}>
-              {formatTime(state.duration)}
-            </Text>
-          </View>
+          <Text style={[styles.tileSong, { color: colors.textMuted }]} numberOfLines={1}>
+            🎵 {item.song.title}
+          </Text>
         </View>
-
-        {/* Memory Title */}
-        <Text style={[styles.memoryTitle, { color: colors.textSecondary }]} numberOfLines={1}>
-          {item.title}
-        </Text>
-      </View>
+      </TouchableOpacity>
     );
   };
+
+  const progress = duration > 0 ? position / duration : 0;
 
   return (
     <ThemedBackground>
@@ -353,9 +295,8 @@ export default function Gallery() {
           </View>
         </View>
 
-        {/* Subtitle */}
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Our memories together 💕
+          Tap a memory to play 💕
         </Text>
 
         {/* Gallery Grid */}
@@ -371,15 +312,94 @@ export default function Gallery() {
           />
         </Animated.View>
 
-        {/* Now Playing Indicator */}
-        {currentlyPlayingId && (
-          <View style={[styles.nowPlaying, { backgroundColor: colors.primary }]}>
-            <Ionicons name="musical-notes" size={16} color="#FFFFFF" />
-            <Text style={styles.nowPlayingText}>
-              Now Playing: {GALLERY_ITEMS.find(i => i.id === currentlyPlayingId)?.song.title}
-            </Text>
+        {/* Fullscreen Modal */}
+        <Modal visible={!!selectedItem} transparent animationType="none">
+          <View style={styles.modalOverlay}>
+            <BlurView intensity={isDark ? 80 : 90} style={StyleSheet.absoluteFill} tint={isDark ? 'dark' : 'light'} />
+            
+            <Animated.View 
+              style={[
+                styles.modalContent,
+                {
+                  opacity: modalAnim,
+                  transform: [
+                    { scale: modalAnim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }
+                  ],
+                }
+              ]}
+            >
+              {/* Close button */}
+              <TouchableOpacity style={styles.closeButton} onPress={closeFullscreen}>
+                <View style={[styles.closeCircle, { backgroundColor: colors.card }]}>
+                  <Ionicons name="close" size={28} color={colors.textPrimary} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Large Video */}
+              <View style={[styles.fullscreenVideoContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                {selectedItem && (
+                  <Video
+                    source={{ uri: selectedItem.media }}
+                    style={styles.fullscreenVideo}
+                    resizeMode={ResizeMode.COVER}
+                    shouldPlay={true}
+                    isLooping={true}
+                    isMuted={true}
+                  />
+                )}
+              </View>
+
+              {/* Title */}
+              <Text style={[styles.fullscreenTitle, { color: colors.textPrimary }]}>
+                {selectedItem?.title}
+              </Text>
+
+              {/* Music Player */}
+              <View style={[styles.musicPlayer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.musicInfo}>
+                  <Ionicons name="musical-notes" size={24} color={colors.primary} />
+                  <Text style={[styles.musicTitle, { color: colors.textPrimary }]}>
+                    {selectedItem?.song.title}
+                  </Text>
+                </View>
+
+                {/* Progress Bar */}
+                <View style={[styles.fullProgressBar, { backgroundColor: colors.border }]}>
+                  <View 
+                    style={[
+                      styles.fullProgressFill, 
+                      { backgroundColor: colors.primary, width: `${progress * 100}%` }
+                    ]} 
+                  />
+                </View>
+
+                {/* Time */}
+                <View style={styles.timeContainer}>
+                  <Text style={[styles.timeText, { color: colors.textMuted }]}>
+                    {formatTime(position)}
+                  </Text>
+                  <Text style={[styles.timeText, { color: colors.textMuted }]}>
+                    {formatTime(duration)}
+                  </Text>
+                </View>
+
+                {/* Play/Pause Button */}
+                <TouchableOpacity 
+                  style={[styles.bigPlayButton, { backgroundColor: colors.primary }]}
+                  onPress={togglePlayPause}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons 
+                    name={isPlaying ? "pause" : "play"} 
+                    size={32} 
+                    color="#FFFFFF" 
+                    style={isPlaying ? {} : { marginLeft: 4 }}
+                  />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
           </View>
-        )}
+        </Modal>
       </SafeAreaView>
     </ThemedBackground>
   );
@@ -425,7 +445,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   gridContent: {
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   row: {
     justifyContent: 'space-between',
@@ -439,7 +459,7 @@ const styles = StyleSheet.create({
   },
   mediaContainer: {
     width: '100%',
-    height: TILE_WIDTH,
+    height: TILE_WIDTH * 0.9,
     position: 'relative',
   },
   media: {
@@ -454,67 +474,108 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    backgroundColor: 'rgba(0,0,0,0.15)',
   },
   playCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
-  playerBar: {
+  tileInfo: {
     padding: 10,
   },
-  songTitle: {
-    fontSize: 13,
+  tileTitle: {
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 2,
   },
-  progressBarContainer: {
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-  },
-  timeText: {
-    fontSize: 10,
-  },
-  memoryTitle: {
+  tileSong: {
     fontSize: 12,
-    paddingHorizontal: 10,
-    paddingBottom: 10,
-    fontStyle: 'italic',
   },
-  nowPlaying: {
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: width - 40,
+    alignItems: 'center',
+  },
+  closeButton: {
     position: 'absolute',
-    bottom: 30,
-    left: 20,
-    right: 20,
+    top: -50,
+    right: 0,
+    zIndex: 10,
+  },
+  closeCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenVideoContainer: {
+    width: width - 60,
+    height: width - 60,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 2,
+  },
+  fullscreenVideo: {
+    width: '100%',
+    height: '100%',
+  },
+  fullscreenTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  musicPlayer: {
+    width: '100%',
+    marginTop: 20,
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  musicInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    gap: 8,
+    gap: 10,
+    marginBottom: 16,
   },
-  nowPlayingText: {
-    color: '#FFFFFF',
-    fontSize: 13,
+  musicTitle: {
+    fontSize: 18,
     fontWeight: '600',
+  },
+  fullProgressBar: {
+    width: '100%',
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  fullProgressFill: {
+    height: '100%',
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 8,
+  },
+  timeText: {
+    fontSize: 12,
+  },
+  bigPlayButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
   },
 });
