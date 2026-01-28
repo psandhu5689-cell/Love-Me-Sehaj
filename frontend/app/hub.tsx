@@ -29,7 +29,7 @@ export default function Hub() {
   const { colors, isDark } = useTheme();
   
   // State management
-  const [showPresenceCheck, setShowPresenceCheck] = useState(true);
+  const [showPresenceCheck, setShowPresenceCheck] = useState(false);
   const [currentUser, setCurrentUser] = useState<'prabh' | 'sehaj' | null>(null);
   const [presenceKey, setPresenceKey] = useState(0);
   
@@ -40,17 +40,27 @@ export default function Hub() {
   const glowAnim = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    loadUser();
+    loadUserAndCheckPresence();
   }, []);
 
-  const loadUser = async () => {
+  const loadUserAndCheckPresence = async () => {
     const savedUser = await AsyncStorage.getItem('currentUser');
     if (savedUser) {
       setCurrentUser(savedUser as 'prabh' | 'sehaj');
     }
+    
+    // Check if presence was already checked this session
+    const presenceChecked = await AsyncStorage.getItem('session_presence_checked');
+    if (!presenceChecked && savedUser) {
+      setShowPresenceCheck(true);
+    } else {
+      // Start animations immediately if presence already checked
+      startAnimations();
+    }
   };
 
-  const handlePresenceComplete = (shared: boolean) => {
+  const handlePresenceComplete = async (shared: boolean) => {
+    await AsyncStorage.setItem('session_presence_checked', 'true');
     setShowPresenceCheck(false);
     setPresenceKey(prev => prev + 1);
     startAnimations();
