@@ -257,6 +257,24 @@ export default function Celebration() {
             </Animated.View>
 
             <TouchableOpacity
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                playMagic();
+                router.push('/quiet-stars');
+              }}
+              activeOpacity={0.9}
+              style={{ marginTop: 30 }}
+            >
+              <LinearGradient
+                colors={[colors.secondary, colors.secondaryDark]}
+                style={[styles.surpriseButton, { shadowColor: colors.secondary }]}
+              >
+                <Ionicons name="gift" size={20} color="#FFFFFF" />
+                <Text style={styles.surpriseButtonText}>One more thing...</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[styles.secretHeart, { backgroundColor: isDark ? 'rgba(74, 144, 217, 0.15)' : '#E6F0FF' }]}
               onPress={handleSecretPress}
               activeOpacity={0.8}
@@ -267,7 +285,6 @@ export default function Celebration() {
                 color="#4A90D9"
               />
             </TouchableOpacity>
-
             {showSecret && (
               <Animated.View
                 style={[
@@ -284,24 +301,6 @@ export default function Celebration() {
                 </Text>
               </Animated.View>
             )}
-
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                playPop();
-                router.push('/surprise');
-              }}
-              activeOpacity={0.9}
-              style={{ marginTop: 30 }}
-            >
-              <LinearGradient
-                colors={[colors.secondary, colors.secondaryDark]}
-                style={[styles.surpriseButton, { shadowColor: colors.secondary }]}
-              >
-                <Ionicons name="gift" size={20} color="#FFFFFF" />
-                <Text style={styles.surpriseButtonText}>One more thing...</Text>
-              </LinearGradient>
-            </TouchableOpacity>
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
