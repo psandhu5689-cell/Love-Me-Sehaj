@@ -2,15 +2,14 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { View, TouchableOpacity, StyleSheet, Animated, Text, Platform } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import soundManager from './utils/sounds';
 import { ThemeProvider, useTheme } from './theme/ThemeContext';
 import { ThemeToggle } from './components/themed';
+import { MusicProvider, useMusic } from './context/MusicContext';
+import { NowPlayingWidget, JukeboxModal } from './components/music';
 import * as Haptics from 'expo-haptics';
-
-const MUSIC_URL = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/230dit60_RealestK%20-%20It%27s%20Love%20%28Official%20Audio%29.mp3';
 
 interface UserContextType {
   userName: string;
@@ -49,8 +48,10 @@ const AudioContext = createContext<AudioContextType>({
 export const useUser = () => useContext(UserContext);
 export const useAudio = () => useContext(AudioContext);
 
-function FloatingControls({ isMuted, onToggleMute }: { isMuted: boolean; onToggleMute: () => void }) {
+function MusicControls() {
   const { colors, isDark } = useTheme();
+  const { isMuted, toggleMute } = useMusic();
+  const [showJukebox, setShowJukebox] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -59,7 +60,7 @@ function FloatingControls({ isMuted, onToggleMute }: { isMuted: boolean; onToggl
       Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
-            toValue: 1.08,
+            toValue: 1.05,
             duration: 1200,
             useNativeDriver: true,
           }),
@@ -75,7 +76,7 @@ function FloatingControls({ isMuted, onToggleMute }: { isMuted: boolean; onToggl
     }
   }, [isMuted]);
 
-  const handlePress = () => {
+  const handleMutePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -89,104 +90,66 @@ function FloatingControls({ isMuted, onToggleMute }: { isMuted: boolean; onToggl
         useNativeDriver: true,
       }),
     ]).start();
-    onToggleMute();
+    toggleMute();
   };
 
   return (
-    <View style={[styles.controlsContainer, { backgroundColor: colors.glass }]}>
-      {/* Music Toggle */}
-      <Animated.View style={{ transform: [{ scale: Animated.multiply(pulseAnim, scaleAnim) }] }}>
-        <TouchableOpacity
-          style={[
-            styles.controlButton,
-            { 
-              backgroundColor: colors.card,
-              borderColor: colors.border,
-              shadowColor: colors.primary,
-            },
-          ]}
-          onPress={handlePress}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={isMuted ? 'volume-mute' : 'musical-notes'}
-            size={20}
-            color={isMuted ? colors.textMuted : colors.primary}
-          />
-        </TouchableOpacity>
-      </Animated.View>
+    <>
+      <View style={[styles.controlsContainer, { backgroundColor: colors.glass }]}>
+        {/* Now Playing Widget */}
+        <NowPlayingWidget onPress={() => setShowJukebox(true)} />
 
-      {/* Theme Toggle */}
-      <ThemeToggle />
-    </View>
+        {/* Mute Toggle */}
+        <Animated.View style={{ transform: [{ scale: Animated.multiply(pulseAnim, scaleAnim) }] }}>
+          <TouchableOpacity
+            style={[
+              styles.controlButton,
+              { 
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                shadowColor: colors.primary,
+              },
+            ]}
+            onPress={handleMutePress}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={isMuted ? 'volume-mute' : 'volume-high'}
+              size={20}
+              color={isMuted ? colors.textMuted : colors.primary}
+            />
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
+      </View>
+
+      {/* Jukebox Modal */}
+      <JukeboxModal visible={showJukebox} onClose={() => setShowJukebox(false)} />
+    </>
   );
 }
 
 function AppContent() {
   const { colors, isDark } = useTheme();
   const [userName, setUserName] = useState('Sehaj');
-  const [isMuted, setIsMuted] = useState(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { isMuted, toggleMute } = useMusic();
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function setupAudio() {
-      try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: true,
-        });
-
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: MUSIC_URL },
-          { 
-            shouldPlay: true, 
-            isLooping: true,
-            volume: 0.6,
-          }
-        );
-
-        if (isMounted) {
-          setSound(newSound);
-          setIsLoaded(true);
-        }
-
-        await soundManager.loadSounds();
-      } catch (error) {
-        console.log('Error loading audio:', error);
-      }
-    }
-
-    setupAudio();
+    const loadSounds = async () => {
+      await soundManager.loadSounds();
+    };
+    loadSounds();
 
     return () => {
-      isMounted = false;
-      if (sound) {
-        sound.unloadAsync();
-      }
       soundManager.unloadAll();
     };
   }, []);
 
   useEffect(() => {
-    if (sound && isLoaded) {
-      if (isMuted) {
-        sound.setVolumeAsync(0);
-      } else {
-        sound.setVolumeAsync(0.6);
-      }
-    }
     soundManager.setMuted(isMuted);
-  }, [isMuted, sound, isLoaded]);
-
-  const toggleMute = () => {
-    soundManager.playClick();
-    setIsMuted(!isMuted);
-  };
+  }, [isMuted]);
 
   const playPop = () => soundManager.playPop();
   const playClick = () => soundManager.playClick();
@@ -218,18 +181,26 @@ function AppContent() {
               contentStyle: { backgroundColor: colors.background },
             }}
           />
-          {/* Floating Controls */}
-          <FloatingControls isMuted={isMuted} onToggleMute={toggleMute} />
+          {/* Music Controls */}
+          <MusicControls />
         </SafeAreaProvider>
       </AudioContext.Provider>
     </UserContext.Provider>
   );
 }
 
+function AppWithMusic() {
+  return (
+    <MusicProvider>
+      <AppContent />
+    </MusicProvider>
+  );
+}
+
 export default function RootLayout() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <AppWithMusic />
     </ThemeProvider>
   );
 }
@@ -238,12 +209,13 @@ const styles = StyleSheet.create({
   controlsContainer: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 50 : 30,
-    left: 20,
+    left: 12,
+    right: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'space-between',
     padding: 8,
-    borderRadius: 24,
+    borderRadius: 20,
     zIndex: 1000,
   },
   controlButton: {
