@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   FlatList,
   Dimensions,
-  Image,
   Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
