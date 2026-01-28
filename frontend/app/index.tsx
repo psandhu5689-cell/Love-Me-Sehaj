@@ -63,10 +63,17 @@ export default function EntryGate() {
 
       setCurrentUser(savedUser as 'prabh' | 'sehaj');
       
-      // If Sehaj, always show first intro
+      // If Sehaj, check if intro was shown this session
       if (savedUser === 'sehaj') {
-        router.replace('/first-intro');
-        return;
+        const introShownSession = await AsyncStorage.getItem('sehaj_intro_shown_session');
+        if (!introShownSession) {
+          // Clear the flag on next app launch
+          await AsyncStorage.removeItem('sehaj_intro_shown_session');
+          router.replace('/first-intro');
+          return;
+        }
+        // Clear for next session
+        await AsyncStorage.removeItem('sehaj_intro_shown_session');
       }
 
       setCheckingIntro(false);
