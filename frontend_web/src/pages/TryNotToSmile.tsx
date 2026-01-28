@@ -104,13 +104,15 @@ export default function TryNotToSmile() {
           width: 44,
           height: 44,
           borderRadius: 22,
-          background: colors.card,
-          border: `1px solid ${colors.border}`,
+          background: 'rgba(255,255,255,0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.2)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
           zIndex: 101,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
         }}
       >
         <IoChevronBack size={24} color={colors.primary} />
