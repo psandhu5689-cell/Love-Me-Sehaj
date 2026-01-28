@@ -211,7 +211,7 @@ export default function QuietStars() {
           for you, always 💕
         </p>
 
-        {/* Back to Begin Button */}
+        {/* Back to Start Button */}
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -229,7 +229,7 @@ export default function QuietStars() {
           }}
         >
           <IoHome size={18} color="#FFFFFF" />
-          <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 600 }}>Back to Begin</span>
+          <span style={{ color: '#FFFFFF', fontSize: 14, fontWeight: 600 }}>Back to Start</span>
         </motion.button>
       </motion.div>
     </motion.div>
