@@ -145,7 +145,7 @@ export default function Index() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: colors.background,
+      background: 'transparent',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -155,8 +155,10 @@ export default function Index() {
     }}>
       {/* Yellow Heart */}
       <motion.button
-        whileHover={{ scale: 1.1 }}
+        whileHover={{ scale: 1.1, rotate: 10 }}
         whileTap={{ scale: 0.95 }}
+        animate={{ y: [0, -5, 0] }}
+        transition={{ y: { duration: 2, repeat: Infinity } }}
         onClick={handleYellowHeart}
         style={{
           position: 'absolute',
@@ -164,9 +166,11 @@ export default function Index() {
           left: 16,
           padding: 10,
           background: 'rgba(255, 215, 0, 0.15)',
+          backdropFilter: 'blur(10px)',
           borderRadius: 20,
-          border: 'none',
+          border: '1px solid rgba(255, 215, 0, 0.3)',
           cursor: 'pointer',
+          boxShadow: '0 4px 20px rgba(255, 215, 0, 0.2)',
         }}
       >
         <IoHeart size={24} color="#FFD700" />
@@ -183,12 +187,14 @@ export default function Index() {
           left: 70,
           padding: '10px 14px',
           background: 'rgba(147, 112, 219, 0.15)',
+          backdropFilter: 'blur(10px)',
           borderRadius: 20,
-          border: 'none',
+          border: '1px solid rgba(147, 112, 219, 0.3)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
+          boxShadow: '0 4px 20px rgba(147, 112, 219, 0.2)',
         }}
       >
         <IoImages size={20} color={colors.secondary} />
@@ -206,15 +212,23 @@ export default function Index() {
           left: 168,
           padding: '10px 14px',
           background: 'rgba(168, 85, 247, 0.15)',
+          backdropFilter: 'blur(10px)',
           borderRadius: 20,
-          border: 'none',
+          border: '1px solid rgba(168, 85, 247, 0.3)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           gap: 6,
+          boxShadow: '0 4px 20px rgba(168, 85, 247, 0.2)',
         }}
       >
-        <span style={{ fontSize: 16 }}>😈</span>
+        <motion.span 
+          animate={{ rotate: [0, 10, -10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          style={{ fontSize: 16 }}
+        >
+          😈
+        </motion.span>
         <span style={{ color: '#a855f7', fontSize: 13, fontWeight: 600 }}>Games</span>
       </motion.button>
 
