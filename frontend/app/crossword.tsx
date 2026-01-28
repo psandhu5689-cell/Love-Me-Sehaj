@@ -243,6 +243,21 @@ export default function Crossword() {
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
 
+        {/* Skip Button - Top Right */}
+        {!isComplete && (
+          <TouchableOpacity
+            style={[styles.skipButtonTop, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => {
+              playClick();
+              router.push('/card-match');
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}
@@ -352,19 +367,6 @@ export default function Crossword() {
                 </Animated.View>
               )}
 
-              {!isComplete && (
-                <TouchableOpacity
-                  style={styles.skipButton}
-                  onPress={() => {
-                    playClick();
-                    router.push('/card-match');
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Skip</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
-              )}
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -526,6 +528,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  skipButtonTop: {
+    position: 'absolute',
+    top: 50,
+    right: 16,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 4,
   },
   skipButton: {
     flexDirection: 'row',
