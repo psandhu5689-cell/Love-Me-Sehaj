@@ -277,16 +277,16 @@ export default function Gallery() {
             {item.song.title}
           </Text>
           
-          <View style={styles.sliderContainer}>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={1}
-              value={progress}
-              onSlidingComplete={(value) => handleSeek(item, value)}
-              minimumTrackTintColor={colors.primary}
-              maximumTrackTintColor={colors.border}
-              thumbTintColor={colors.primary}
+          {/* Simple Progress Bar */}
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
+            <View 
+              style={[
+                styles.progressBarFill, 
+                { 
+                  backgroundColor: colors.primary,
+                  width: `${progress * 100}%` 
+                }
+              ]} 
             />
           </View>
           
