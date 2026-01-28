@@ -23,6 +23,9 @@ const { width, height } = Dimensions.get('window');
 
 const STICKER_GOLD_DRESS = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/grh04hmp_IMG_5616.jpeg';
 
+// Session key to track if presence was already checked this app session
+const SESSION_PRESENCE_CHECKED_KEY = 'session_presence_checked';
+
 export default function EntryGate() {
   const router = useRouter();
   const { playKiss, playClick } = useAudio();
@@ -63,36 +66,39 @@ export default function EntryGate() {
 
       setCurrentUser(savedUser as 'prabh' | 'sehaj');
       
-      // If Sehaj, check if intro was shown this session
+      // If Sehaj, always show intro on app start
       if (savedUser === 'sehaj') {
         const introShownSession = await AsyncStorage.getItem('sehaj_intro_shown_session');
         if (!introShownSession) {
-          // Clear the flag on next app launch
-          await AsyncStorage.removeItem('sehaj_intro_shown_session');
           router.replace('/first-intro');
           return;
         }
-        // Clear for next session
-        await AsyncStorage.removeItem('sehaj_intro_shown_session');
       }
 
       setCheckingIntro(false);
       
-      // Show presence check modal
-      setShowPresenceCheck(true);
+      // Check if presence was already checked this session
+      const presenceCheckedThisSession = await AsyncStorage.getItem(SESSION_PRESENCE_CHECKED_KEY);
+      if (!presenceCheckedThisSession) {
+        // Show presence check modal only once per session
+        setShowPresenceCheck(true);
+      }
     } catch (error) {
       console.log('Error initializing app:', error);
       setCheckingIntro(false);
     }
   };
 
-  const handleUserSetupComplete = (user: 'prabh' | 'sehaj') => {
+  const handleUserSetupComplete = async (user: 'prabh' | 'sehaj') => {
     setCurrentUser(user);
     setShowUserSetup(false);
+    // Mark session presence as needed
     setShowPresenceCheck(true);
   };
 
-  const handlePresenceComplete = (shared: boolean) => {
+  const handlePresenceComplete = async (shared: boolean) => {
+    // Mark presence as checked for this session
+    await AsyncStorage.setItem(SESSION_PRESENCE_CHECKED_KEY, 'true');
     setShowPresenceCheck(false);
     setPresenceKey(prev => prev + 1); // Refresh presence display
   };
@@ -167,6 +173,12 @@ export default function EntryGate() {
     router.push('/daily-love');
   };
 
+  const handleYellowHeart = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    playClick();
+    router.push('/first-intro');
+  };
+
   // Show nothing while checking intro
   if (checkingIntro) {
     return (
@@ -183,7 +195,7 @@ export default function EntryGate() {
           onComplete={handleUserSetupComplete}
         />
 
-        {/* Presence Check Modal - Every app launch */}
+        {/* Presence Check Modal - Once per app session */}
         {currentUser && (
           <PresenceCheckModal
             visible={showPresenceCheck}
@@ -191,6 +203,15 @@ export default function EntryGate() {
             onComplete={handlePresenceComplete}
           />
         )}
+
+        {/* Yellow Heart - Top Left - Go to Intro */}
+        <TouchableOpacity
+          style={styles.yellowHeartButton}
+          onPress={handleYellowHeart}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="heart" size={24} color="#FFD700" />
+        </TouchableOpacity>
 
         <View style={styles.content}>
           {/* Photo Sticker - Heart Shaped */}
@@ -404,5 +425,14 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     marginTop: 15,
     borderWidth: 3,
+  },
+  yellowHeartButton: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    zIndex: 10,
+    padding: 10,
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderRadius: 20,
   },
 });
