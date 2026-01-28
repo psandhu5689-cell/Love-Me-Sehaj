@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { IoHeart, IoSparkles, IoImages, IoSkull } from 'react-icons/io5'
 import { useTheme } from '../context/ThemeContext'
 import { useAudio } from '../context/AudioContext'
+import { PresenceDisplay } from '../components/PresenceModals'
 
 const STICKER_GOLD_DRESS = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/grh04hmp_IMG_5616.jpeg'
 
