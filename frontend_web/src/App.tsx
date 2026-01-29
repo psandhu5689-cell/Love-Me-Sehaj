@@ -62,6 +62,8 @@ export default function App() {
           <Route path="/virtual-bed" element={<VirtualBed />} />
           <Route path="/future-goals" element={<FutureGoals />} />
           <Route path="/word-puzzles" element={<WordPuzzles />} />
+          <Route path="/word-search" element={<WordSearch />} />
+          <Route path="/crossword" element={<Crossword />} />
         </Routes>
       </AnimatePresence>
     </>
