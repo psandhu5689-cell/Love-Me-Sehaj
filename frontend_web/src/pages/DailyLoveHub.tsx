@@ -104,30 +104,30 @@ export default function DailyLoveHub() {
         paddingLeft: 16,
         paddingRight: 16,
       }}>
-        {/* Title - FIXED: Use explicit white color */}
+        {/* Title Section */}
         <div
           style={{
             textAlign: 'center',
             marginBottom: 16,
-            padding: '12px 0',
+            padding: '8px 0',
           }}
         >
-          <h1 style={{
+          <span style={{
             color: '#FFFFFF',
             fontSize: 24,
             fontWeight: 700,
-            marginBottom: 4,
-            marginTop: 0,
+            display: 'block',
           }}>
             ✨ Personal Library ✨
-          </h1>
-          <p style={{
+          </span>
+          <span style={{
             color: '#9B9BAE',
             fontSize: 13,
-            margin: 0,
+            display: 'block',
+            marginTop: 4,
           }}>
             Everything for my girl
-          </p>
+          </span>
         </div>
 
         {/* BIG "When You're Sad" Widget at TOP */}
