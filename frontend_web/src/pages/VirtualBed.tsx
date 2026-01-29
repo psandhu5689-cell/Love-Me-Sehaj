@@ -861,6 +861,22 @@ export default function VirtualBed() {
             overflow: 'hidden',
             borderRadius: 24,
           }}>
+            {/* NEW: Dim Lights Overlay - dims wall and floor when active */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'rgba(0, 0, 0, 0)',
+              transition: 'background 0.8s ease',
+              ...(lightsDimmed && {
+                background: 'rgba(0, 0, 0, 0.5)',
+              }),
+              zIndex: 5,
+              pointerEvents: 'none',
+            }} />
+            
             {/* LAYER 1: Wall Background (full width) */}
             <div style={{
               position: 'absolute',
