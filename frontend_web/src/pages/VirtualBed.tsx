@@ -392,6 +392,12 @@ export default function VirtualBed() {
       case 'nudge':
         playSound(AUDIO.meow)
         setCat(prev => ({ ...prev, action: 'nudge', mood: Math.min(100, prev.mood + 15) }))
+        // Increase horniness meter (Prabh increases faster)
+        if (cat === 'prabh') {
+          setPrabhMeter(prev => Math.min(100, prev + 20))
+        } else {
+          setSehajMeter(prev => Math.min(100, prev + 15))
+        }
         setTimeout(() => {
           setOtherCat(prev => ({ ...prev, action: 'tailWag', mood: Math.min(100, prev.mood + 10) }))
         }, 400)
