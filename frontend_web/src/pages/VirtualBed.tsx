@@ -69,14 +69,20 @@ interface AnimationDef {
 /**
  * ANIMATION MAP FOR PRABH (Gray Cat)
  * UPDATED: Default to STATIC single frame, not looping
+ * ADDED: Walk animations for each direction (floor roaming)
  */
 const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
   // STATIC default - single frozen frame
   sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
   tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
   // Sleep states
-  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
-  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
+  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false },
+  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false },
+  // WALK ANIMATIONS - 4 directions (using tail wag frames for walk effect)
+  walkRight: { startRow: 1, frameCount: 4, fps: 4, loop: true },
+  walkLeft: { startRow: 1, frameCount: 4, fps: 4, loop: true },
+  walkUp: { startRow: 1, frameCount: 4, fps: 4, loop: true },
+  walkDown: { startRow: 1, frameCount: 4, fps: 4, loop: true },
   // Grooming
   lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
   // Vocalizations
@@ -90,7 +96,7 @@ const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
   // Eating
   eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
   // Cuddle state
-  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static
+  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false },
   // Gaming
   gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
 }
