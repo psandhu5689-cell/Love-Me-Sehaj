@@ -1,1689 +1,1707 @@
+diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
+index 3e9c795..2a7e573 100644
+--- a/frontend_web/src/pages/VirtualBed.tsx
++++ b/frontend_web/src/pages/VirtualBed.tsx
+@@ -1216,7 +1216,7 @@ export default function VirtualBed() {
+               transition={{ duration: 0.3, ease: 'easeOut' }}
+               style={{
+                 position: 'absolute',
+-                right: '25%',
++                right: '20%', // MOBILE: Pushed more right for spacing
+                 bottom: 110, // Moved lower to touch floor on mobile
+                 zIndex: 3,
+                 // SAFETY: Never allow invisible cats
 diff --git a/model.patch b/model.patch
-index 85e5b21..e69de29 100644
+index 5d65a64..e69de29 100644
 --- a/model.patch
 +++ b/model.patch
-@@ -1,1684 +0,0 @@
+@@ -1,1689 +0,0 @@
 -diff --git a/model.patch b/model.patch
--index 8399a04..e69de29 100644
+-index 85e5b21..e69de29 100644
 ---- a/model.patch
 -+++ b/model.patch
--@@ -1,1679 +0,0 @@
---diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
---index 6fa3c82..b609c41 100644
------ a/frontend_web/src/pages/VirtualBed.tsx
---+++ b/frontend_web/src/pages/VirtualBed.tsx
---@@ -333,6 +333,34 @@ export default function VirtualBed() {
---   const [rainMuted] = useState(true) // Rain is PERMANENTLY muted on MR & MRS
---   const [userInteracted, setUserInteracted] = useState(false)
---   
---+  // GLOBAL AUDIO COOLDOWN: 3-5 seconds between cat sounds
---+  const lastSoundTimeRef = useRef<number>(0)
---+  const SOUND_COOLDOWN_MS = 4000 // 4 seconds between sounds
---+  
---+  // Helper to play cat sound with cooldown
---+  const playCatSound = (soundRef: React.MutableRefObject<Howl | null>) => {
---+    if (!userInteracted || isMuted) return false
---+    
---+    const now = Date.now()
---+    const timeSinceLastSound = now - lastSoundTimeRef.current
---+    
---+    // Check cooldown
---+    if (timeSinceLastSound < SOUND_COOLDOWN_MS) {
---+      console.log('[AUDIO COOLDOWN] Sound skipped, too soon')
---+      return false
---+    }
---+    
---+    // Play sound and update timestamp
---+    if (soundRef.current) {
---+      soundRef.current.volume(0.3) // Keep volumes low
---+      soundRef.current.play()
---+      lastSoundTimeRef.current = now
---+      return true
---+    }
---+    
---+    return false
---+  }
---+  
---   // FIXED: Cats start sitting idle (awake) on load, not sleeping
---   const [prabh, setPrabh] = useState<CatState>({
---     mood: 75,
---@@ -525,10 +553,8 @@ export default function VirtualBed() {
---     
---     switch (action) {
---       case 'wake':
----        // Play soft meow for wake up
----        if (userInteracted && catMeowSoftRef.current && !isMuted) {
----          catMeowSoftRef.current.play()
----        }
---+        // Play soft meow for wake up with cooldown
---+        playCatSound(catMeowSoftRef)
---         setCat(prev => ({ 
---           ...prev, 
---           isAwake: true, 
---@@ -538,19 +564,15 @@ export default function VirtualBed() {
---         break
---         
---       case 'sleep':
----        // Play soft purr/night sound for sleep
----        if (userInteracted && catMeowNightRef.current && !isMuted) {
----          catMeowNightRef.current.play()
----        }
---+        // Play soft purr/night sound for sleep with cooldown
---+        playCatSound(catMeowNightRef)
---         setCat(prev => ({ ...prev, isAwake: false, action: 'sleep', mood: Math.min(100, prev.mood + 5) }))
---         setShowEffect({ type: 'z', x: isLeft ? 35 : 65, y: 35 })
---         break
---         
---       case 'nudge':
----        // Play cute chirp for nudge
----        if (userInteracted && catMeowSoftRef.current && !isMuted) {
----          catMeowSoftRef.current.play()
----        }
---+        // Play cute chirp for nudge with cooldown
---+        playCatSound(catMeowSoftRef)
---         setCat(prev => ({ ...prev, action: 'nudge', mood: Math.min(100, prev.mood + 15) }))
---         // Increase freakiness meter (Prabh increases faster)
---         if (cat === 'prabh') {
---@@ -569,10 +591,8 @@ export default function VirtualBed() {
---         break
---         
---       case 'kick':
----        // Play annoyed meow for kick
----        if (userInteracted && catMeowNightRef.current && !isMuted) {
----          catMeowNightRef.current.play()
----        }
---+        // Play annoyed meow for kick with cooldown
---+        playCatSound(catMeowNightRef)
---         haptics.medium()
---         setCat(prev => ({ ...prev, action: 'kick', mood: Math.max(0, prev.mood - 5) }))
---         setTimeout(() => {
---@@ -599,10 +619,8 @@ export default function VirtualBed() {
---         break
---         
---       case 'feed':
----        // Play happy meow for food
----        if (userInteracted && catMeowFoodRef.current && !isMuted) {
----          catMeowFoodRef.current.play()
----        }
---+        // Play happy meow for food with cooldown
---+        playCatSound(catMeowFoodRef)
---         setCat(prev => ({ ...prev, action: 'eat', mood: Math.min(100, prev.mood + 20) }))
---         // Increase meter slightly
---         if (cat === 'prabh') {
---@@ -619,10 +637,8 @@ export default function VirtualBed() {
---         break
---         
---       case 'game':
----        // Play chirp for gaming
----        if (userInteracted && catMeowSoftRef.current && !isMuted) {
----          catMeowSoftRef.current.play()
----        }
---+        // Play chirp for gaming with cooldown
---+        playCatSound(catMeowSoftRef)
---         setCat(prev => ({ ...prev, action: 'gaming', mood: Math.min(100, prev.mood + 15) }))
---         setShowEffect({ type: 'sparkle', x: isLeft ? 35 : 65, y: 45 })
---         setTimeout(() => {
---@@ -646,10 +662,8 @@ export default function VirtualBed() {
---     // Clear any unloved messages since both cats are getting attention
---     setShowUnlovedMessage(null)
---     
----    // NEW: Play cat SCREAM sound for special button
----    if (!isMuted && catScreamRef.current) {
----      catScreamRef.current.play()
----    }
---+    // NEW: Play cat SCREAM sound for special button with cooldown
---+    playCatSound(catScreamRef)
---     
---     // Also play tussle sounds
---     if (!isMuted && tussleRef.current) {
+-@@ -1,1684 +0,0 @@
 --diff --git a/model.patch b/model.patch
---index d696f8d..3ac1685 100644
+--index 8399a04..e69de29 100644
 ----- a/model.patch
 --+++ b/model.patch
---@@ -1,1546 +0,0 @@
+--@@ -1,1679 +0,0 @@
 ---diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
----index 44830cd..6fa3c82 100644
+---index 6fa3c82..b609c41 100644
 ------ a/frontend_web/src/pages/VirtualBed.tsx
 ---+++ b/frontend_web/src/pages/VirtualBed.tsx
----@@ -67,20 +67,18 @@ interface AnimationDef {
---- }
---- 
---- /**
----- * ANIMATION MAP FOR PRABH (Grey/Black Cat)
----- * Based on sprite sheet analysis - cat1_sheet.png
----- * Rows are 0-indexed, 14 cols, 72 rows total
----- * Using conservative row numbers for reliable animation
----+ * ANIMATION MAP FOR PRABH (Gray Cat)
----+ * UPDATED: Default to STATIC single frame, not looping
----  */
---- const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
-----  // Default calm sitting - use row 0 (first row, always safe)
-----  sitIdle: { startRow: 0, frameCount: 8, fps: 2, loop: true },
-----  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: true },
-----  // Sleep states - typically in lower rows
-----  sleep: { startRow: 5, frameCount: 4, fps: 1.5, loop: true },
-----  sleepCurled: { startRow: 6, frameCount: 4, fps: 1.5, loop: true },
----+  // STATIC default - single frozen frame
----+  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
----+  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
----+  // Sleep states
----+  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
----+  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
----   // Grooming
-----  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: true },
----+  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
----   // Vocalizations
----   meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
----   yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
----@@ -92,24 +90,24 @@ const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
----   // Eating
----   eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
----   // Cuddle state
-----  cuddle: { startRow: 5, frameCount: 4, fps: 2, loop: true },
----+  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static
----   // Gaming
-----  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: true },
----+  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
---- }
---- 
---- /**
----  * ANIMATION MAP FOR SEHAJ (Brown/Ginger Cat)
----- * Based on sprite sheet analysis - cat2_sheet.png
----+ * UPDATED: Default to STATIC single frame, not looping
----  */
---- const SEHAJ_ANIMATIONS: Record<string, AnimationDef> = {
-----  // Default calm sitting
-----  sitIdle: { startRow: 0, frameCount: 8, fps: 2, loop: true },
-----  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: true },
----+  // STATIC default - single frozen frame
----+  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
----+  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
----   // Sleep states
-----  sleep: { startRow: 5, frameCount: 4, fps: 1.5, loop: true },
-----  sleepCurled: { startRow: 6, frameCount: 4, fps: 1.5, loop: true },
----+  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
----+  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
----   // Grooming
-----  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: true },
----+  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
----   // Vocalizations  
----   meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
----   yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
----@@ -121,9 +119,9 @@ const SEHAJ_ANIMATIONS: Record<string, AnimationDef> = {
----   // Eating
----   eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
----   // Cuddle state
-----  cuddle: { startRow: 5, frameCount: 4, fps: 2, loop: true },
----+  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static
----   // Gaming
-----  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: true },
----+  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
---- }
---- 
---- type AnimationState = keyof typeof PRABH_ANIMATIONS
+---@@ -333,6 +333,34 @@ export default function VirtualBed() {
+---   const [rainMuted] = useState(true) // Rain is PERMANENTLY muted on MR & MRS
+---   const [userInteracted, setUserInteracted] = useState(false)
+---   
+---+  // GLOBAL AUDIO COOLDOWN: 3-5 seconds between cat sounds
+---+  const lastSoundTimeRef = useRef<number>(0)
+---+  const SOUND_COOLDOWN_MS = 4000 // 4 seconds between sounds
+---+  
+---+  // Helper to play cat sound with cooldown
+---+  const playCatSound = (soundRef: React.MutableRefObject<Howl | null>) => {
+---+    if (!userInteracted || isMuted) return false
+---+    
+---+    const now = Date.now()
+---+    const timeSinceLastSound = now - lastSoundTimeRef.current
+---+    
+---+    // Check cooldown
+---+    if (timeSinceLastSound < SOUND_COOLDOWN_MS) {
+---+      console.log('[AUDIO COOLDOWN] Sound skipped, too soon')
+---+      return false
+---+    }
+---+    
+---+    // Play sound and update timestamp
+---+    if (soundRef.current) {
+---+      soundRef.current.volume(0.3) // Keep volumes low
+---+      soundRef.current.play()
+---+      lastSoundTimeRef.current = now
+---+      return true
+---+    }
+---+    
+---+    return false
+---+  }
+---+  
+---   // FIXED: Cats start sitting idle (awake) on load, not sleeping
+---   const [prabh, setPrabh] = useState<CatState>({
+---     mood: 75,
+---@@ -525,10 +553,8 @@ export default function VirtualBed() {
+---     
+---     switch (action) {
+---       case 'wake':
+----        // Play soft meow for wake up
+----        if (userInteracted && catMeowSoftRef.current && !isMuted) {
+----          catMeowSoftRef.current.play()
+----        }
+---+        // Play soft meow for wake up with cooldown
+---+        playCatSound(catMeowSoftRef)
+---         setCat(prev => ({ 
+---           ...prev, 
+---           isAwake: true, 
+---@@ -538,19 +564,15 @@ export default function VirtualBed() {
+---         break
+---         
+---       case 'sleep':
+----        // Play soft purr/night sound for sleep
+----        if (userInteracted && catMeowNightRef.current && !isMuted) {
+----          catMeowNightRef.current.play()
+----        }
+---+        // Play soft purr/night sound for sleep with cooldown
+---+        playCatSound(catMeowNightRef)
+---         setCat(prev => ({ ...prev, isAwake: false, action: 'sleep', mood: Math.min(100, prev.mood + 5) }))
+---         setShowEffect({ type: 'z', x: isLeft ? 35 : 65, y: 35 })
+---         break
+---         
+---       case 'nudge':
+----        // Play cute chirp for nudge
+----        if (userInteracted && catMeowSoftRef.current && !isMuted) {
+----          catMeowSoftRef.current.play()
+----        }
+---+        // Play cute chirp for nudge with cooldown
+---+        playCatSound(catMeowSoftRef)
+---         setCat(prev => ({ ...prev, action: 'nudge', mood: Math.min(100, prev.mood + 15) }))
+---         // Increase freakiness meter (Prabh increases faster)
+---         if (cat === 'prabh') {
+---@@ -569,10 +591,8 @@ export default function VirtualBed() {
+---         break
+---         
+---       case 'kick':
+----        // Play annoyed meow for kick
+----        if (userInteracted && catMeowNightRef.current && !isMuted) {
+----          catMeowNightRef.current.play()
+----        }
+---+        // Play annoyed meow for kick with cooldown
+---+        playCatSound(catMeowNightRef)
+---         haptics.medium()
+---         setCat(prev => ({ ...prev, action: 'kick', mood: Math.max(0, prev.mood - 5) }))
+---         setTimeout(() => {
+---@@ -599,10 +619,8 @@ export default function VirtualBed() {
+---         break
+---         
+---       case 'feed':
+----        // Play happy meow for food
+----        if (userInteracted && catMeowFoodRef.current && !isMuted) {
+----          catMeowFoodRef.current.play()
+----        }
+---+        // Play happy meow for food with cooldown
+---+        playCatSound(catMeowFoodRef)
+---         setCat(prev => ({ ...prev, action: 'eat', mood: Math.min(100, prev.mood + 20) }))
+---         // Increase meter slightly
+---         if (cat === 'prabh') {
+---@@ -619,10 +637,8 @@ export default function VirtualBed() {
+---         break
+---         
+---       case 'game':
+----        // Play chirp for gaming
+----        if (userInteracted && catMeowSoftRef.current && !isMuted) {
+----          catMeowSoftRef.current.play()
+----        }
+---+        // Play chirp for gaming with cooldown
+---+        playCatSound(catMeowSoftRef)
+---         setCat(prev => ({ ...prev, action: 'gaming', mood: Math.min(100, prev.mood + 15) }))
+---         setShowEffect({ type: 'sparkle', x: isLeft ? 35 : 65, y: 45 })
+---         setTimeout(() => {
+---@@ -646,10 +662,8 @@ export default function VirtualBed() {
+---     // Clear any unloved messages since both cats are getting attention
+---     setShowUnlovedMessage(null)
+---     
+----    // NEW: Play cat SCREAM sound for special button
+----    if (!isMuted && catScreamRef.current) {
+----      catScreamRef.current.play()
+----    }
+---+    // NEW: Play cat SCREAM sound for special button with cooldown
+---+    playCatSound(catScreamRef)
+---     
+---     // Also play tussle sounds
+---     if (!isMuted && tussleRef.current) {
 ---diff --git a/model.patch b/model.patch
----index 5001961..e69de29 100644
+---index d696f8d..3ac1685 100644
 ------ a/model.patch
 ---+++ b/model.patch
----@@ -1,1461 +0,0 @@
+---@@ -1,1546 +0,0 @@
+----diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
+----index 44830cd..6fa3c82 100644
+------- a/frontend_web/src/pages/VirtualBed.tsx
+----+++ b/frontend_web/src/pages/VirtualBed.tsx
+----@@ -67,20 +67,18 @@ interface AnimationDef {
+---- }
+---- 
+---- /**
+----- * ANIMATION MAP FOR PRABH (Grey/Black Cat)
+----- * Based on sprite sheet analysis - cat1_sheet.png
+----- * Rows are 0-indexed, 14 cols, 72 rows total
+----- * Using conservative row numbers for reliable animation
+----+ * ANIMATION MAP FOR PRABH (Gray Cat)
+----+ * UPDATED: Default to STATIC single frame, not looping
+----  */
+---- const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
+-----  // Default calm sitting - use row 0 (first row, always safe)
+-----  sitIdle: { startRow: 0, frameCount: 8, fps: 2, loop: true },
+-----  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: true },
+-----  // Sleep states - typically in lower rows
+-----  sleep: { startRow: 5, frameCount: 4, fps: 1.5, loop: true },
+-----  sleepCurled: { startRow: 6, frameCount: 4, fps: 1.5, loop: true },
+----+  // STATIC default - single frozen frame
+----+  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
+----+  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
+----+  // Sleep states
+----+  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
+----+  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
+----   // Grooming
+-----  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: true },
+----+  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
+----   // Vocalizations
+----   meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
+----   yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
+----@@ -92,24 +90,24 @@ const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
+----   // Eating
+----   eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
+----   // Cuddle state
+-----  cuddle: { startRow: 5, frameCount: 4, fps: 2, loop: true },
+----+  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static
+----   // Gaming
+-----  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: true },
+----+  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
+---- }
+---- 
+---- /**
+----  * ANIMATION MAP FOR SEHAJ (Brown/Ginger Cat)
+----- * Based on sprite sheet analysis - cat2_sheet.png
+----+ * UPDATED: Default to STATIC single frame, not looping
+----  */
+---- const SEHAJ_ANIMATIONS: Record<string, AnimationDef> = {
+-----  // Default calm sitting
+-----  sitIdle: { startRow: 0, frameCount: 8, fps: 2, loop: true },
+-----  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: true },
+----+  // STATIC default - single frozen frame
+----+  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
+----+  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
+----   // Sleep states
+-----  sleep: { startRow: 5, frameCount: 4, fps: 1.5, loop: true },
+-----  sleepCurled: { startRow: 6, frameCount: 4, fps: 1.5, loop: true },
+----+  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
+----+  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
+----   // Grooming
+-----  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: true },
+----+  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
+----   // Vocalizations  
+----   meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
+----   yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
+----@@ -121,9 +119,9 @@ const SEHAJ_ANIMATIONS: Record<string, AnimationDef> = {
+----   // Eating
+----   eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
+----   // Cuddle state
+-----  cuddle: { startRow: 5, frameCount: 4, fps: 2, loop: true },
+----+  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static
+----   // Gaming
+-----  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: true },
+----+  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
+---- }
+---- 
+---- type AnimationState = keyof typeof PRABH_ANIMATIONS
 ----diff --git a/model.patch b/model.patch
-----index cb1811c..e69de29 100644
+----index 5001961..e69de29 100644
 ------- a/model.patch
 ----+++ b/model.patch
-----@@ -1,1456 +0,0 @@
------diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
------index bda7dc1..623dc75 100644
--------- a/frontend_web/src/pages/TortureChamber.tsx
------+++ b/frontend_web/src/pages/TortureChamber.tsx
------@@ -466,6 +466,7 @@ export default function TortureChamber() {
------                   opacity: isDead ? 0.5 : 1,
------                   minHeight: 70,
------                   boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 15px rgba(239,68,68,0.1)',
------+                  pointerEvents: isDead ? 'none' : 'auto',
------                 }}
------               >
------                 <motion.span 
------@@ -526,6 +527,7 @@ export default function TortureChamber() {
------                   opacity: isDead ? 0.5 : 1,
------                   minHeight: 70,
------                   boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 15px rgba(74,222,128,0.1)',
------+                  pointerEvents: isDead ? 'none' : 'auto',
------                 }}
------               >
------                 <motion.span 
+----@@ -1,1461 +0,0 @@
 -----diff --git a/model.patch b/model.patch
------index b7eb885..e69de29 100644
+-----index cb1811c..e69de29 100644
 -------- a/model.patch
 -----+++ b/model.patch
------@@ -1,1431 +0,0 @@
+-----@@ -1,1456 +0,0 @@
 ------diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
-------index 6653114..bda7dc1 100644
+------index bda7dc1..623dc75 100644
 --------- a/frontend_web/src/pages/TortureChamber.tsx
 ------+++ b/frontend_web/src/pages/TortureChamber.tsx
-------@@ -118,63 +118,79 @@ export default function TortureChamber() {
-------     }, 1000)
-------   }
------- 
--------  // Handle damage
--------  const handleDamage = (attack: typeof DAMAGE_ATTACKS[0], buttonIndex: number) => {
--------    playPop()
--------    setIsShaking(true)
--------    setWasJustDamaged(true)
--------    setTimeout(() => setIsShaking(false), 300)
--------
--------    const newHp = Math.max(0, hp - attack.damage)
--------    setHp(newHp)
--------
--------    // Show floating damage - with button position
--------    addFloatingMessage(-attack.damage, false, buttonIndex)
--------
--------    // Random message or attack message
--------    if (Math.random() < 0.3) {
--------      setCurrentMessage(RANDOM_DAMAGE_MESSAGES[Math.floor(Math.random() * RANDOM_DAMAGE_MESSAGES.length)])
--------    } else {
--------      setCurrentMessage(attack.message)
-------+  // SINGLE SOURCE OF TRUTH: Unified action handler with hard instrumentation
-------+  const handleAction = (actionType: 'damage' | 'heal', actionData: any, buttonIndex: number) => {
-------+    // INSTRUMENTATION: Log every action in dev mode
-------+    if (process.env.NODE_ENV === 'development') {
-------+      console.log(`[TORTURE CHAMBER] ${actionType.toUpperCase()} pressed:`, actionData.name, `HP: ${hp}`)
-------     }
--------
--------    // Check for death
--------    if (newHp <= 0) {
--------      setIsDead(true)
--------      const newStats = tortureStorage.incrementDeaths()
--------      setStats(newStats)
--------      setTimeout(() => {
--------        setShowJustKidding(true)
--------        setTimeout(() => {
--------          setHp(900)  // Revive to 30% of 3000
--------          const revivedStats = tortureStorage.incrementRevivals()
--------          setStats(revivedStats)
--------          setIsDead(false)
--------          setShowJustKidding(false)
--------          setCurrentMessage("im immortal unfortunately.")
--------        }, 2000)
--------      }, 1500)
--------    }
--------  }
--------
--------  // Handle healing
--------  const handleHeal = (action: typeof HEAL_ACTIONS[0], buttonIndex: number) => {
--------    playClick()
-------     
--------    // Check for redemption arc
--------    if (wasJustDamaged) {
--------      setCurrentMessage("Redemption arc.")
--------      setWasJustDamaged(false)
-------+    if (actionType === 'damage') {
-------+      playPop()
-------+      setWasJustDamaged(true)
-------+      setCurrentMessage(RANDOM_DAMAGE_MESSAGES[Math.floor(Math.random() * RANDOM_DAMAGE_MESSAGES.length)])
-------+      
-------+      // Functional setState to avoid stale closure
-------+      setHp(prev => {
-------+        const newHp = Math.max(0, prev - actionData.damage)
-------+        // Check for death
-------+        if (newHp <= 0) {
-------+          setTimeout(() => handleDeath(), 100)
-------+        }
-------+        return newHp
-------+      })
-------+      
-------+      // Shake effect
-------+      setIsShaking(true)
-------+      setTimeout(() => setIsShaking(false), 300)
-------+      
-------+      // Show floating damage - with button position
-------+      addFloatingMessage(-actionData.damage, false, buttonIndex)
-------     } else {
--------      // Use new playful heal messages
--------      setCurrentMessage(HEAL_MESSAGES[Math.floor(Math.random() * HEAL_MESSAGES.length)])
-------+      // HEAL ACTION
-------+      playClick()
-------+      
-------+      // INSTRUMENTATION: Always show feedback
-------+      if (wasJustDamaged) {
-------+        setCurrentMessage("Redemption arc.")
-------+        setWasJustDamaged(false)
-------+      } else {
-------+        setCurrentMessage(HEAL_MESSAGES[Math.floor(Math.random() * HEAL_MESSAGES.length)])
-------+      }
-------+      
-------+      // Functional setState to avoid stale closure
-------+      setHp(prev => {
-------+        const newHp = Math.min(maxHp, prev + actionData.heal)
-------+        
-------+        // INSTRUMENTATION: Log if capped
-------+        if (prev + actionData.heal > maxHp && process.env.NODE_ENV === 'development') {
-------+          console.log(`[TORTURE CHAMBER] Heal capped at maxHp: ${maxHp}`)
-------+        }
-------+        
-------+        return newHp
-------+      })
-------+      
-------+      // INSTRUMENTATION: Always show floating heal message
-------+      addFloatingMessage(actionData.heal, true, buttonIndex)
-------     }
-------+  }
------- 
--------    const newHp = Math.min(1800, hp + action.heal) // Cap at 1800 (120% of 1500)
--------    setHp(newHp)
--------
--------    // Show floating heal - with button position
--------    addFloatingMessage(action.heal, true, buttonIndex)
-------+  // Handle death - extracted for clarity
-------+  const handleDeath = () => {
-------+    setIsDead(true)
-------+    const newStats = tortureStorage.incrementDeaths()
-------+    setStats(newStats)
-------+    setTimeout(() => {
-------+      setShowJustKidding(true)
-------+      setTimeout(() => {
-------+        setHp(900)  // Revive to 30% of 3000
-------+        const revivedStats = tortureStorage.incrementRevivals()
-------+        setStats(revivedStats)
-------+        setIsDead(false)
-------+        setShowJustKidding(false)
-------+        setCurrentMessage("im immortal unfortunately.")
-------+      }, 2000)
-------+    }, 1500)
-------   }
------- 
-------   // Revive button
-------@@ -434,7 +450,7 @@ export default function TortureChamber() {
-------                 ref={(el) => (damageButtonRefs.current[index] = el)}
-------                 whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(239,68,68,0.4)' }}
-------                 whileTap={{ scale: 0.9 }}
--------                onClick={() => handleDamage(attack, index)}
-------+                onClick={() => handleAction('damage', attack, index)}
-------                 disabled={isDead}
-------                 style={{
-------                   background: 'rgba(239,68,68,0.15)',
-------@@ -494,7 +510,7 @@ export default function TortureChamber() {
-------                 ref={(el) => (healButtonRefs.current[index] = el)}
-------                 whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(74,222,128,0.4)' }}
-------                 whileTap={{ scale: 0.9 }}
--------                onClick={() => handleHeal(action, index)}
-------+                onClick={() => handleAction('heal', action, index)}
-------                 disabled={isDead}
-------                 style={{
-------                   background: 'rgba(74,222,128,0.15)',
+------@@ -466,6 +466,7 @@ export default function TortureChamber() {
+------                   opacity: isDead ? 0.5 : 1,
+------                   minHeight: 70,
+------                   boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 15px rgba(239,68,68,0.1)',
+------+                  pointerEvents: isDead ? 'none' : 'auto',
+------                 }}
+------               >
+------                 <motion.span 
+------@@ -526,6 +527,7 @@ export default function TortureChamber() {
+------                   opacity: isDead ? 0.5 : 1,
+------                   minHeight: 70,
+------                   boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 15px rgba(74,222,128,0.1)',
+------+                  pointerEvents: isDead ? 'none' : 'auto',
+------                 }}
+------               >
+------                 <motion.span 
 ------diff --git a/model.patch b/model.patch
-------index bb043f5..637de5b 100644
+------index b7eb885..e69de29 100644
 --------- a/model.patch
 ------+++ b/model.patch
-------@@ -1,1272 +0,0 @@
+------@@ -1,1431 +0,0 @@
 -------diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
--------index ab284c9..03ab341 100644
+-------index 6653114..bda7dc1 100644
 ---------- a/frontend_web/src/pages/TortureChamber.tsx
 -------+++ b/frontend_web/src/pages/TortureChamber.tsx
--------@@ -119,7 +119,7 @@ export default function TortureChamber() {
+-------@@ -118,63 +118,79 @@ export default function TortureChamber() {
+-------     }, 1000)
 -------   }
 ------- 
--------   // Handle damage
---------  const handleDamage = (attack: typeof DAMAGE_ATTACKS[0]) => {
--------+  const handleDamage = (attack: typeof DAMAGE_ATTACKS[0], buttonIndex: number) => {
--------     playPop()
--------     setIsShaking(true)
--------     setWasJustDamaged(true)
--------@@ -128,8 +128,8 @@ export default function TortureChamber() {
--------     const newHp = Math.max(0, hp - attack.damage)
--------     setHp(newHp)
-------- 
---------    // Show floating damage
---------    addFloatingMessage(-attack.damage, false)
--------+    // Show floating damage - with button position
--------+    addFloatingMessage(-attack.damage, false, buttonIndex)
-------- 
--------     // Random message or attack message
--------     if (Math.random() < 0.3) {
--------@@ -158,7 +158,7 @@ export default function TortureChamber() {
--------   }
-------- 
--------   // Handle healing
---------  const handleHeal = (action: typeof HEAL_ACTIONS[0]) => {
--------+  const handleHeal = (action: typeof HEAL_ACTIONS[0], buttonIndex: number) => {
--------     playClick()
+--------  // Handle damage
+--------  const handleDamage = (attack: typeof DAMAGE_ATTACKS[0], buttonIndex: number) => {
+--------    playPop()
+--------    setIsShaking(true)
+--------    setWasJustDamaged(true)
+--------    setTimeout(() => setIsShaking(false), 300)
+--------
+--------    const newHp = Math.max(0, hp - attack.damage)
+--------    setHp(newHp)
+--------
+--------    // Show floating damage - with button position
+--------    addFloatingMessage(-attack.damage, false, buttonIndex)
+--------
+--------    // Random message or attack message
+--------    if (Math.random() < 0.3) {
+--------      setCurrentMessage(RANDOM_DAMAGE_MESSAGES[Math.floor(Math.random() * RANDOM_DAMAGE_MESSAGES.length)])
+--------    } else {
+--------      setCurrentMessage(attack.message)
+-------+  // SINGLE SOURCE OF TRUTH: Unified action handler with hard instrumentation
+-------+  const handleAction = (actionType: 'damage' | 'heal', actionData: any, buttonIndex: number) => {
+-------+    // INSTRUMENTATION: Log every action in dev mode
+-------+    if (process.env.NODE_ENV === 'development') {
+-------+      console.log(`[TORTURE CHAMBER] ${actionType.toUpperCase()} pressed:`, actionData.name, `HP: ${hp}`)
+-------     }
+--------
+--------    // Check for death
+--------    if (newHp <= 0) {
+--------      setIsDead(true)
+--------      const newStats = tortureStorage.incrementDeaths()
+--------      setStats(newStats)
+--------      setTimeout(() => {
+--------        setShowJustKidding(true)
+--------        setTimeout(() => {
+--------          setHp(900)  // Revive to 30% of 3000
+--------          const revivedStats = tortureStorage.incrementRevivals()
+--------          setStats(revivedStats)
+--------          setIsDead(false)
+--------          setShowJustKidding(false)
+--------          setCurrentMessage("im immortal unfortunately.")
+--------        }, 2000)
+--------      }, 1500)
+--------    }
+--------  }
+--------
+--------  // Handle healing
+--------  const handleHeal = (action: typeof HEAL_ACTIONS[0], buttonIndex: number) => {
+--------    playClick()
 -------     
--------     // Check for redemption arc
--------@@ -173,8 +173,8 @@ export default function TortureChamber() {
--------     const newHp = Math.min(1800, hp + action.heal) // Cap at 1800 (120% of 1500)
--------     setHp(newHp)
+--------    // Check for redemption arc
+--------    if (wasJustDamaged) {
+--------      setCurrentMessage("Redemption arc.")
+--------      setWasJustDamaged(false)
+-------+    if (actionType === 'damage') {
+-------+      playPop()
+-------+      setWasJustDamaged(true)
+-------+      setCurrentMessage(RANDOM_DAMAGE_MESSAGES[Math.floor(Math.random() * RANDOM_DAMAGE_MESSAGES.length)])
+-------+      
+-------+      // Functional setState to avoid stale closure
+-------+      setHp(prev => {
+-------+        const newHp = Math.max(0, prev - actionData.damage)
+-------+        // Check for death
+-------+        if (newHp <= 0) {
+-------+          setTimeout(() => handleDeath(), 100)
+-------+        }
+-------+        return newHp
+-------+      })
+-------+      
+-------+      // Shake effect
+-------+      setIsShaking(true)
+-------+      setTimeout(() => setIsShaking(false), 300)
+-------+      
+-------+      // Show floating damage - with button position
+-------+      addFloatingMessage(-actionData.damage, false, buttonIndex)
+-------     } else {
+--------      // Use new playful heal messages
+--------      setCurrentMessage(HEAL_MESSAGES[Math.floor(Math.random() * HEAL_MESSAGES.length)])
+-------+      // HEAL ACTION
+-------+      playClick()
+-------+      
+-------+      // INSTRUMENTATION: Always show feedback
+-------+      if (wasJustDamaged) {
+-------+        setCurrentMessage("Redemption arc.")
+-------+        setWasJustDamaged(false)
+-------+      } else {
+-------+        setCurrentMessage(HEAL_MESSAGES[Math.floor(Math.random() * HEAL_MESSAGES.length)])
+-------+      }
+-------+      
+-------+      // Functional setState to avoid stale closure
+-------+      setHp(prev => {
+-------+        const newHp = Math.min(maxHp, prev + actionData.heal)
+-------+        
+-------+        // INSTRUMENTATION: Log if capped
+-------+        if (prev + actionData.heal > maxHp && process.env.NODE_ENV === 'development') {
+-------+          console.log(`[TORTURE CHAMBER] Heal capped at maxHp: ${maxHp}`)
+-------+        }
+-------+        
+-------+        return newHp
+-------+      })
+-------+      
+-------+      // INSTRUMENTATION: Always show floating heal message
+-------+      addFloatingMessage(actionData.heal, true, buttonIndex)
+-------     }
+-------+  }
 ------- 
---------    // Show floating heal
---------    addFloatingMessage(action.heal, true)
--------+    // Show floating heal - with button position
--------+    addFloatingMessage(action.heal, true, buttonIndex)
+--------    const newHp = Math.min(1800, hp + action.heal) // Cap at 1800 (120% of 1500)
+--------    setHp(newHp)
+--------
+--------    // Show floating heal - with button position
+--------    addFloatingMessage(action.heal, true, buttonIndex)
+-------+  // Handle death - extracted for clarity
+-------+  const handleDeath = () => {
+-------+    setIsDead(true)
+-------+    const newStats = tortureStorage.incrementDeaths()
+-------+    setStats(newStats)
+-------+    setTimeout(() => {
+-------+      setShowJustKidding(true)
+-------+      setTimeout(() => {
+-------+        setHp(900)  // Revive to 30% of 3000
+-------+        const revivedStats = tortureStorage.incrementRevivals()
+-------+        setStats(revivedStats)
+-------+        setIsDead(false)
+-------+        setShowJustKidding(false)
+-------+        setCurrentMessage("im immortal unfortunately.")
+-------+      }, 2000)
+-------+    }, 1500)
 -------   }
 ------- 
 -------   // Revive button
--------@@ -427,12 +427,13 @@ export default function TortureChamber() {
--------             gridTemplateColumns: 'repeat(5, 1fr)',
--------             gap: 6,
--------           }}>
---------            {DAMAGE_ATTACKS.map((attack) => (
--------+            {DAMAGE_ATTACKS.map((attack, index) => (
--------               <motion.button
--------                 key={attack.name}
--------+                ref={(el) => (damageButtonRefs.current[index] = el)}
+-------@@ -434,7 +450,7 @@ export default function TortureChamber() {
+-------                 ref={(el) => (damageButtonRefs.current[index] = el)}
 -------                 whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(239,68,68,0.4)' }}
 -------                 whileTap={{ scale: 0.9 }}
---------                onClick={() => handleDamage(attack)}
--------+                onClick={() => handleDamage(attack, index)}
+--------                onClick={() => handleDamage(attack, index)}
+-------+                onClick={() => handleAction('damage', attack, index)}
 -------                 disabled={isDead}
 -------                 style={{
 -------                   background: 'rgba(239,68,68,0.15)',
--------@@ -486,12 +487,13 @@ export default function TortureChamber() {
--------             gridTemplateColumns: 'repeat(5, 1fr)',
--------             gap: 6,
--------           }}>
---------            {HEAL_ACTIONS.map((action) => (
--------+            {HEAL_ACTIONS.map((action, index) => (
--------               <motion.button
--------                 key={action.name}
--------+                ref={(el) => (healButtonRefs.current[index] = el)}
+-------@@ -494,7 +510,7 @@ export default function TortureChamber() {
+-------                 ref={(el) => (healButtonRefs.current[index] = el)}
 -------                 whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(74,222,128,0.4)' }}
 -------                 whileTap={{ scale: 0.9 }}
---------                onClick={() => handleHeal(action)}
--------+                onClick={() => handleHeal(action, index)}
+--------                onClick={() => handleHeal(action, index)}
+-------+                onClick={() => handleAction('heal', action, index)}
 -------                 disabled={isDead}
 -------                 style={{
 -------                   background: 'rgba(74,222,128,0.15)',
 -------diff --git a/model.patch b/model.patch
--------index 00b0611..e69de29 100644
+-------index bb043f5..637de5b 100644
 ---------- a/model.patch
 -------+++ b/model.patch
--------@@ -1,1191 +0,0 @@
---------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
---------index f500eaa..bca2b43 100644
------------ a/frontend_web/src/pages/VirtualBed.tsx
---------+++ b/frontend_web/src/pages/VirtualBed.tsx
---------@@ -491,7 +491,7 @@ export default function VirtualBed() {
---------           catMeowSoftRef.current.play()
---------         }
---------         setCat(prev => ({ ...prev, action: 'nudge', mood: Math.min(100, prev.mood + 15) }))
----------        // Increase horniness meter (Prabh increases faster)
---------+        // Increase freakiness meter (Prabh increases faster)
---------         if (cat === 'prabh') {
---------           setPrabhMeter(prev => Math.min(100, prev + 20))
---------         } else {
---------@@ -1344,7 +1344,7 @@ export default function VirtualBed() {
---------             </div>
---------           </div>
---------           
----------          {/* Horniness Meters */}
---------+          {/* Freakiness Meters */}
---------           <div style={{
---------             display: 'flex',
---------             justifyContent: 'space-between',
---------@@ -1353,7 +1353,7 @@ export default function VirtualBed() {
+-------@@ -1,1272 +0,0 @@
+--------diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
+--------index ab284c9..03ab341 100644
+----------- a/frontend_web/src/pages/TortureChamber.tsx
+--------+++ b/frontend_web/src/pages/TortureChamber.tsx
+--------@@ -119,7 +119,7 @@ export default function TortureChamber() {
+--------   }
+-------- 
+--------   // Handle damage
+---------  const handleDamage = (attack: typeof DAMAGE_ATTACKS[0]) => {
+--------+  const handleDamage = (attack: typeof DAMAGE_ATTACKS[0], buttonIndex: number) => {
+--------     playPop()
+--------     setIsShaking(true)
+--------     setWasJustDamaged(true)
+--------@@ -128,8 +128,8 @@ export default function TortureChamber() {
+--------     const newHp = Math.max(0, hp - attack.damage)
+--------     setHp(newHp)
+-------- 
+---------    // Show floating damage
+---------    addFloatingMessage(-attack.damage, false)
+--------+    // Show floating damage - with button position
+--------+    addFloatingMessage(-attack.damage, false, buttonIndex)
+-------- 
+--------     // Random message or attack message
+--------     if (Math.random() < 0.3) {
+--------@@ -158,7 +158,7 @@ export default function TortureChamber() {
+--------   }
+-------- 
+--------   // Handle healing
+---------  const handleHeal = (action: typeof HEAL_ACTIONS[0]) => {
+--------+  const handleHeal = (action: typeof HEAL_ACTIONS[0], buttonIndex: number) => {
+--------     playClick()
+--------     
+--------     // Check for redemption arc
+--------@@ -173,8 +173,8 @@ export default function TortureChamber() {
+--------     const newHp = Math.min(1800, hp + action.heal) // Cap at 1800 (120% of 1500)
+--------     setHp(newHp)
+-------- 
+---------    // Show floating heal
+---------    addFloatingMessage(action.heal, true)
+--------+    // Show floating heal - with button position
+--------+    addFloatingMessage(action.heal, true, buttonIndex)
+--------   }
+-------- 
+--------   // Revive button
+--------@@ -427,12 +427,13 @@ export default function TortureChamber() {
+--------             gridTemplateColumns: 'repeat(5, 1fr)',
+--------             gap: 6,
 --------           }}>
---------             <div style={{ flex: 1 }}>
---------               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
----------                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Affection</p>
---------+                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Freakiness</p>
---------                 <p style={{ color: '#E67E22', fontSize: 11, fontWeight: 600 }}>{sehajMeter}%</p>
---------               </div>
---------               <div style={{
---------@@ -1378,7 +1378,7 @@ export default function VirtualBed() {
---------             
---------             <div style={{ flex: 1 }}>
---------               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
----------                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Affection</p>
---------+                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Freakiness</p>
---------                 <p style={{ color: '#8E44AD', fontSize: 11, fontWeight: 600 }}>{prabhMeter}%</p>
---------               </div>
---------               <div style={{
+---------            {DAMAGE_ATTACKS.map((attack) => (
+--------+            {DAMAGE_ATTACKS.map((attack, index) => (
+--------               <motion.button
+--------                 key={attack.name}
+--------+                ref={(el) => (damageButtonRefs.current[index] = el)}
+--------                 whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(239,68,68,0.4)' }}
+--------                 whileTap={{ scale: 0.9 }}
+---------                onClick={() => handleDamage(attack)}
+--------+                onClick={() => handleDamage(attack, index)}
+--------                 disabled={isDead}
+--------                 style={{
+--------                   background: 'rgba(239,68,68,0.15)',
+--------@@ -486,12 +487,13 @@ export default function TortureChamber() {
+--------             gridTemplateColumns: 'repeat(5, 1fr)',
+--------             gap: 6,
+--------           }}>
+---------            {HEAL_ACTIONS.map((action) => (
+--------+            {HEAL_ACTIONS.map((action, index) => (
+--------               <motion.button
+--------                 key={action.name}
+--------+                ref={(el) => (healButtonRefs.current[index] = el)}
+--------                 whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(74,222,128,0.4)' }}
+--------                 whileTap={{ scale: 0.9 }}
+---------                onClick={() => handleHeal(action)}
+--------+                onClick={() => handleHeal(action, index)}
+--------                 disabled={isDead}
+--------                 style={{
+--------                   background: 'rgba(74,222,128,0.15)',
 --------diff --git a/model.patch b/model.patch
---------index 8633fcf..e69de29 100644
+--------index 00b0611..e69de29 100644
 ----------- a/model.patch
 --------+++ b/model.patch
---------@@ -1,1146 +0,0 @@
+--------@@ -1,1191 +0,0 @@
+---------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
+---------index f500eaa..bca2b43 100644
+------------ a/frontend_web/src/pages/VirtualBed.tsx
+---------+++ b/frontend_web/src/pages/VirtualBed.tsx
+---------@@ -491,7 +491,7 @@ export default function VirtualBed() {
+---------           catMeowSoftRef.current.play()
+---------         }
+---------         setCat(prev => ({ ...prev, action: 'nudge', mood: Math.min(100, prev.mood + 15) }))
+----------        // Increase horniness meter (Prabh increases faster)
+---------+        // Increase freakiness meter (Prabh increases faster)
+---------         if (cat === 'prabh') {
+---------           setPrabhMeter(prev => Math.min(100, prev + 20))
+---------         } else {
+---------@@ -1344,7 +1344,7 @@ export default function VirtualBed() {
+---------             </div>
+---------           </div>
+---------           
+----------          {/* Horniness Meters */}
+---------+          {/* Freakiness Meters */}
+---------           <div style={{
+---------             display: 'flex',
+---------             justifyContent: 'space-between',
+---------@@ -1353,7 +1353,7 @@ export default function VirtualBed() {
+---------           }}>
+---------             <div style={{ flex: 1 }}>
+---------               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+----------                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Affection</p>
+---------+                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Freakiness</p>
+---------                 <p style={{ color: '#E67E22', fontSize: 11, fontWeight: 600 }}>{sehajMeter}%</p>
+---------               </div>
+---------               <div style={{
+---------@@ -1378,7 +1378,7 @@ export default function VirtualBed() {
+---------             
+---------             <div style={{ flex: 1 }}>
+---------               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+----------                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Affection</p>
+---------+                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Freakiness</p>
+---------                 <p style={{ color: '#8E44AD', fontSize: 11, fontWeight: 600 }}>{prabhMeter}%</p>
+---------               </div>
+---------               <div style={{
 ---------diff --git a/model.patch b/model.patch
----------index f8ad99d..e69de29 100644
+---------index 8633fcf..e69de29 100644
 ------------ a/model.patch
 ---------+++ b/model.patch
----------@@ -1,1141 +0,0 @@
-----------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
-----------index 8bda9cd..305bd69 100644
-------------- a/frontend_web/src/pages/VirtualBed.tsx
-----------+++ b/frontend_web/src/pages/VirtualBed.tsx
-----------@@ -976,37 +976,6 @@ export default function VirtualBed() {
-----------               zIndex: 2,
-----------             }} />
----------- 
------------            {/* NEW: LAYER 3.5: Blanket (moves left/center/right based on hog blanket action) */}
------------            <motion.div
------------              animate={{
------------                left: blanketPosition === 'left' ? '20%' : blanketPosition === 'right' ? '65%' : '42.5%',
------------              }}
------------              transition={{ type: 'spring', stiffness: 120, damping: 15 }}
------------              style={{
------------                position: 'absolute',
------------                bottom: 80,
------------                width: 180,
------------                height: 120,
------------                background: 'linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFD1DC 100%)',
------------                borderRadius: '60% 60% 30% 30%',
------------                border: '3px solid #FF69B4',
------------                zIndex: 6,
------------                boxShadow: '0 4px 12px rgba(255,105,180,0.3), inset 0 2px 8px rgba(255,255,255,0.3)',
------------                opacity: 0.9,
------------              }}
------------            >
------------              {/* Blanket texture/pattern */}
------------              <div style={{
------------                position: 'absolute',
------------                top: 10,
------------                left: 10,
------------                right: 10,
------------                bottom: 10,
------------                background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)',
------------                borderRadius: '50% 50% 25% 25%',
------------              }} />
------------            </motion.div>
------------
-----------             {/* LAYER 4: Furniture Props */}
-----------             {/* Small couch/bean bag - left side */}
-----------             <div style={{
-----------@@ -1209,6 +1178,57 @@ export default function VirtualBed() {
-----------               )}
-----------             </motion.div>
----------- 
-----------+            {/* NEW: LAYER 7: Blanket (moves left/center/right based on hog blanket action) - FOREGROUND */}
-----------+            <motion.div
-----------+              animate={{
-----------+                left: blanketPosition === 'left' ? '15%' : blanketPosition === 'right' ? '60%' : '37.5%',
-----------+              }}
-----------+              transition={{ type: 'spring', stiffness: 120, damping: 15 }}
-----------+              style={{
-----------+                position: 'absolute',
-----------+                bottom: 40,
-----------+                width: 220,
-----------+                height: 80,
-----------+                background: 'linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFD1DC 100%)',
-----------+                borderRadius: '50% 50% 20% 20%',
-----------+                border: '2px solid #FF69B4',
-----------+                zIndex: 7,
-----------+                boxShadow: '0 2px 8px rgba(255,105,180,0.2), inset 0 1px 4px rgba(255,255,255,0.4)',
-----------+                opacity: 0.85,
-----------+                transform: 'perspective(100px) rotateX(15deg)',
-----------+              }}
-----------+            >
-----------+              {/* Blanket texture/pattern - flatter appearance */}
-----------+              <div style={{
-----------+                position: 'absolute',
-----------+                top: 5,
-----------+                left: 5,
-----------+                right: 5,
-----------+                bottom: 5,
-----------+                background: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px)',
-----------+                borderRadius: '45% 45% 15% 15%',
-----------+              }} />
-----------+              {/* Blanket folds for realistic flat appearance */}
-----------+              <div style={{
-----------+                position: 'absolute',
-----------+                top: '30%',
-----------+                left: '20%',
-----------+                right: '20%',
-----------+                height: 2,
-----------+                background: 'rgba(255,105,180,0.3)',
-----------+                borderRadius: 1,
-----------+              }} />
-----------+              <div style={{
-----------+                position: 'absolute',
-----------+                top: '60%',
-----------+                left: '15%',
-----------+                right: '25%',
-----------+                height: 1,
-----------+                background: 'rgba(255,105,180,0.2)',
-----------+                borderRadius: 1,
-----------+              }} />
-----------+            </motion.div>
-----------+
-----------             {/* LAYER 6: Foreground Props - moved lower */}
-----------             {/* Pillow on floor - left */}
-----------             <div style={{
+---------@@ -1,1146 +0,0 @@
 ----------diff --git a/model.patch b/model.patch
-----------index 3635d71..11962ba 100644
+----------index f8ad99d..e69de29 100644
 ------------- a/model.patch
 ----------+++ b/model.patch
-----------@@ -1,1036 +0,0 @@
------------diff --git a/frontend_web/src/pages/Index.tsx b/frontend_web/src/pages/Index.tsx
------------index 4e404d0..779d8ca 100644
--------------- a/frontend_web/src/pages/Index.tsx
------------+++ b/frontend_web/src/pages/Index.tsx
------------@@ -378,33 +378,36 @@ export default function Index() {
------------             <IoHeart size={18} />
------------           </motion.div>
------------         </motion.button>
------------+        </div>
+----------@@ -1,1141 +0,0 @@
+-----------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
+-----------index 8bda9cd..305bd69 100644
+-------------- a/frontend_web/src/pages/VirtualBed.tsx
+-----------+++ b/frontend_web/src/pages/VirtualBed.tsx
+-----------@@ -976,37 +976,6 @@ export default function VirtualBed() {
+-----------               zIndex: 2,
+-----------             }} />
 ----------- 
-------------        <p style={{ color: colors.textMuted, margin: '12px 0', fontStyle: 'italic' }}>or</p>
------------+        <p style={{ color: colors.textMuted, margin: '12px 0', fontStyle: 'italic', textAlign: 'center' }}>or</p>
+------------            {/* NEW: LAYER 3.5: Blanket (moves left/center/right based on hog blanket action) */}
+------------            <motion.div
+------------              animate={{
+------------                left: blanketPosition === 'left' ? '20%' : blanketPosition === 'right' ? '65%' : '42.5%',
+------------              }}
+------------              transition={{ type: 'spring', stiffness: 120, damping: 15 }}
+------------              style={{
+------------                position: 'absolute',
+------------                bottom: 80,
+------------                width: 180,
+------------                height: 120,
+------------                background: 'linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFD1DC 100%)',
+------------                borderRadius: '60% 60% 30% 30%',
+------------                border: '3px solid #FF69B4',
+------------                zIndex: 6,
+------------                boxShadow: '0 4px 12px rgba(255,105,180,0.3), inset 0 2px 8px rgba(255,255,255,0.3)',
+------------                opacity: 0.9,
+------------              }}
+------------            >
+------------              {/* Blanket texture/pattern */}
+------------              <div style={{
+------------                position: 'absolute',
+------------                top: 10,
+------------                left: 10,
+------------                right: 10,
+------------                bottom: 10,
+------------                background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px)',
+------------                borderRadius: '50% 50% 25% 25%',
+------------              }} />
+------------            </motion.div>
+------------
+-----------             {/* LAYER 4: Furniture Props */}
+-----------             {/* Small couch/bean bag - left side */}
+-----------             <div style={{
+-----------@@ -1209,6 +1178,57 @@ export default function VirtualBed() {
+-----------               )}
+-----------             </motion.div>
 ----------- 
-------------        {/* Silly Crybaby Button */}
-------------        <motion.button
-------------          whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${colors.secondary}30` }}
-------------          whileTap={{ scale: 0.98 }}
-------------          onClick={handleSillyCrybaby}
-------------          style={{
-------------            background: 'rgba(255, 255, 255, 0.05)',
-------------            backdropFilter: 'blur(10px)',
-------------            border: `1.5px solid ${colors.secondary}50`,
-------------            borderRadius: 25,
-------------            padding: '14px 20px',
-------------            cursor: 'pointer',
-------------            display: 'flex',
-------------            alignItems: 'center',
-------------            gap: 8,
-------------            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-------------          }}
-------------        >
-------------          <IoHeart size={18} color={colors.secondary} />
-------------          <span style={{ color: colors.secondary, fontSize: 14, fontWeight: 500 }}>
-------------            when you're being my silly crybaby
-------------          </span>
-------------          <span>💕</span>
-------------        </motion.button>
------------+        {/* Silly Crybaby Button - CENTERED */}
------------+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
------------+          <motion.button
------------+            whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${colors.secondary}30` }}
------------+            whileTap={{ scale: 0.98 }}
------------+            onClick={handleSillyCrybaby}
------------+            style={{
------------+              background: 'rgba(255, 255, 255, 0.05)',
------------+              backdropFilter: 'blur(10px)',
------------+              border: `1.5px solid ${colors.secondary}50`,
------------+              borderRadius: 25,
------------+              padding: '14px 20px',
------------+              cursor: 'pointer',
------------+              display: 'flex',
------------+              alignItems: 'center',
------------+              gap: 8,
------------+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
------------+            }}
------------+          >
------------+            <IoHeart size={18} color={colors.secondary} />
------------+            <span style={{ color: colors.secondary, fontSize: 14, fontWeight: 500 }}>
------------+              when you're being my silly crybaby
------------+            </span>
------------+            <span>💕</span>
------------+          </motion.button>
------------+        </div>
------------ 
------------         {/* Presence Display */}
------------         <PresenceDisplay style={{ marginTop: 24 }} />
+-----------+            {/* NEW: LAYER 7: Blanket (moves left/center/right based on hog blanket action) - FOREGROUND */}
+-----------+            <motion.div
+-----------+              animate={{
+-----------+                left: blanketPosition === 'left' ? '15%' : blanketPosition === 'right' ? '60%' : '37.5%',
+-----------+              }}
+-----------+              transition={{ type: 'spring', stiffness: 120, damping: 15 }}
+-----------+              style={{
+-----------+                position: 'absolute',
+-----------+                bottom: 40,
+-----------+                width: 220,
+-----------+                height: 80,
+-----------+                background: 'linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFD1DC 100%)',
+-----------+                borderRadius: '50% 50% 20% 20%',
+-----------+                border: '2px solid #FF69B4',
+-----------+                zIndex: 7,
+-----------+                boxShadow: '0 2px 8px rgba(255,105,180,0.2), inset 0 1px 4px rgba(255,255,255,0.4)',
+-----------+                opacity: 0.85,
+-----------+                transform: 'perspective(100px) rotateX(15deg)',
+-----------+              }}
+-----------+            >
+-----------+              {/* Blanket texture/pattern - flatter appearance */}
+-----------+              <div style={{
+-----------+                position: 'absolute',
+-----------+                top: 5,
+-----------+                left: 5,
+-----------+                right: 5,
+-----------+                bottom: 5,
+-----------+                background: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px)',
+-----------+                borderRadius: '45% 45% 15% 15%',
+-----------+              }} />
+-----------+              {/* Blanket folds for realistic flat appearance */}
+-----------+              <div style={{
+-----------+                position: 'absolute',
+-----------+                top: '30%',
+-----------+                left: '20%',
+-----------+                right: '20%',
+-----------+                height: 2,
+-----------+                background: 'rgba(255,105,180,0.3)',
+-----------+                borderRadius: 1,
+-----------+              }} />
+-----------+              <div style={{
+-----------+                position: 'absolute',
+-----------+                top: '60%',
+-----------+                left: '15%',
+-----------+                right: '25%',
+-----------+                height: 1,
+-----------+                background: 'rgba(255,105,180,0.2)',
+-----------+                borderRadius: 1,
+-----------+              }} />
+-----------+            </motion.div>
+-----------+
+-----------             {/* LAYER 6: Foreground Props - moved lower */}
+-----------             {/* Pillow on floor - left */}
+-----------             <div style={{
 -----------diff --git a/model.patch b/model.patch
------------index 8e66e7d..e69de29 100644
+-----------index 3635d71..11962ba 100644
 -------------- a/model.patch
 -----------+++ b/model.patch
------------@@ -1,965 +0,0 @@
-------------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
-------------index 7873232..0b8f3dd 100644
---------------- a/frontend_web/src/pages/VirtualBed.tsx
-------------+++ b/frontend_web/src/pages/VirtualBed.tsx
-------------@@ -457,11 +457,10 @@ export default function VirtualBed() {
-------------         break
-------------         
-------------       case 'hog':
-------------+        // REMOVED blanket hogging - no longer using blanket
-------------         haptics.medium()
--------------        setBlanketOffset(isLeft ? 30 : 70)
-------------         setCat(prev => ({ ...prev, mood: Math.min(100, prev.mood + 10) }))
-------------         setOtherCat(prev => ({ ...prev, action: 'hiss', mood: Math.max(0, prev.mood - 15) }))
--------------        setTimeout(() => setBlanketOffset(50), 3000)
-------------         break
-------------         
-------------       case 'feed':
+-----------@@ -1,1036 +0,0 @@
+------------diff --git a/frontend_web/src/pages/Index.tsx b/frontend_web/src/pages/Index.tsx
+------------index 4e404d0..779d8ca 100644
+--------------- a/frontend_web/src/pages/Index.tsx
+------------+++ b/frontend_web/src/pages/Index.tsx
+------------@@ -378,33 +378,36 @@ export default function Index() {
+------------             <IoHeart size={18} />
+------------           </motion.div>
+------------         </motion.button>
+------------+        </div>
+------------ 
+-------------        <p style={{ color: colors.textMuted, margin: '12px 0', fontStyle: 'italic' }}>or</p>
+------------+        <p style={{ color: colors.textMuted, margin: '12px 0', fontStyle: 'italic', textAlign: 'center' }}>or</p>
+------------ 
+-------------        {/* Silly Crybaby Button */}
+-------------        <motion.button
+-------------          whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${colors.secondary}30` }}
+-------------          whileTap={{ scale: 0.98 }}
+-------------          onClick={handleSillyCrybaby}
+-------------          style={{
+-------------            background: 'rgba(255, 255, 255, 0.05)',
+-------------            backdropFilter: 'blur(10px)',
+-------------            border: `1.5px solid ${colors.secondary}50`,
+-------------            borderRadius: 25,
+-------------            padding: '14px 20px',
+-------------            cursor: 'pointer',
+-------------            display: 'flex',
+-------------            alignItems: 'center',
+-------------            gap: 8,
+-------------            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+-------------          }}
+-------------        >
+-------------          <IoHeart size={18} color={colors.secondary} />
+-------------          <span style={{ color: colors.secondary, fontSize: 14, fontWeight: 500 }}>
+-------------            when you're being my silly crybaby
+-------------          </span>
+-------------          <span>💕</span>
+-------------        </motion.button>
+------------+        {/* Silly Crybaby Button - CENTERED */}
+------------+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+------------+          <motion.button
+------------+            whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${colors.secondary}30` }}
+------------+            whileTap={{ scale: 0.98 }}
+------------+            onClick={handleSillyCrybaby}
+------------+            style={{
+------------+              background: 'rgba(255, 255, 255, 0.05)',
+------------+              backdropFilter: 'blur(10px)',
+------------+              border: `1.5px solid ${colors.secondary}50`,
+------------+              borderRadius: 25,
+------------+              padding: '14px 20px',
+------------+              cursor: 'pointer',
+------------+              display: 'flex',
+------------+              alignItems: 'center',
+------------+              gap: 8,
+------------+              boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+------------+            }}
+------------+          >
+------------+            <IoHeart size={18} color={colors.secondary} />
+------------+            <span style={{ color: colors.secondary, fontSize: 14, fontWeight: 500 }}>
+------------+              when you're being my silly crybaby
+------------+            </span>
+------------+            <span>💕</span>
+------------+          </motion.button>
+------------+        </div>
+------------ 
+------------         {/* Presence Display */}
+------------         <PresenceDisplay style={{ marginTop: 24 }} />
 ------------diff --git a/model.patch b/model.patch
-------------index 2e936c3..e69de29 100644
+------------index 8e66e7d..e69de29 100644
 --------------- a/model.patch
 ------------+++ b/model.patch
-------------@@ -1,943 +0,0 @@
+------------@@ -1,965 +0,0 @@
 -------------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
--------------index 9293793..5c196dc 100644
+-------------index 7873232..0b8f3dd 100644
 ---------------- a/frontend_web/src/pages/VirtualBed.tsx
 -------------+++ b/frontend_web/src/pages/VirtualBed.tsx
--------------@@ -319,6 +319,43 @@ export default function VirtualBed() {
--------------     }
--------------   }, [userInteracted, isMuted])
--------------   
--------------+  // Monitor horniness meters
--------------+  useEffect(() => {
--------------+    let prabhTimer: NodeJS.Timeout | null = null
--------------+    let sehajTimer: NodeJS.Timeout | null = null
--------------+    
--------------+    // Check Prabh meter
--------------+    if (prabhMeter >= 100) {
--------------+      prabhTimer = setTimeout(() => {
--------------+        setShowUnlovedMessage('prabh')
--------------+        setTimeout(() => setShowUnlovedMessage(null), 4000)
--------------+      }, 10000) // Show after 10 seconds at 100
--------------+    }
--------------+    
--------------+    // Check Sehaj meter
--------------+    if (sehajMeter >= 100) {
--------------+      sehajTimer = setTimeout(() => {
--------------+        setShowUnlovedMessage('sehaj')
--------------+        setTimeout(() => setShowUnlovedMessage(null), 4000)
--------------+      }, 10000) // Show after 10 seconds at 100
--------------+    }
--------------+    
--------------+    return () => {
--------------+      if (prabhTimer) clearTimeout(prabhTimer)
--------------+      if (sehajTimer) clearTimeout(sehajTimer)
--------------+    }
--------------+  }, [prabhMeter, sehajMeter])
--------------+  
--------------+  // Gradually decrease horniness meters over time
--------------+  useEffect(() => {
--------------+    const interval = setInterval(() => {
--------------+      setPrabhMeter(prev => Math.max(0, prev - 1))
--------------+      setSehajMeter(prev => Math.max(0, prev - 1))
--------------+    }, 30000) // Decrease by 1 every 30 seconds
--------------+    
--------------+    return () => clearInterval(interval)
--------------+  }, [])
--------------+  
--------------   useEffect(() => {
--------------     if (showEffect) {
--------------       const timeout = setTimeout(() => setShowEffect(null), 1500)
--------------@@ -398,6 +435,10 @@ export default function VirtualBed() {
--------------         } else {
--------------           setSehajMeter(prev => Math.min(100, prev + 15))
--------------         }
--------------+        // Clear unloved message if showing for this cat
--------------+        if (showUnlovedMessage === cat) {
--------------+          setShowUnlovedMessage(null)
--------------+        }
--------------         setTimeout(() => {
--------------           setOtherCat(prev => ({ ...prev, action: 'tailWag', mood: Math.min(100, prev.mood + 10) }))
--------------         }, 400)
--------------@@ -430,6 +471,10 @@ export default function VirtualBed() {
--------------         } else {
--------------           setSehajMeter(prev => Math.min(100, prev + 8))
--------------         }
--------------+        // Clear unloved message if showing for this cat
--------------+        if (showUnlovedMessage === cat) {
--------------+          setShowUnlovedMessage(null)
--------------+        }
--------------         const food = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)]
--------------         setShowEffect({ type: 'food', x: isLeft ? 35 : 65, y: 40, value: food })
+-------------@@ -457,11 +457,10 @@ export default function VirtualBed() {
 -------------         break
--------------@@ -455,6 +500,9 @@ export default function VirtualBed() {
--------------     setPrabhMeter(prev => Math.min(100, prev + 30))
--------------     setSehajMeter(prev => Math.min(100, prev + 25))
--------------     
--------------+    // Clear any unloved messages since both cats are getting attention
--------------+    setShowUnlovedMessage(null)
--------------+    
--------------     // Play tussle sounds
--------------     if (!isMuted && tussleRef.current) {
--------------       tussleRef.current.play()
--------------@@ -574,6 +622,61 @@ export default function VirtualBed() {
--------------         )}
--------------       </AnimatePresence>
--------------       
--------------+      {/* Unloved Message Overlay */}
--------------+      <AnimatePresence>
--------------+        {showUnlovedMessage && (
--------------+          <motion.div
--------------+            initial={{ opacity: 0, y: 50 }}
--------------+            animate={{ opacity: 1, y: 0 }}
--------------+            exit={{ opacity: 0, y: -50 }}
--------------+            transition={{ duration: 0.5 }}
--------------+            style={{
--------------+              position: 'fixed',
--------------+              top: '50%',
--------------+              left: '50%',
--------------+              transform: 'translate(-50%, -50%)',
--------------+              background: 'rgba(0,0,0,0.9)',
--------------+              borderRadius: 20,
--------------+              padding: '20px 30px',
--------------+              zIndex: 999,
--------------+              border: `2px solid ${showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'}`,
--------------+              boxShadow: `0 0 30px ${showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'}`,
--------------+            }}
--------------+          >
--------------+            <motion.div
--------------+              animate={{ 
--------------+                scale: [1, 1.1, 1],
--------------+              }}
--------------+              transition={{ duration: 0.8, repeat: Infinity }}
--------------+              style={{
--------------+                textAlign: 'center',
--------------+                color: 'white',
--------------+              }}
--------------+            >
--------------+              <div style={{ fontSize: 40, marginBottom: 10 }}>
--------------+                {showUnlovedMessage === 'prabh' ? '🖤💔' : '🧡💔'}
--------------+              </div>
--------------+              <p style={{ 
--------------+                fontSize: 18, 
--------------+                fontWeight: 600, 
--------------+                margin: 0,
--------------+                color: showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'
--------------+              }}>
--------------+                {showUnlovedMessage === 'prabh' ? 'Prabh' : 'Sehaj'} feels unloved...
--------------+              </p>
--------------+              <p style={{ 
--------------+                fontSize: 14, 
--------------+                margin: '8px 0 0 0',
--------------+                color: 'rgba(255,255,255,0.8)',
--------------+                fontStyle: 'italic'
--------------+              }}>
--------------+                Give some attention! 💕
--------------+              </p>
--------------+            </motion.div>
--------------+          </motion.div>
--------------+        )}
--------------+      </AnimatePresence>
--------------+      
--------------       {/* Header Controls */}
--------------       <motion.button
--------------         whileTap={{ scale: 0.9 }}
--------------@@ -1123,6 +1226,64 @@ export default function VirtualBed() {
--------------             </div>
--------------           </div>
--------------           
--------------+          {/* Horniness Meters */}
--------------+          <div style={{
--------------+            display: 'flex',
--------------+            justifyContent: 'space-between',
--------------+            marginTop: 16,
--------------+            gap: 16,
--------------+          }}>
--------------+            <div style={{ flex: 1 }}>
--------------+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
--------------+                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Affection</p>
--------------+                <p style={{ color: '#E67E22', fontSize: 11, fontWeight: 600 }}>{sehajMeter}%</p>
--------------+              </div>
--------------+              <div style={{
--------------+                width: '100%',
--------------+                height: 6,
--------------+                background: colors.card,
--------------+                borderRadius: 3,
--------------+                overflow: 'hidden',
--------------+                border: `1px solid ${colors.border}`,
--------------+              }}>
--------------+                <motion.div
--------------+                  animate={{ width: `${sehajMeter}%` }}
--------------+                  transition={{ duration: 0.5, ease: 'easeOut' }}
--------------+                  style={{
--------------+                    height: '100%',
--------------+                    background: sehajMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #E67E22, #F39C12)',
--------------+                    borderRadius: 3,
--------------+                  }}
--------------+                />
--------------+              </div>
--------------+            </div>
--------------+            
--------------+            <div style={{ flex: 1 }}>
--------------+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
--------------+                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Affection</p>
--------------+                <p style={{ color: '#8E44AD', fontSize: 11, fontWeight: 600 }}>{prabhMeter}%</p>
--------------+              </div>
--------------+              <div style={{
--------------+                width: '100%',
--------------+                height: 6,
--------------+                background: colors.card,
--------------+                borderRadius: 3,
--------------+                overflow: 'hidden',
--------------+                border: `1px solid ${colors.border}`,
--------------+              }}>
--------------+                <motion.div
--------------+                  animate={{ width: `${prabhMeter}%` }}
--------------+                  transition={{ duration: 0.5, ease: 'easeOut' }}
--------------+                  style={{
--------------+                    height: '100%',
--------------+                    background: prabhMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #8E44AD, #9B59B6)',
--------------+                    borderRadius: 3,
--------------+                  }}
--------------+                />
--------------+              </div>
--------------+            </div>
--------------+          </div>
--------------+          
--------------           {/* Control Buttons */}
--------------           <div style={{
--------------             display: 'grid',
+-------------         
+-------------       case 'hog':
+-------------+        // REMOVED blanket hogging - no longer using blanket
+-------------         haptics.medium()
+--------------        setBlanketOffset(isLeft ? 30 : 70)
+-------------         setCat(prev => ({ ...prev, mood: Math.min(100, prev.mood + 10) }))
+-------------         setOtherCat(prev => ({ ...prev, action: 'hiss', mood: Math.max(0, prev.mood - 15) }))
+--------------        setTimeout(() => setBlanketOffset(50), 3000)
+-------------         break
+-------------         
+-------------       case 'feed':
 -------------diff --git a/model.patch b/model.patch
--------------index e7d7b37..7ec678c 100644
+-------------index 2e936c3..e69de29 100644
 ---------------- a/model.patch
 -------------+++ b/model.patch
--------------@@ -1,731 +0,0 @@
+-------------@@ -1,943 +0,0 @@
 --------------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
---------------index 3a2749d..bdb96ac 100644
+--------------index 9293793..5c196dc 100644
 ----------------- a/frontend_web/src/pages/VirtualBed.tsx
 --------------+++ b/frontend_web/src/pages/VirtualBed.tsx
---------------@@ -859,7 +859,8 @@ export default function VirtualBed() {
---------------               }} />
+--------------@@ -319,6 +319,43 @@ export default function VirtualBed() {
+--------------     }
+--------------   }, [userInteracted, isMuted])
+--------------   
+--------------+  // Monitor horniness meters
+--------------+  useEffect(() => {
+--------------+    let prabhTimer: NodeJS.Timeout | null = null
+--------------+    let sehajTimer: NodeJS.Timeout | null = null
+--------------+    
+--------------+    // Check Prabh meter
+--------------+    if (prabhMeter >= 100) {
+--------------+      prabhTimer = setTimeout(() => {
+--------------+        setShowUnlovedMessage('prabh')
+--------------+        setTimeout(() => setShowUnlovedMessage(null), 4000)
+--------------+      }, 10000) // Show after 10 seconds at 100
+--------------+    }
+--------------+    
+--------------+    // Check Sehaj meter
+--------------+    if (sehajMeter >= 100) {
+--------------+      sehajTimer = setTimeout(() => {
+--------------+        setShowUnlovedMessage('sehaj')
+--------------+        setTimeout(() => setShowUnlovedMessage(null), 4000)
+--------------+      }, 10000) // Show after 10 seconds at 100
+--------------+    }
+--------------+    
+--------------+    return () => {
+--------------+      if (prabhTimer) clearTimeout(prabhTimer)
+--------------+      if (sehajTimer) clearTimeout(sehajTimer)
+--------------+    }
+--------------+  }, [prabhMeter, sehajMeter])
+--------------+  
+--------------+  // Gradually decrease horniness meters over time
+--------------+  useEffect(() => {
+--------------+    const interval = setInterval(() => {
+--------------+      setPrabhMeter(prev => Math.max(0, prev - 1))
+--------------+      setSehajMeter(prev => Math.max(0, prev - 1))
+--------------+    }, 30000) // Decrease by 1 every 30 seconds
+--------------+    
+--------------+    return () => clearInterval(interval)
+--------------+  }, [])
+--------------+  
+--------------   useEffect(() => {
+--------------     if (showEffect) {
+--------------       const timeout = setTimeout(() => setShowEffect(null), 1500)
+--------------@@ -398,6 +435,10 @@ export default function VirtualBed() {
+--------------         } else {
+--------------           setSehajMeter(prev => Math.min(100, prev + 15))
+--------------         }
+--------------+        // Clear unloved message if showing for this cat
+--------------+        if (showUnlovedMessage === cat) {
+--------------+          setShowUnlovedMessage(null)
+--------------+        }
+--------------         setTimeout(() => {
+--------------           setOtherCat(prev => ({ ...prev, action: 'tailWag', mood: Math.min(100, prev.mood + 10) }))
+--------------         }, 400)
+--------------@@ -430,6 +471,10 @@ export default function VirtualBed() {
+--------------         } else {
+--------------           setSehajMeter(prev => Math.min(100, prev + 8))
+--------------         }
+--------------+        // Clear unloved message if showing for this cat
+--------------+        if (showUnlovedMessage === cat) {
+--------------+          setShowUnlovedMessage(null)
+--------------+        }
+--------------         const food = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)]
+--------------         setShowEffect({ type: 'food', x: isLeft ? 35 : 65, y: 40, value: food })
+--------------         break
+--------------@@ -455,6 +500,9 @@ export default function VirtualBed() {
+--------------     setPrabhMeter(prev => Math.min(100, prev + 30))
+--------------     setSehajMeter(prev => Math.min(100, prev + 25))
+--------------     
+--------------+    // Clear any unloved messages since both cats are getting attention
+--------------+    setShowUnlovedMessage(null)
+--------------+    
+--------------     // Play tussle sounds
+--------------     if (!isMuted && tussleRef.current) {
+--------------       tussleRef.current.play()
+--------------@@ -574,6 +622,61 @@ export default function VirtualBed() {
+--------------         )}
+--------------       </AnimatePresence>
+--------------       
+--------------+      {/* Unloved Message Overlay */}
+--------------+      <AnimatePresence>
+--------------+        {showUnlovedMessage && (
+--------------+          <motion.div
+--------------+            initial={{ opacity: 0, y: 50 }}
+--------------+            animate={{ opacity: 1, y: 0 }}
+--------------+            exit={{ opacity: 0, y: -50 }}
+--------------+            transition={{ duration: 0.5 }}
+--------------+            style={{
+--------------+              position: 'fixed',
+--------------+              top: '50%',
+--------------+              left: '50%',
+--------------+              transform: 'translate(-50%, -50%)',
+--------------+              background: 'rgba(0,0,0,0.9)',
+--------------+              borderRadius: 20,
+--------------+              padding: '20px 30px',
+--------------+              zIndex: 999,
+--------------+              border: `2px solid ${showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'}`,
+--------------+              boxShadow: `0 0 30px ${showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'}`,
+--------------+            }}
+--------------+          >
+--------------+            <motion.div
+--------------+              animate={{ 
+--------------+                scale: [1, 1.1, 1],
+--------------+              }}
+--------------+              transition={{ duration: 0.8, repeat: Infinity }}
+--------------+              style={{
+--------------+                textAlign: 'center',
+--------------+                color: 'white',
+--------------+              }}
+--------------+            >
+--------------+              <div style={{ fontSize: 40, marginBottom: 10 }}>
+--------------+                {showUnlovedMessage === 'prabh' ? '🖤💔' : '🧡💔'}
+--------------+              </div>
+--------------+              <p style={{ 
+--------------+                fontSize: 18, 
+--------------+                fontWeight: 600, 
+--------------+                margin: 0,
+--------------+                color: showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'
+--------------+              }}>
+--------------+                {showUnlovedMessage === 'prabh' ? 'Prabh' : 'Sehaj'} feels unloved...
+--------------+              </p>
+--------------+              <p style={{ 
+--------------+                fontSize: 14, 
+--------------+                margin: '8px 0 0 0',
+--------------+                color: 'rgba(255,255,255,0.8)',
+--------------+                fontStyle: 'italic'
+--------------+              }}>
+--------------+                Give some attention! 💕
+--------------+              </p>
+--------------+            </motion.div>
+--------------+          </motion.div>
+--------------+        )}
+--------------+      </AnimatePresence>
+--------------+      
+--------------       {/* Header Controls */}
+--------------       <motion.button
+--------------         whileTap={{ scale: 0.9 }}
+--------------@@ -1123,6 +1226,64 @@ export default function VirtualBed() {
 --------------             </div>
---------------             
----------------            {/* LAYER 5: Sehaj Cat (Left - Ginger) */}
---------------+            {/* LAYER 5: Cat Sprites */}
---------------+            {/* Sehaj Cat (Left - Ginger) */}
---------------             <motion.div
---------------               animate={{
---------------                 y: sehaj.action === 'nudge' || sehaj.action === 'kick' ? [0, -3, 0] : 0,
---------------@@ -867,7 +868,7 @@ export default function VirtualBed() {
---------------               transition={{ duration: 0.3, ease: 'easeOut' }}
---------------               style={{
---------------                 position: 'absolute',
----------------                left: '25%',
---------------+                left: '28%',
---------------                 bottom: 180,
---------------                 zIndex: 3,
---------------               }}
---------------@@ -909,7 +910,7 @@ export default function VirtualBed() {
---------------               )}
---------------             </motion.div>
---------------             
----------------            {/* LAYER 6: Prabh Cat (Right - Grey) */}
---------------+            {/* Prabh Cat (Right - Grey) */}
---------------             <motion.div
---------------               animate={{
---------------                 y: prabh.action === 'nudge' || prabh.action === 'kick' ? [0, -3, 0] : 0,
---------------@@ -917,7 +918,7 @@ export default function VirtualBed() {
---------------               transition={{ duration: 0.3, ease: 'easeOut' }}
---------------               style={{
---------------                 position: 'absolute',
----------------                right: '25%',
---------------+                right: '28%',
---------------                 bottom: 180,
---------------                 zIndex: 3,
---------------               }}
---------------@@ -958,8 +959,36 @@ export default function VirtualBed() {
---------------                 </motion.div>
---------------               )}
---------------             </motion.div>
----------------            
----------------            {/* LAYER 7: Blanket Overlay */}
---------------+
---------------+            {/* LAYER 6: Foreground Props */}
---------------+            {/* Pillow on floor - left */}
---------------+            <div style={{
---------------+              position: 'absolute',
---------------+              bottom: 120,
---------------+              left: 70,
---------------+              width: 50,
---------------+              height: 35,
---------------+              background: 'linear-gradient(135deg, #FF6B9D 0%, #E91E63 100%)',
---------------+              borderRadius: '45%',
---------------+              border: '2px solid #C2185B',
---------------+              zIndex: 4,
---------------+              boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
---------------+              transform: 'rotate(-15deg)',
---------------+            }} />
---------------+
---------------+            {/* Toy on floor - right */}
---------------+            <div style={{
---------------+              position: 'absolute',
---------------+              bottom: 130,
---------------+              right: 80,
---------------+              fontSize: 28,
---------------+              zIndex: 4,
---------------+              transform: 'rotate(20deg)',
---------------+            }}>
---------------+              🎾
+--------------           </div>
+--------------           
+--------------+          {/* Horniness Meters */}
+--------------+          <div style={{
+--------------+            display: 'flex',
+--------------+            justifyContent: 'space-between',
+--------------+            marginTop: 16,
+--------------+            gap: 16,
+--------------+          }}>
+--------------+            <div style={{ flex: 1 }}>
+--------------+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+--------------+                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Affection</p>
+--------------+                <p style={{ color: '#E67E22', fontSize: 11, fontWeight: 600 }}>{sehajMeter}%</p>
+--------------+              </div>
+--------------+              <div style={{
+--------------+                width: '100%',
+--------------+                height: 6,
+--------------+                background: colors.card,
+--------------+                borderRadius: 3,
+--------------+                overflow: 'hidden',
+--------------+                border: `1px solid ${colors.border}`,
+--------------+              }}>
+--------------+                <motion.div
+--------------+                  animate={{ width: `${sehajMeter}%` }}
+--------------+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+--------------+                  style={{
+--------------+                    height: '100%',
+--------------+                    background: sehajMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #E67E22, #F39C12)',
+--------------+                    borderRadius: 3,
+--------------+                  }}
+--------------+                />
+--------------+              </div>
 --------------+            </div>
---------------+
---------------+            {/* Blanket Overlay (between cats) */}
---------------             <motion.div
---------------               animate={{ x: `${blanketOffset - 50}%` }}
---------------               transition={{ type: 'spring', damping: 20, stiffness: 100 }}
---------------@@ -968,8 +997,8 @@ export default function VirtualBed() {
---------------                 bottom: 160,
---------------                 left: '50%',
---------------                 transform: 'translateX(-50%)',
----------------                width: '60%',
----------------                height: 40,
---------------+                width: '50%',
---------------+                height: 60,
---------------                 background: 'linear-gradient(180deg, #E8A5C0 0%, #D88BA5 50%, #C87090 100%)',
---------------                 borderRadius: '18px 18px 8px 8px',
---------------                 border: '3px solid #B86080',
+--------------+            
+--------------+            <div style={{ flex: 1 }}>
+--------------+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+--------------+                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Affection</p>
+--------------+                <p style={{ color: '#8E44AD', fontSize: 11, fontWeight: 600 }}>{prabhMeter}%</p>
+--------------+              </div>
+--------------+              <div style={{
+--------------+                width: '100%',
+--------------+                height: 6,
+--------------+                background: colors.card,
+--------------+                borderRadius: 3,
+--------------+                overflow: 'hidden',
+--------------+                border: `1px solid ${colors.border}`,
+--------------+              }}>
+--------------+                <motion.div
+--------------+                  animate={{ width: `${prabhMeter}%` }}
+--------------+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+--------------+                  style={{
+--------------+                    height: '100%',
+--------------+                    background: prabhMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #8E44AD, #9B59B6)',
+--------------+                    borderRadius: 3,
+--------------+                  }}
+--------------+                />
+--------------+              </div>
+--------------+            </div>
+--------------+          </div>
+--------------+          
+--------------           {/* Control Buttons */}
+--------------           <div style={{
+--------------             display: 'grid',
 --------------diff --git a/model.patch b/model.patch
---------------index cf619fa..e69de29 100644
+--------------index e7d7b37..7ec678c 100644
 ----------------- a/model.patch
 --------------+++ b/model.patch
---------------@@ -1,635 +0,0 @@
+--------------@@ -1,731 +0,0 @@
 ---------------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
----------------index e1ca8c3..3a2749d 100644
+---------------index 3a2749d..bdb96ac 100644
 ------------------ a/frontend_web/src/pages/VirtualBed.tsx
 ---------------+++ b/frontend_web/src/pages/VirtualBed.tsx
----------------@@ -629,94 +629,237 @@ export default function VirtualBed() {
----------------           Mr & Mrs 🐱💕🐱
----------------         </h1>
----------------         
-----------------        {/* Room Scene */}
----------------+        {/* Room Scene Container */}
----------------         <motion.div
----------------           style={{
----------------             background: colors.glass,
----------------             backdropFilter: 'blur(20px)',
----------------             border: `1px solid ${colors.border}`,
----------------             borderRadius: 24,
-----------------            padding: 20,
----------------+            padding: 0,
----------------             position: 'relative',
----------------             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
----------------+            overflow: 'hidden',
----------------           }}
----------------         >
-----------------          {/* Rainy Window - Real Video Loop */}
----------------+          {/* Room Environment - Full Scene */}
----------------           <div style={{
-----------------            width: 180,
-----------------            height: 130,
-----------------            border: '6px solid #5D4037',
-----------------            borderRadius: 12,
-----------------            margin: '0 auto 16px',
----------------             position: 'relative',
----------------+            width: '100%',
----------------+            height: 450,
----------------             overflow: 'hidden',
----------------+            borderRadius: 24,
----------------           }}>
-----------------            {/* Background Video */}
-----------------            <video
-----------------              autoPlay
-----------------              loop
-----------------              muted={isMuted}
-----------------              playsInline
-----------------              style={{
-----------------                position: 'absolute',
-----------------                top: 0,
-----------------                left: 0,
-----------------                width: '100%',
-----------------                height: '100%',
-----------------                objectFit: 'cover',
-----------------                zIndex: 0,
-----------------              }}
-----------------              src="/window-rain.mov"
-----------------            />
-----------------            
-----------------            {/* Window frame */}
----------------+            {/* LAYER 1: Wall Background (full width) */}
----------------             <div style={{
----------------               position: 'absolute',
----------------               top: 0,
-----------------              left: '50%',
-----------------              width: 6,
----------------+              left: 0,
----------------+              width: '100%',
----------------               height: '100%',
-----------------              background: '#5D4037',
-----------------              transform: 'translateX(-50%)',
-----------------              zIndex: 1,
----------------+              backgroundImage: 'url(/wall-background.jpeg)',
----------------+              backgroundSize: 'cover',
----------------+              backgroundPosition: 'center',
----------------+              backgroundRepeat: 'no-repeat',
----------------+              zIndex: 0,
----------------             }} />
----------------+
----------------+            {/* Rainy Window on Wall */}
----------------             <div style={{
----------------               position: 'absolute',
-----------------              top: '50%',
-----------------              left: 0,
-----------------              width: '100%',
-----------------              height: 6,
-----------------              background: '#5D4037',
-----------------              transform: 'translateY(-50%)',
----------------+              top: 20,
----------------+              right: 30,
----------------+              width: 120,
----------------+              height: 90,
----------------+              background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
----------------+              border: '4px solid #5D4037',
----------------+              borderRadius: 8,
----------------+              overflow: 'hidden',
----------------               zIndex: 1,
-----------------            }} />
-----------------          </div>
-----------------          
-----------------          {/* Floor Scene Container */}
-----------------          <div style={{
-----------------            position: 'relative',
-----------------            width: '100%',
-----------------            height: 200,
-----------------            display: 'flex',
-----------------            alignItems: 'flex-end',
-----------------            justifyContent: 'center',
-----------------            borderRadius: 16,
-----------------            overflow: 'hidden',
-----------------          }}>
-----------------            {/* Real Cartoon Floor Background from Attached Image */}
----------------+            }}>
----------------+              {/* Looping rain video inside window */}
----------------+              <video
----------------+                autoPlay
----------------+                loop
----------------+                muted={isMuted}
----------------+                playsInline
----------------+                style={{
----------------+                  position: 'absolute',
----------------+                  top: 0,
----------------+                  left: 0,
----------------+                  width: '100%',
----------------+                  height: '100%',
----------------+                  objectFit: 'cover',
----------------+                  zIndex: 0,
----------------+                }}
----------------+                src="/window-rain.mov"
----------------+              />
----------------+              
----------------+              {/* Window frame overlays */}
----------------+              <div style={{
----------------+                position: 'absolute',
----------------+                top: 0,
----------------+                left: '50%',
----------------+                width: 4,
----------------+                height: '100%',
----------------+                background: '#5D4037',
----------------+                transform: 'translateX(-50%)',
----------------+                zIndex: 1,
----------------+              }} />
----------------+              <div style={{
----------------+                position: 'absolute',
----------------+                top: '50%',
----------------+                left: 0,
----------------+                width: '100%',
----------------+                height: 4,
----------------+                background: '#5D4037',
----------------+                transform: 'translateY(-50%)',
----------------+                zIndex: 1,
----------------+              }} />
----------------+            </div>
----------------+
----------------+            {/* LAYER 2: Floor/Base Surface */}
----------------             <div style={{
----------------               position: 'absolute',
----------------               bottom: 0,
----------------+              left: 0,
----------------               width: '100%',
-----------------              height: '100%',
----------------+              height: '50%',
----------------               backgroundImage: 'url(/floor.jpeg)',
----------------               backgroundSize: 'cover',
----------------               backgroundPosition: 'center bottom',
----------------               backgroundRepeat: 'no-repeat',
-----------------              zIndex: 0,
----------------+              zIndex: 1,
----------------             }} />
----------------+
----------------+            {/* LAYER 3: Rug (centered, below characters) */}
----------------+            <div style={{
----------------+              position: 'absolute',
----------------+              bottom: 40,
----------------+              left: '50%',
----------------+              transform: 'translateX(-50%)',
----------------+              width: '70%',
----------------+              maxWidth: 350,
----------------+              height: 140,
----------------+              backgroundImage: 'url(/rug.png)',
----------------+              backgroundSize: 'contain',
----------------+              backgroundPosition: 'center',
----------------+              backgroundRepeat: 'no-repeat',
----------------+              zIndex: 2,
----------------+            }} />
----------------+
----------------+            {/* LAYER 4: Furniture Props */}
----------------+            {/* Small couch/bean bag - left side */}
----------------+            <div style={{
----------------+              position: 'absolute',
----------------+              bottom: 60,
----------------+              left: 20,
----------------+              width: 80,
----------------+              height: 70,
----------------+              background: 'linear-gradient(135deg, #8B7355 0%, #6B5644 100%)',
----------------+              borderRadius: '45% 45% 20% 20%',
----------------+              border: '3px solid #5D4037',
----------------+              zIndex: 2,
----------------+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
----------------+            }}>
----------------+              {/* Couch cushion detail */}
----------------+              <div style={{
----------------+                position: 'absolute',
----------------+                top: 10,
----------------+                left: '50%',
----------------+                transform: 'translateX(-50%)',
----------------+                width: '60%',
----------------+                height: 25,
----------------+                background: 'rgba(255,255,255,0.1)',
----------------+                borderRadius: 12,
----------------+              }} />
----------------+            </div>
----------------+
----------------+            {/* Toy box - right side */}
----------------+            <div style={{
----------------+              position: 'absolute',
----------------+              bottom: 55,
----------------+              right: 25,
----------------+              width: 70,
----------------+              height: 60,
----------------+              background: 'linear-gradient(135deg, #E8A5C0 0%, #D88BA5 100%)',
----------------+              borderRadius: 8,
----------------+              border: '3px solid #B86080',
----------------+              zIndex: 2,
----------------+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
----------------+            }}>
----------------+              {/* Toy sticking out */}
----------------+              <div style={{
----------------+                position: 'absolute',
----------------+                top: -15,
----------------+                right: 10,
----------------+                fontSize: 24,
----------------+              }}>
----------------+                🧸
----------------+              </div>
----------------+            </div>
----------------+
----------------+            {/* Wall shelf - top left */}
----------------+            <div style={{
----------------+              position: 'absolute',
----------------+              top: 120,
----------------+              left: 30,
----------------+              width: 90,
----------------+              height: 8,
----------------+              background: '#8B6F47',
----------------+              borderRadius: 4,
----------------+              zIndex: 1,
----------------+              boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
----------------+            }}>
----------------+              {/* Tiny plant on shelf */}
----------------+              <div style={{
----------------+                position: 'absolute',
----------------+                top: -25,
----------------+                left: 15,
----------------+                fontSize: 20,
----------------+              }}>
----------------+                🪴
----------------+              </div>
----------------+              {/* Tiny frame on shelf */}
----------------+              <div style={{
----------------+                position: 'absolute',
----------------+                top: -20,
----------------+                right: 15,
----------------+                width: 18,
----------------+                height: 18,
----------------+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
----------------+                border: '2px solid #8B6914',
----------------+                borderRadius: 3,
----------------+              }} />
----------------+            </div>
----------------+
----------------+            {/* Small lamp - top right */}
----------------+            <div style={{
----------------+              position: 'absolute',
----------------+              top: 130,
----------------+              right: 40,
----------------+              zIndex: 1,
----------------+            }}>
----------------+              {/* Lamp shade */}
----------------+              <div style={{
----------------+                width: 0,
----------------+                height: 0,
----------------+                borderLeft: '20px solid transparent',
----------------+                borderRight: '20px solid transparent',
----------------+                borderBottom: '30px solid #FFE4B5',
----------------+                margin: '0 auto',
----------------+              }} />
----------------+              {/* Lamp base */}
----------------+              <div style={{
----------------+                width: 12,
----------------+                height: 25,
----------------+                background: '#8B7355',
----------------+                margin: '0 auto',
----------------+                borderRadius: '0 0 6px 6px',
----------------+              }} />
----------------+            </div>
+---------------@@ -859,7 +859,8 @@ export default function VirtualBed() {
+---------------               }} />
+---------------             </div>
 ---------------             
-----------------            {/* Sehaj Cat (Left - Ginger) */}
----------------+            {/* LAYER 5: Sehaj Cat (Left - Ginger) */}
+----------------            {/* LAYER 5: Sehaj Cat (Left - Ginger) */}
+---------------+            {/* LAYER 5: Cat Sprites */}
+---------------+            {/* Sehaj Cat (Left - Ginger) */}
 ---------------             <motion.div
 ---------------               animate={{
 ---------------                 y: sehaj.action === 'nudge' || sehaj.action === 'kick' ? [0, -3, 0] : 0,
----------------@@ -724,9 +867,9 @@ export default function VirtualBed() {
+---------------@@ -867,7 +868,7 @@ export default function VirtualBed() {
 ---------------               transition={{ duration: 0.3, ease: 'easeOut' }}
 ---------------               style={{
 ---------------                 position: 'absolute',
-----------------                left: '18%',
-----------------                bottom: 55,
-----------------                zIndex: 2,
----------------+                left: '25%',
----------------+                bottom: 180,
----------------+                zIndex: 3,
+----------------                left: '25%',
+---------------+                left: '28%',
+---------------                 bottom: 180,
+---------------                 zIndex: 3,
 ---------------               }}
----------------             >
----------------               <Sprite
----------------@@ -766,7 +909,7 @@ export default function VirtualBed() {
+---------------@@ -909,7 +910,7 @@ export default function VirtualBed() {
 ---------------               )}
 ---------------             </motion.div>
 ---------------             
-----------------            {/* Prabh Cat (Right - Grey) */}
----------------+            {/* LAYER 6: Prabh Cat (Right - Grey) */}
+----------------            {/* LAYER 6: Prabh Cat (Right - Grey) */}
+---------------+            {/* Prabh Cat (Right - Grey) */}
 ---------------             <motion.div
 ---------------               animate={{
 ---------------                 y: prabh.action === 'nudge' || prabh.action === 'kick' ? [0, -3, 0] : 0,
----------------@@ -774,9 +917,9 @@ export default function VirtualBed() {
+---------------@@ -917,7 +918,7 @@ export default function VirtualBed() {
 ---------------               transition={{ duration: 0.3, ease: 'easeOut' }}
 ---------------               style={{
 ---------------                 position: 'absolute',
-----------------                right: '18%',
-----------------                bottom: 55,
-----------------                zIndex: 2,
----------------+                right: '25%',
----------------+                bottom: 180,
----------------+                zIndex: 3,
+----------------                right: '25%',
+---------------+                right: '28%',
+---------------                 bottom: 180,
+---------------                 zIndex: 3,
 ---------------               }}
----------------             >
----------------               <Sprite
----------------@@ -816,19 +959,21 @@ export default function VirtualBed() {
+---------------@@ -958,8 +959,36 @@ export default function VirtualBed() {
+---------------                 </motion.div>
 ---------------               )}
 ---------------             </motion.div>
----------------             
-----------------            {/* Blanket Overlay */}
----------------+            {/* LAYER 7: Blanket Overlay */}
+----------------            
+----------------            {/* LAYER 7: Blanket Overlay */}
+---------------+
+---------------+            {/* LAYER 6: Foreground Props */}
+---------------+            {/* Pillow on floor - left */}
+---------------+            <div style={{
+---------------+              position: 'absolute',
+---------------+              bottom: 120,
+---------------+              left: 70,
+---------------+              width: 50,
+---------------+              height: 35,
+---------------+              background: 'linear-gradient(135deg, #FF6B9D 0%, #E91E63 100%)',
+---------------+              borderRadius: '45%',
+---------------+              border: '2px solid #C2185B',
+---------------+              zIndex: 4,
+---------------+              boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
+---------------+              transform: 'rotate(-15deg)',
+---------------+            }} />
+---------------+
+---------------+            {/* Toy on floor - right */}
+---------------+            <div style={{
+---------------+              position: 'absolute',
+---------------+              bottom: 130,
+---------------+              right: 80,
+---------------+              fontSize: 28,
+---------------+              zIndex: 4,
+---------------+              transform: 'rotate(20deg)',
+---------------+            }}>
+---------------+              🎾
+---------------+            </div>
+---------------+
+---------------+            {/* Blanket Overlay (between cats) */}
 ---------------             <motion.div
 ---------------               animate={{ x: `${blanketOffset - 50}%` }}
 ---------------               transition={{ type: 'spring', damping: 20, stiffness: 100 }}
----------------               style={{
----------------                 position: 'absolute',
-----------------                bottom: 15,
-----------------                width: '70%',
-----------------                height: 50,
----------------+                bottom: 160,
----------------+                left: '50%',
----------------+                transform: 'translateX(-50%)',
----------------+                width: '60%',
----------------+                height: 40,
+---------------@@ -968,8 +997,8 @@ export default function VirtualBed() {
+---------------                 bottom: 160,
+---------------                 left: '50%',
+---------------                 transform: 'translateX(-50%)',
+----------------                width: '60%',
+----------------                height: 40,
+---------------+                width: '50%',
+---------------+                height: 60,
 ---------------                 background: 'linear-gradient(180deg, #E8A5C0 0%, #D88BA5 50%, #C87090 100%)',
 ---------------                 borderRadius: '18px 18px 8px 8px',
 ---------------                 border: '3px solid #B86080',
-----------------                zIndex: 3,
----------------+                zIndex: 4,
----------------                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
----------------               }}
----------------             >
 ---------------diff --git a/model.patch b/model.patch
----------------index 4c5f2ab..e0eb3c1 100644
+---------------index cf619fa..e69de29 100644
 ------------------ a/model.patch
 ---------------+++ b/model.patch
----------------@@ -1,270 +0,0 @@
+---------------@@ -1,635 +0,0 @@
 ----------------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
-----------------index e352115..e1ca8c3 100644
+----------------index e1ca8c3..3a2749d 100644
 ------------------- a/frontend_web/src/pages/VirtualBed.tsx
 ----------------+++ b/frontend_web/src/pages/VirtualBed.tsx
-----------------@@ -655,7 +655,7 @@ export default function VirtualBed() {
-----------------             <video
-----------------               autoPlay
-----------------               loop
------------------              muted
-----------------+              muted={isMuted}
-----------------               playsInline
+----------------@@ -629,94 +629,237 @@ export default function VirtualBed() {
+----------------           Mr & Mrs 🐱💕🐱
+----------------         </h1>
+----------------         
+-----------------        {/* Room Scene */}
+----------------+        {/* Room Scene Container */}
+----------------         <motion.div
+----------------           style={{
+----------------             background: colors.glass,
+----------------             backdropFilter: 'blur(20px)',
+----------------             border: `1px solid ${colors.border}`,
+----------------             borderRadius: 24,
+-----------------            padding: 20,
+----------------+            padding: 0,
+----------------             position: 'relative',
+----------------             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
+----------------+            overflow: 'hidden',
+----------------           }}
+----------------         >
+-----------------          {/* Rainy Window - Real Video Loop */}
+----------------+          {/* Room Environment - Full Scene */}
+----------------           <div style={{
+-----------------            width: 180,
+-----------------            height: 130,
+-----------------            border: '6px solid #5D4037',
+-----------------            borderRadius: 12,
+-----------------            margin: '0 auto 16px',
+----------------             position: 'relative',
+----------------+            width: '100%',
+----------------+            height: 450,
+----------------             overflow: 'hidden',
+----------------+            borderRadius: 24,
+----------------           }}>
+-----------------            {/* Background Video */}
+-----------------            <video
+-----------------              autoPlay
+-----------------              loop
+-----------------              muted={isMuted}
+-----------------              playsInline
+-----------------              style={{
+-----------------                position: 'absolute',
+-----------------                top: 0,
+-----------------                left: 0,
+-----------------                width: '100%',
+-----------------                height: '100%',
+-----------------                objectFit: 'cover',
+-----------------                zIndex: 0,
+-----------------              }}
+-----------------              src="/window-rain.mov"
+-----------------            />
+-----------------            
+-----------------            {/* Window frame */}
+----------------+            {/* LAYER 1: Wall Background (full width) */}
+----------------             <div style={{
+----------------               position: 'absolute',
+----------------               top: 0,
+-----------------              left: '50%',
+-----------------              width: 6,
+----------------+              left: 0,
+----------------+              width: '100%',
+----------------               height: '100%',
+-----------------              background: '#5D4037',
+-----------------              transform: 'translateX(-50%)',
+-----------------              zIndex: 1,
+----------------+              backgroundImage: 'url(/wall-background.jpeg)',
+----------------+              backgroundSize: 'cover',
+----------------+              backgroundPosition: 'center',
+----------------+              backgroundRepeat: 'no-repeat',
+----------------+              zIndex: 0,
+----------------             }} />
+----------------+
+----------------+            {/* Rainy Window on Wall */}
+----------------             <div style={{
+----------------               position: 'absolute',
+-----------------              top: '50%',
+-----------------              left: 0,
+-----------------              width: '100%',
+-----------------              height: 6,
+-----------------              background: '#5D4037',
+-----------------              transform: 'translateY(-50%)',
+----------------+              top: 20,
+----------------+              right: 30,
+----------------+              width: 120,
+----------------+              height: 90,
+----------------+              background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
+----------------+              border: '4px solid #5D4037',
+----------------+              borderRadius: 8,
+----------------+              overflow: 'hidden',
+----------------               zIndex: 1,
+-----------------            }} />
+-----------------          </div>
+-----------------          
+-----------------          {/* Floor Scene Container */}
+-----------------          <div style={{
+-----------------            position: 'relative',
+-----------------            width: '100%',
+-----------------            height: 200,
+-----------------            display: 'flex',
+-----------------            alignItems: 'flex-end',
+-----------------            justifyContent: 'center',
+-----------------            borderRadius: 16,
+-----------------            overflow: 'hidden',
+-----------------          }}>
+-----------------            {/* Real Cartoon Floor Background from Attached Image */}
+----------------+            }}>
+----------------+              {/* Looping rain video inside window */}
+----------------+              <video
+----------------+                autoPlay
+----------------+                loop
+----------------+                muted={isMuted}
+----------------+                playsInline
+----------------+                style={{
+----------------+                  position: 'absolute',
+----------------+                  top: 0,
+----------------+                  left: 0,
+----------------+                  width: '100%',
+----------------+                  height: '100%',
+----------------+                  objectFit: 'cover',
+----------------+                  zIndex: 0,
+----------------+                }}
+----------------+                src="/window-rain.mov"
+----------------+              />
+----------------+              
+----------------+              {/* Window frame overlays */}
+----------------+              <div style={{
+----------------+                position: 'absolute',
+----------------+                top: 0,
+----------------+                left: '50%',
+----------------+                width: 4,
+----------------+                height: '100%',
+----------------+                background: '#5D4037',
+----------------+                transform: 'translateX(-50%)',
+----------------+                zIndex: 1,
+----------------+              }} />
+----------------+              <div style={{
+----------------+                position: 'absolute',
+----------------+                top: '50%',
+----------------+                left: 0,
+----------------+                width: '100%',
+----------------+                height: 4,
+----------------+                background: '#5D4037',
+----------------+                transform: 'translateY(-50%)',
+----------------+                zIndex: 1,
+----------------+              }} />
+----------------+            </div>
+----------------+
+----------------+            {/* LAYER 2: Floor/Base Surface */}
+----------------             <div style={{
+----------------               position: 'absolute',
+----------------               bottom: 0,
+----------------+              left: 0,
+----------------               width: '100%',
+-----------------              height: '100%',
+----------------+              height: '50%',
+----------------               backgroundImage: 'url(/floor.jpeg)',
+----------------               backgroundSize: 'cover',
+----------------               backgroundPosition: 'center bottom',
+----------------               backgroundRepeat: 'no-repeat',
+-----------------              zIndex: 0,
+----------------+              zIndex: 1,
+----------------             }} />
+----------------+
+----------------+            {/* LAYER 3: Rug (centered, below characters) */}
+----------------+            <div style={{
+----------------+              position: 'absolute',
+----------------+              bottom: 40,
+----------------+              left: '50%',
+----------------+              transform: 'translateX(-50%)',
+----------------+              width: '70%',
+----------------+              maxWidth: 350,
+----------------+              height: 140,
+----------------+              backgroundImage: 'url(/rug.png)',
+----------------+              backgroundSize: 'contain',
+----------------+              backgroundPosition: 'center',
+----------------+              backgroundRepeat: 'no-repeat',
+----------------+              zIndex: 2,
+----------------+            }} />
+----------------+
+----------------+            {/* LAYER 4: Furniture Props */}
+----------------+            {/* Small couch/bean bag - left side */}
+----------------+            <div style={{
+----------------+              position: 'absolute',
+----------------+              bottom: 60,
+----------------+              left: 20,
+----------------+              width: 80,
+----------------+              height: 70,
+----------------+              background: 'linear-gradient(135deg, #8B7355 0%, #6B5644 100%)',
+----------------+              borderRadius: '45% 45% 20% 20%',
+----------------+              border: '3px solid #5D4037',
+----------------+              zIndex: 2,
+----------------+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+----------------+            }}>
+----------------+              {/* Couch cushion detail */}
+----------------+              <div style={{
+----------------+                position: 'absolute',
+----------------+                top: 10,
+----------------+                left: '50%',
+----------------+                transform: 'translateX(-50%)',
+----------------+                width: '60%',
+----------------+                height: 25,
+----------------+                background: 'rgba(255,255,255,0.1)',
+----------------+                borderRadius: 12,
+----------------+              }} />
+----------------+            </div>
+----------------+
+----------------+            {/* Toy box - right side */}
+----------------+            <div style={{
+----------------+              position: 'absolute',
+----------------+              bottom: 55,
+----------------+              right: 25,
+----------------+              width: 70,
+----------------+              height: 60,
+----------------+              background: 'linear-gradient(135deg, #E8A5C0 0%, #D88BA5 100%)',
+----------------+              borderRadius: 8,
+----------------+              border: '3px solid #B86080',
+----------------+              zIndex: 2,
+----------------+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+----------------+            }}>
+----------------+              {/* Toy sticking out */}
+----------------+              <div style={{
+----------------+                position: 'absolute',
+----------------+                top: -15,
+----------------+                right: 10,
+----------------+                fontSize: 24,
+----------------+              }}>
+----------------+                🧸
+----------------+              </div>
+----------------+            </div>
+----------------+
+----------------+            {/* Wall shelf - top left */}
+----------------+            <div style={{
+----------------+              position: 'absolute',
+----------------+              top: 120,
+----------------+              left: 30,
+----------------+              width: 90,
+----------------+              height: 8,
+----------------+              background: '#8B6F47',
+----------------+              borderRadius: 4,
+----------------+              zIndex: 1,
+----------------+              boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
+----------------+            }}>
+----------------+              {/* Tiny plant on shelf */}
+----------------+              <div style={{
+----------------+                position: 'absolute',
+----------------+                top: -25,
+----------------+                left: 15,
+----------------+                fontSize: 20,
+----------------+              }}>
+----------------+                🪴
+----------------+              </div>
+----------------+              {/* Tiny frame on shelf */}
+----------------+              <div style={{
+----------------+                position: 'absolute',
+----------------+                top: -20,
+----------------+                right: 15,
+----------------+                width: 18,
+----------------+                height: 18,
+----------------+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+----------------+                border: '2px solid #8B6914',
+----------------+                borderRadius: 3,
+----------------+              }} />
+----------------+            </div>
+----------------+
+----------------+            {/* Small lamp - top right */}
+----------------+            <div style={{
+----------------+              position: 'absolute',
+----------------+              top: 130,
+----------------+              right: 40,
+----------------+              zIndex: 1,
+----------------+            }}>
+----------------+              {/* Lamp shade */}
+----------------+              <div style={{
+----------------+                width: 0,
+----------------+                height: 0,
+----------------+                borderLeft: '20px solid transparent',
+----------------+                borderRight: '20px solid transparent',
+----------------+                borderBottom: '30px solid #FFE4B5',
+----------------+                margin: '0 auto',
+----------------+              }} />
+----------------+              {/* Lamp base */}
+----------------+              <div style={{
+----------------+                width: 12,
+----------------+                height: 25,
+----------------+                background: '#8B7355',
+----------------+                margin: '0 auto',
+----------------+                borderRadius: '0 0 6px 6px',
+----------------+              }} />
+----------------+            </div>
+----------------             
+-----------------            {/* Sehaj Cat (Left - Ginger) */}
+----------------+            {/* LAYER 5: Sehaj Cat (Left - Ginger) */}
+----------------             <motion.div
+----------------               animate={{
+----------------                 y: sehaj.action === 'nudge' || sehaj.action === 'kick' ? [0, -3, 0] : 0,
+----------------@@ -724,9 +867,9 @@ export default function VirtualBed() {
+----------------               transition={{ duration: 0.3, ease: 'easeOut' }}
 ----------------               style={{
 ----------------                 position: 'absolute',
-----------------@@ -666,9 +666,8 @@ export default function VirtualBed() {
-----------------                 objectFit: 'cover',
-----------------                 zIndex: 0,
+-----------------                left: '18%',
+-----------------                bottom: 55,
+-----------------                zIndex: 2,
+----------------+                left: '25%',
+----------------+                bottom: 180,
+----------------+                zIndex: 3,
 ----------------               }}
------------------            >
------------------              <source src="/window-rain.mov" type="video/mp4" />
------------------            </video>
-----------------+              src="/window-rain.mov"
-----------------+            />
+----------------             >
+----------------               <Sprite
+----------------@@ -766,7 +909,7 @@ export default function VirtualBed() {
+----------------               )}
+----------------             </motion.div>
 ----------------             
-----------------             {/* Window frame */}
-----------------             <div style={{
+-----------------            {/* Prabh Cat (Right - Grey) */}
+----------------+            {/* LAYER 6: Prabh Cat (Right - Grey) */}
+----------------             <motion.div
+----------------               animate={{
+----------------                 y: prabh.action === 'nudge' || prabh.action === 'kick' ? [0, -3, 0] : 0,
+----------------@@ -774,9 +917,9 @@ export default function VirtualBed() {
+----------------               transition={{ duration: 0.3, ease: 'easeOut' }}
+----------------               style={{
+----------------                 position: 'absolute',
+-----------------                right: '18%',
+-----------------                bottom: 55,
+-----------------                zIndex: 2,
+----------------+                right: '25%',
+----------------+                bottom: 180,
+----------------+                zIndex: 3,
+----------------               }}
+----------------             >
+----------------               <Sprite
+----------------@@ -816,19 +959,21 @@ export default function VirtualBed() {
+----------------               )}
+----------------             </motion.div>
+----------------             
+-----------------            {/* Blanket Overlay */}
+----------------+            {/* LAYER 7: Blanket Overlay */}
+----------------             <motion.div
+----------------               animate={{ x: `${blanketOffset - 50}%` }}
+----------------               transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+----------------               style={{
+----------------                 position: 'absolute',
+-----------------                bottom: 15,
+-----------------                width: '70%',
+-----------------                height: 50,
+----------------+                bottom: 160,
+----------------+                left: '50%',
+----------------+                transform: 'translateX(-50%)',
+----------------+                width: '60%',
+----------------+                height: 40,
+----------------                 background: 'linear-gradient(180deg, #E8A5C0 0%, #D88BA5 50%, #C87090 100%)',
+----------------                 borderRadius: '18px 18px 8px 8px',
+----------------                 border: '3px solid #B86080',
+-----------------                zIndex: 3,
+----------------+                zIndex: 4,
+----------------                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+----------------               }}
+----------------             >
 ----------------diff --git a/model.patch b/model.patch
-----------------index e084416..e69de29 100644
+----------------index 4c5f2ab..e0eb3c1 100644
 ------------------- a/model.patch
 ----------------+++ b/model.patch
-----------------@@ -1,240 +0,0 @@
+----------------@@ -1,270 +0,0 @@
 -----------------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
------------------index 0a7cb7a..e352115 100644
+-----------------index e352115..e1ca8c3 100644
 -------------------- a/frontend_web/src/pages/VirtualBed.tsx
 -----------------+++ b/frontend_web/src/pages/VirtualBed.tsx
------------------@@ -641,17 +641,35 @@ export default function VirtualBed() {
------------------             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
------------------           }}
------------------         >
-------------------          {/* Rainy Window - Always rainy GIF style */}
------------------+          {/* Rainy Window - Real Video Loop */}
------------------           <div style={{
------------------             width: 180,
------------------             height: 130,
-------------------            background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
------------------             border: '6px solid #5D4037',
------------------             borderRadius: 12,
------------------             margin: '0 auto 16px',
------------------             position: 'relative',
------------------             overflow: 'hidden',
------------------           }}>
------------------+            {/* Background Video */}
------------------+            <video
------------------+              autoPlay
------------------+              loop
------------------+              muted
------------------+              playsInline
------------------+              style={{
------------------+                position: 'absolute',
------------------+                top: 0,
------------------+                left: 0,
------------------+                width: '100%',
------------------+                height: '100%',
------------------+                objectFit: 'cover',
------------------+                zIndex: 0,
------------------+              }}
------------------+            >
------------------+              <source src="/window-rain.mov" type="video/mp4" />
------------------+            </video>
------------------+            
+-----------------@@ -655,7 +655,7 @@ export default function VirtualBed() {
+-----------------             <video
+-----------------               autoPlay
+-----------------               loop
+------------------              muted
+-----------------+              muted={isMuted}
+-----------------               playsInline
+-----------------               style={{
+-----------------                 position: 'absolute',
+-----------------@@ -666,9 +666,8 @@ export default function VirtualBed() {
+-----------------                 objectFit: 'cover',
+-----------------                 zIndex: 0,
+-----------------               }}
+------------------            >
+------------------              <source src="/window-rain.mov" type="video/mp4" />
+------------------            </video>
+-----------------+              src="/window-rain.mov"
+-----------------+            />
+-----------------             
 -----------------             {/* Window frame */}
 -----------------             <div style={{
------------------               position: 'absolute',
------------------@@ -661,6 +679,7 @@ export default function VirtualBed() {
------------------               height: '100%',
------------------               background: '#5D4037',
------------------               transform: 'translateX(-50%)',
------------------+              zIndex: 1,
------------------             }} />
------------------             <div style={{
------------------               position: 'absolute',
------------------@@ -670,46 +689,8 @@ export default function VirtualBed() {
------------------               height: 6,
------------------               background: '#5D4037',
------------------               transform: 'translateY(-50%)',
------------------+              zIndex: 1,
------------------             }} />
-------------------            
-------------------            {/* Rain animation - always on */}
-------------------            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
-------------------              {[...Array(40)].map((_, i) => (
-------------------                <motion.div
-------------------                  key={i}
-------------------                  initial={{ y: -20, x: `${Math.random() * 100}%`, opacity: 0.7 }}
-------------------                  animate={{ y: 150, opacity: [0.7, 0.4, 0.7] }}
-------------------                  transition={{
-------------------                    duration: 0.6 + Math.random() * 0.4,
-------------------                    repeat: Infinity,
-------------------                    delay: Math.random() * 0.6,
-------------------                    ease: 'linear',
-------------------                  }}
-------------------                  style={{
-------------------                    position: 'absolute',
-------------------                    width: 2,
-------------------                    height: 12,
-------------------                    background: 'linear-gradient(180deg, rgba(150, 200, 255, 0.8), rgba(150, 200, 255, 0.2))',
-------------------                    borderRadius: 2,
-------------------                  }}
-------------------                />
-------------------              ))}
-------------------            </div>
-------------------            
-------------------            {/* Distant lightning flash occasionally */}
-------------------            <motion.div
-------------------              animate={{ opacity: [0, 0, 0, 0, 0.3, 0, 0.1, 0] }}
-------------------              transition={{ duration: 8, repeat: Infinity, repeatDelay: 5 }}
-------------------              style={{
-------------------                position: 'absolute',
-------------------                top: 0,
-------------------                left: 0,
-------------------                right: 0,
-------------------                bottom: 0,
-------------------                background: 'white',
-------------------                pointerEvents: 'none',
-------------------              }}
-------------------            />
------------------           </div>
------------------           
------------------           {/* Floor Scene Container */}
------------------@@ -723,49 +704,18 @@ export default function VirtualBed() {
------------------             borderRadius: 16,
------------------             overflow: 'hidden',
------------------           }}>
-------------------            {/* Cartoon Floor Background */}
------------------+            {/* Real Cartoon Floor Background from Attached Image */}
------------------             <div style={{
------------------               position: 'absolute',
------------------               bottom: 0,
------------------               width: '100%',
------------------               height: '100%',
-------------------              background: `
-------------------                linear-gradient(180deg, 
-------------------                  transparent 0%, 
-------------------                  rgba(139, 90, 43, 0.1) 40%,
-------------------                  rgba(139, 90, 43, 0.3) 60%,
-------------------                  #DEB887 70%,
-------------------                  #D2A679 85%,
-------------------                  #C4956A 100%
-------------------                )
-------------------              `,
------------------+              backgroundImage: 'url(/floor.jpeg)',
------------------+              backgroundSize: 'cover',
------------------+              backgroundPosition: 'center bottom',
------------------+              backgroundRepeat: 'no-repeat',
------------------               zIndex: 0,
-------------------            }}>
-------------------              {/* Wood grain pattern */}
-------------------              <div style={{
-------------------                position: 'absolute',
-------------------                bottom: 0,
-------------------                left: 0,
-------------------                right: 0,
-------------------                height: '40%',
-------------------                background: `
-------------------                  repeating-linear-gradient(
-------------------                    90deg,
-------------------                    transparent,
-------------------                    transparent 60px,
-------------------                    rgba(139, 69, 19, 0.15) 60px,
-------------------                    rgba(139, 69, 19, 0.15) 62px
-------------------                  ),
-------------------                  repeating-linear-gradient(
-------------------                    0deg,
-------------------                    transparent,
-------------------                    transparent 15px,
-------------------                    rgba(139, 69, 19, 0.08) 15px,
-------------------                    rgba(139, 69, 19, 0.08) 16px
-------------------                  )
-------------------                `,
-------------------              }} />
-------------------            </div>
------------------+            }} />
------------------             
------------------             {/* Sehaj Cat (Left - Ginger) */}
------------------             <motion.div
 -----------------diff --git a/model.patch b/model.patch
------------------index d4077ef..a7d585b 100644
+-----------------index e084416..e69de29 100644
 -------------------- a/model.patch
 -----------------+++ b/model.patch
------------------@@ -1,81 +0,0 @@
-------------------diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
-------------------index fdd16db..5cc8e72 100644
---------------------- a/frontend_web/src/pages/TortureChamber.tsx
-------------------+++ b/frontend_web/src/pages/TortureChamber.tsx
-------------------@@ -193,20 +193,22 @@ export default function TortureChamber() {
+-----------------@@ -1,240 +0,0 @@
+------------------diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
+------------------index 0a7cb7a..e352115 100644
+--------------------- a/frontend_web/src/pages/VirtualBed.tsx
+------------------+++ b/frontend_web/src/pages/VirtualBed.tsx
+------------------@@ -641,17 +641,35 @@ export default function VirtualBed() {
+------------------             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
+------------------           }}
+------------------         >
+-------------------          {/* Rainy Window - Always rainy GIF style */}
+------------------+          {/* Rainy Window - Real Video Loop */}
 ------------------           <div style={{
-------------------             width: '100%',
-------------------             height: 28,
--------------------            background: 'rgba(255,255,255,0.1)',
-------------------+            background: 'rgba(255,255,255,0.05)',
-------------------+            backdropFilter: 'blur(10px)',
-------------------             borderRadius: 14,
-------------------             overflow: 'hidden',
+------------------             width: 180,
+------------------             height: 130,
+-------------------            background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
+------------------             border: '6px solid #5D4037',
+------------------             borderRadius: 12,
+------------------             margin: '0 auto 16px',
 ------------------             position: 'relative',
--------------------            border: hp > 100 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
--------------------            boxShadow: hp > 100 ? '0 0 15px rgba(255,105,180,0.5)' : 'none',
-------------------+            border: hp > 1500 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
-------------------+            boxShadow: hp > 1500 ? '0 0 25px rgba(255,105,180,0.5)' : '0 4px 20px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.05)',
+------------------             overflow: 'hidden',
 ------------------           }}>
+------------------+            {/* Background Video */}
+------------------+            <video
+------------------+              autoPlay
+------------------+              loop
+------------------+              muted
+------------------+              playsInline
+------------------+              style={{
+------------------+                position: 'absolute',
+------------------+                top: 0,
+------------------+                left: 0,
+------------------+                width: '100%',
+------------------+                height: '100%',
+------------------+                objectFit: 'cover',
+------------------+                zIndex: 0,
+------------------+              }}
+------------------+            >
+------------------+              <source src="/window-rain.mov" type="video/mp4" />
+------------------+            </video>
+------------------+            
+------------------             {/* Window frame */}
+------------------             <div style={{
+------------------               position: 'absolute',
+------------------@@ -661,6 +679,7 @@ export default function VirtualBed() {
+------------------               height: '100%',
+------------------               background: '#5D4037',
+------------------               transform: 'translateX(-50%)',
+------------------+              zIndex: 1,
+------------------             }} />
+------------------             <div style={{
+------------------               position: 'absolute',
+------------------@@ -670,46 +689,8 @@ export default function VirtualBed() {
+------------------               height: 6,
+------------------               background: '#5D4037',
+------------------               transform: 'translateY(-50%)',
+------------------+              zIndex: 1,
+------------------             }} />
+-------------------            
+-------------------            {/* Rain animation - always on */}
+-------------------            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
+-------------------              {[...Array(40)].map((_, i) => (
+-------------------                <motion.div
+-------------------                  key={i}
+-------------------                  initial={{ y: -20, x: `${Math.random() * 100}%`, opacity: 0.7 }}
+-------------------                  animate={{ y: 150, opacity: [0.7, 0.4, 0.7] }}
+-------------------                  transition={{
+-------------------                    duration: 0.6 + Math.random() * 0.4,
+-------------------                    repeat: Infinity,
+-------------------                    delay: Math.random() * 0.6,
+-------------------                    ease: 'linear',
+-------------------                  }}
+-------------------                  style={{
+-------------------                    position: 'absolute',
+-------------------                    width: 2,
+-------------------                    height: 12,
+-------------------                    background: 'linear-gradient(180deg, rgba(150, 200, 255, 0.8), rgba(150, 200, 255, 0.2))',
+-------------------                    borderRadius: 2,
+-------------------                  }}
+-------------------                />
+-------------------              ))}
+-------------------            </div>
+-------------------            
+-------------------            {/* Distant lightning flash occasionally */}
+-------------------            <motion.div
+-------------------              animate={{ opacity: [0, 0, 0, 0, 0.3, 0, 0.1, 0] }}
+-------------------              transition={{ duration: 8, repeat: Infinity, repeatDelay: 5 }}
+-------------------              style={{
+-------------------                position: 'absolute',
+-------------------                top: 0,
+-------------------                left: 0,
+-------------------                right: 0,
+-------------------                bottom: 0,
+-------------------                background: 'white',
+-------------------                pointerEvents: 'none',
+-------------------              }}
+-------------------            />
+------------------           </div>
+------------------           
+------------------           {/* Floor Scene Container */}
+------------------@@ -723,49 +704,18 @@ export default function VirtualBed() {
+------------------             borderRadius: 16,
+------------------             overflow: 'hidden',
+------------------           }}>
+-------------------            {/* Cartoon Floor Background */}
+------------------+            {/* Real Cartoon Floor Background from Attached Image */}
+------------------             <div style={{
+------------------               position: 'absolute',
+------------------               bottom: 0,
+------------------               width: '100%',
+------------------               height: '100%',
+-------------------              background: `
+-------------------                linear-gradient(180deg, 
+-------------------                  transparent 0%, 
+-------------------                  rgba(139, 90, 43, 0.1) 40%,
+-------------------                  rgba(139, 90, 43, 0.3) 60%,
+-------------------                  #DEB887 70%,
+-------------------                  #D2A679 85%,
+-------------------                  #C4956A 100%
+-------------------                )
+-------------------              `,
+------------------+              backgroundImage: 'url(/floor.jpeg)',
+------------------+              backgroundSize: 'cover',
+------------------+              backgroundPosition: 'center bottom',
+------------------+              backgroundRepeat: 'no-repeat',
+------------------               zIndex: 0,
+-------------------            }}>
+-------------------              {/* Wood grain pattern */}
+-------------------              <div style={{
+-------------------                position: 'absolute',
+-------------------                bottom: 0,
+-------------------                left: 0,
+-------------------                right: 0,
+-------------------                height: '40%',
+-------------------                background: `
+-------------------                  repeating-linear-gradient(
+-------------------                    90deg,
+-------------------                    transparent,
+-------------------                    transparent 60px,
+-------------------                    rgba(139, 69, 19, 0.15) 60px,
+-------------------                    rgba(139, 69, 19, 0.15) 62px
+-------------------                  ),
+-------------------                  repeating-linear-gradient(
+-------------------                    0deg,
+-------------------                    transparent,
+-------------------                    transparent 15px,
+-------------------                    rgba(139, 69, 19, 0.08) 15px,
+-------------------                    rgba(139, 69, 19, 0.08) 16px
+-------------------                  )
+-------------------                `,
+-------------------              }} />
+-------------------            </div>
+------------------+            }} />
+------------------             
+------------------             {/* Sehaj Cat (Left - Ginger) */}
 ------------------             <motion.div
-------------------               animate={{ width: `${Math.min((hp / maxHp) * 100, 120)}%` }}
-------------------               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-------------------               style={{
-------------------                 height: '100%',
--------------------                background: getHpColor(),
-------------------+                background: `linear-gradient(90deg, ${getHpColor()}, ${getHpColor()}cc)`,
-------------------                 borderRadius: 14,
-------------------+                boxShadow: `0 0 20px ${getHpColor()}50`,
-------------------               }}
-------------------             />
-------------------             <span style={{
-------------------@@ -217,7 +219,7 @@ export default function TortureChamber() {
-------------------               color: '#fff',
-------------------               fontWeight: 'bold',
-------------------               fontSize: 14,
--------------------              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-------------------+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-------------------             }}>
-------------------               {hp} / {maxHp} HP
-------------------             </span>
 ------------------diff --git a/model.patch b/model.patch
-------------------index 30e44ec..e69de29 100644
+------------------index d4077ef..a7d585b 100644
 --------------------- a/model.patch
 ------------------+++ b/model.patch
-------------------@@ -1,36 +0,0 @@
--------------------diff --git a/frontend/app/index.tsx b/frontend/app/index.tsx
--------------------index cd5666a..ae7ecd1 100644
----------------------- a/frontend/app/index.tsx
--------------------+++ b/frontend/app/index.tsx
--------------------@@ -101,7 +101,7 @@ export default function EntryGate() {
--------------------         }),
--------------------       ])
--------------------     ).start();
---------------------  }, []);
--------------------+  }, [checkingIntro]);
-------------------- 
--------------------   const heartTranslateY = heartAnim.interpolate({
--------------------     inputRange: [0, 1],
+------------------@@ -1,81 +0,0 @@
+-------------------diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
+-------------------index fdd16db..5cc8e72 100644
+---------------------- a/frontend_web/src/pages/TortureChamber.tsx
+-------------------+++ b/frontend_web/src/pages/TortureChamber.tsx
+-------------------@@ -193,20 +193,22 @@ export default function TortureChamber() {
+-------------------           <div style={{
+-------------------             width: '100%',
+-------------------             height: 28,
+--------------------            background: 'rgba(255,255,255,0.1)',
+-------------------+            background: 'rgba(255,255,255,0.05)',
+-------------------+            backdropFilter: 'blur(10px)',
+-------------------             borderRadius: 14,
+-------------------             overflow: 'hidden',
+-------------------             position: 'relative',
+--------------------            border: hp > 100 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
+--------------------            boxShadow: hp > 100 ? '0 0 15px rgba(255,105,180,0.5)' : 'none',
+-------------------+            border: hp > 1500 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
+-------------------+            boxShadow: hp > 1500 ? '0 0 25px rgba(255,105,180,0.5)' : '0 4px 20px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.05)',
+-------------------           }}>
+-------------------             <motion.div
+-------------------               animate={{ width: `${Math.min((hp / maxHp) * 100, 120)}%` }}
+-------------------               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+-------------------               style={{
+-------------------                 height: '100%',
+--------------------                background: getHpColor(),
+-------------------+                background: `linear-gradient(90deg, ${getHpColor()}, ${getHpColor()}cc)`,
+-------------------                 borderRadius: 14,
+-------------------+                boxShadow: `0 0 20px ${getHpColor()}50`,
+-------------------               }}
+-------------------             />
+-------------------             <span style={{
+-------------------@@ -217,7 +219,7 @@ export default function TortureChamber() {
+-------------------               color: '#fff',
+-------------------               fontWeight: 'bold',
+-------------------               fontSize: 14,
+--------------------              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+-------------------+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+-------------------             }}>
+-------------------               {hp} / {maxHp} HP
+-------------------             </span>
 -------------------diff --git a/model.patch b/model.patch
--------------------index 5d9f76b..e69de29 100644
+-------------------index 30e44ec..e69de29 100644
 ---------------------- a/model.patch
 -------------------+++ b/model.patch
--------------------@@ -1,18 +0,0 @@
---------------------diff --git a/frontend/app/memories.tsx b/frontend/app/memories.tsx
---------------------index 51ca983..e6cac96 100644
------------------------ a/frontend/app/memories.tsx
---------------------+++ b/frontend/app/memories.tsx
---------------------@@ -306,6 +306,13 @@ const styles = StyleSheet.create({
---------------------     flex: 1,
---------------------     backgroundColor: '#FFF5F7',
---------------------   },
---------------------+  backButton: {
---------------------+    position: 'absolute',
---------------------+    top: 50,
---------------------+    left: 16,
---------------------+    zIndex: 10,
---------------------+    padding: 8,
---------------------+  },
---------------------   content: {
---------------------     flex: 1,
---------------------     padding: 24,
+-------------------@@ -1,36 +0,0 @@
+--------------------diff --git a/frontend/app/index.tsx b/frontend/app/index.tsx
+--------------------index cd5666a..ae7ecd1 100644
+----------------------- a/frontend/app/index.tsx
+--------------------+++ b/frontend/app/index.tsx
+--------------------@@ -101,7 +101,7 @@ export default function EntryGate() {
+--------------------         }),
+--------------------       ])
+--------------------     ).start();
+---------------------  }, []);
+--------------------+  }, [checkingIntro]);
+-------------------- 
+--------------------   const heartTranslateY = heartAnim.interpolate({
+--------------------     inputRange: [0, 1],
+--------------------diff --git a/model.patch b/model.patch
+--------------------index 5d9f76b..e69de29 100644
+----------------------- a/model.patch
+--------------------+++ b/model.patch
+--------------------@@ -1,18 +0,0 @@
+---------------------diff --git a/frontend/app/memories.tsx b/frontend/app/memories.tsx
+---------------------index 51ca983..e6cac96 100644
+------------------------ a/frontend/app/memories.tsx
+---------------------+++ b/frontend/app/memories.tsx
+---------------------@@ -306,6 +306,13 @@ const styles = StyleSheet.create({
+---------------------     flex: 1,
+---------------------     backgroundColor: '#FFF5F7',
+---------------------   },
+---------------------+  backButton: {
+---------------------+    position: 'absolute',
+---------------------+    top: 50,
+---------------------+    left: 16,
+---------------------+    zIndex: 10,
+---------------------+    padding: 8,
+---------------------+  },
+---------------------   content: {
+---------------------     flex: 1,
+---------------------     padding: 24,
