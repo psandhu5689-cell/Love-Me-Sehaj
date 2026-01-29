@@ -62,17 +62,20 @@ export default function CrosswordGame() {
   const [currentPuzzleIndex, setCurrentPuzzleIndex] = useState(0)
   const [currentPuzzle, setCurrentPuzzle] = useState<CrosswordPuzzle>(getPuzzle(0))
   
-  const [userGrid, setUserGrid] = useState<(string | null)[][]>(createEmptyGrid())
+  const [userGrid, setUserGrid] = useState<(string | null)[][]>(() => preFillLetters(getPuzzle(0)))
+  const [lockedCells, setLockedCells] = useState<boolean[][]>(() => getLockedCells(getPuzzle(0), preFillLetters(getPuzzle(0))))
   const [selectedCell, setSelectedCell] = useState<{row: number, col: number} | null>(null)
   const [selectedDirection, setSelectedDirection] = useState<'across' | 'down'>('across')
   const [revealCount, setRevealCount] = useState(3)
   const [showConfetti, setShowConfetti] = useState(false)
 
-  // Load new puzzle
+  // Load new puzzle with pre-filled letters
   const loadPuzzle = (index: number) => {
     const puzzle = getPuzzle(index)
     setCurrentPuzzle(puzzle)
-    setUserGrid(createEmptyGrid())
+    const preFilledGrid = preFillLetters(puzzle)
+    setUserGrid(preFilledGrid)
+    setLockedCells(getLockedCells(puzzle, preFilledGrid))
     setSelectedCell(null)
     setRevealCount(3)
     setShowConfetti(false)
