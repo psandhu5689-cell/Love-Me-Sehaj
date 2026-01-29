@@ -46,6 +46,8 @@ interface MusicContextType {
   toggleMute: () => void
   nextTrack: () => void
   previousTrack: () => void
+  needsUserInteraction: boolean
+  enableMusic: () => void
 }
 
 const MusicContext = createContext<MusicContextType>({
