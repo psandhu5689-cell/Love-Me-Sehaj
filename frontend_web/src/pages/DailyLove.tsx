@@ -1087,9 +1087,9 @@ export default function DailyLove() {
       haptics.light()
       // Removed vibration as per user request
       // Random message on spin
-      const newIndex = Math.floor(Math.random() * SAD_MODE_MESSAGES.length)
+      const newIndex = Math.floor(Math.random() * SAD_MESSAGES.length)
       setWheelIndex(newIndex)
-      setSadMessage(SAD_MODE_MESSAGES[newIndex])
+      setSadMessage(SAD_MESSAGES[newIndex])
     }
     
     // Handle Quick Kiss (removed vibration)
