@@ -1095,13 +1095,10 @@ export default function DailyLove() {
       setSadMessage(SAD_MODE_MESSAGES[newIndex])
     }
     
-    // Handle Quick Kiss vibration
+    // Handle Quick Kiss (removed vibration)
     const handleQuickKissVibrate = () => {
       handleQuickKiss()
-      // FIXED: Quick Kiss vibrates
-      if (navigator.vibrate) {
-        navigator.vibrate([50, 30, 50])
-      }
+      // Removed vibration as per user request
     }
 
     return (
