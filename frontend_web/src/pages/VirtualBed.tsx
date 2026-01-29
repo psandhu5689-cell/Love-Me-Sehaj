@@ -290,6 +290,18 @@ export default function VirtualBed() {
   const [sehajMeter, setSehajMeter] = useState(0)
   const [showUnlovedMessage, setShowUnlovedMessage] = useState<'prabh' | 'sehaj' | null>(null)
   
+  // NEW: Blanket position state ('left', 'center', 'right')
+  const [blanketPosition, setBlanketPosition] = useState<'left' | 'center' | 'right'>('center')
+  
+  // NEW: Dim lights state
+  const [lightsDiv, setLightsDimmed] = useState(false)
+  
+  // NEW: Cat sound refs for the uploaded audio files
+  const catMeowSoftRef = useRef<Howl | null>(null)
+  const catMeowNightRef = useRef<Howl | null>(null)
+  const catMeowFoodRef = useRef<Howl | null>(null)
+  const catScreamRef = useRef<Howl | null>(null)
+  
   const [showEffect, setShowEffect] = useState<{
     type: 'heart' | 'z' | 'puff' | 'sparkle' | 'food'
     x: number
