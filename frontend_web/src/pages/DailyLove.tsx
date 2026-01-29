@@ -461,35 +461,99 @@ export default function DailyLove() {
         </h1>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 350 }}>
-          <motion.div
-            whileHover={{ scale: 1.02 }}
+          <motion.button
+            whileHover={{ scale: wyrMyChoice ? 1 : 1.02 }}
+            whileTap={{ scale: wyrMyChoice ? 1 : 0.98 }}
+            onClick={() => !wyrMyChoice && handleWYRChoice('a')}
+            disabled={!!wyrMyChoice}
             style={{
-              background: `linear-gradient(135deg, ${colors.primary}, #ff8fab)`,
+              background: wyrMyChoice === 'a' 
+                ? `linear-gradient(135deg, ${colors.primary}, #ff8fab)`
+                : wyrOtherChoice === 'a' && wyrMyChoice
+                ? 'rgba(255, 107, 157, 0.3)'
+                : `linear-gradient(135deg, ${colors.primary}, #ff8fab)`,
               borderRadius: 16,
               padding: 20,
-              cursor: 'pointer',
+              cursor: wyrMyChoice ? 'default' : 'pointer',
+              border: wyrMyChoice === 'a' ? '3px solid #FFD700' : wyrOtherChoice === 'a' && wyrMyChoice ? '3px solid rgba(255, 215, 0, 0.5)' : 'none',
+              position: 'relative',
+              opacity: wyrMyChoice && wyrMyChoice !== 'a' ? 0.5 : 1,
             }}
           >
             <p style={{ color: 'white', fontSize: 18, textAlign: 'center', fontWeight: 500 }}>
               {wyr.a}
             </p>
-          </motion.div>
+            {wyrMyChoice === 'a' && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                style={{
+                  position: 'absolute',
+                  top: -10,
+                  right: -10,
+                  background: '#FFD700',
+                  borderRadius: '50%',
+                  padding: 8,
+                  boxShadow: '0 4px 12px rgba(255, 215, 0, 0.4)',
+                }}
+              >
+                <IoCheckmark size={20} color="white" />
+              </motion.div>
+            )}
+            {wyrOtherChoice === 'a' && wyrMyChoice && (
+              <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, marginTop: 8, fontStyle: 'italic' }}>
+                {currentUser === 'prabh' ? '✨ Sehaj picked this' : '🏆 Prabh picked this'}
+              </p>
+            )}
+          </motion.button>
 
           <p style={{ color: colors.textMuted, textAlign: 'center', fontSize: 14 }}>OR</p>
 
-          <motion.div
-            whileHover={{ scale: 1.02 }}
+          <motion.button
+            whileHover={{ scale: wyrMyChoice ? 1 : 1.02 }}
+            whileTap={{ scale: wyrMyChoice ? 1 : 0.98 }}
+            onClick={() => !wyrMyChoice && handleWYRChoice('b')}
+            disabled={!!wyrMyChoice}
             style={{
-              background: `linear-gradient(135deg, ${colors.secondary}, #9d4edd)`,
+              background: wyrMyChoice === 'b'
+                ? `linear-gradient(135deg, ${colors.secondary}, #9d4edd)`
+                : wyrOtherChoice === 'b' && wyrMyChoice
+                ? 'rgba(157, 78, 221, 0.3)'
+                : `linear-gradient(135deg, ${colors.secondary}, #9d4edd)`,
               borderRadius: 16,
               padding: 20,
-              cursor: 'pointer',
+              cursor: wyrMyChoice ? 'default' : 'pointer',
+              border: wyrMyChoice === 'b' ? '3px solid #FFD700' : wyrOtherChoice === 'b' && wyrMyChoice ? '3px solid rgba(255, 215, 0, 0.5)' : 'none',
+              position: 'relative',
+              opacity: wyrMyChoice && wyrMyChoice !== 'b' ? 0.5 : 1,
             }}
           >
             <p style={{ color: 'white', fontSize: 18, textAlign: 'center', fontWeight: 500 }}>
               {wyr.b}
             </p>
-          </motion.div>
+            {wyrMyChoice === 'b' && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                style={{
+                  position: 'absolute',
+                  top: -10,
+                  right: -10,
+                  background: '#FFD700',
+                  borderRadius: '50%',
+                  padding: 8,
+                  boxShadow: '0 4px 12px rgba(255, 215, 0, 0.4)',
+                }}
+              >
+                <IoCheckmark size={20} color="white" />
+              </motion.div>
+            )}
+            {wyrOtherChoice === 'b' && wyrMyChoice && (
+              <p style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, marginTop: 8, fontStyle: 'italic' }}>
+                {currentUser === 'prabh' ? '✨ Sehaj picked this' : '🏆 Prabh picked this'}
+              </p>
+            )}
+          </motion.button>
         </div>
 
         <motion.button
