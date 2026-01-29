@@ -105,9 +105,7 @@ export default function DailyLoveHub() {
         paddingRight: 16,
       }}>
         {/* Title - MUST BE VISIBLE AT TOP */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+        <div
           style={{
             textAlign: 'center',
             marginBottom: 20,
@@ -120,6 +118,7 @@ export default function DailyLoveHub() {
             fontWeight: 700,
             marginBottom: 4,
             marginTop: 0,
+            display: 'block',
           }}>
             Personal Library
           </h1>
@@ -127,10 +126,11 @@ export default function DailyLoveHub() {
             color: colors.textSecondary,
             fontSize: 13,
             margin: 0,
+            display: 'block',
           }}>
             Everything for my girl
           </p>
-        </motion.div>
+        </div>
 
         {/* BIG "When You're Sad" Widget at TOP */}
         <motion.div
