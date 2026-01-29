@@ -966,7 +966,7 @@ export default function VirtualBed() {
               zIndex: 0,
             }} />
 
-            {/* Rainy Window on Wall - LARGER with WHITE OUTLINE */}
+            {/* Rainy Window on Wall - LARGER with WHITE OUTLINE - STAYS BRIGHT */}
             <div style={{
               position: 'absolute',
               top: 15,
@@ -977,7 +977,7 @@ export default function VirtualBed() {
               border: '5px solid #FFFFFF',
               borderRadius: 10,
               overflow: 'hidden',
-              zIndex: 1,
+              zIndex: 10, // ABOVE dim overlay (z-index 5) so it stays bright
               boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.3)',
             }}>
               {/* Looping rain video inside window - ALWAYS MUTED */}
