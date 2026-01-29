@@ -1,635 +1,731 @@
 diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
-index e1ca8c3..3a2749d 100644
+index 3a2749d..bdb96ac 100644
 --- a/frontend_web/src/pages/VirtualBed.tsx
 +++ b/frontend_web/src/pages/VirtualBed.tsx
-@@ -629,94 +629,237 @@ export default function VirtualBed() {
-           Mr & Mrs 🐱💕🐱
-         </h1>
-         
--        {/* Room Scene */}
-+        {/* Room Scene Container */}
-         <motion.div
-           style={{
-             background: colors.glass,
-             backdropFilter: 'blur(20px)',
-             border: `1px solid ${colors.border}`,
-             borderRadius: 24,
--            padding: 20,
-+            padding: 0,
-             position: 'relative',
-             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
-+            overflow: 'hidden',
-           }}
-         >
--          {/* Rainy Window - Real Video Loop */}
-+          {/* Room Environment - Full Scene */}
-           <div style={{
--            width: 180,
--            height: 130,
--            border: '6px solid #5D4037',
--            borderRadius: 12,
--            margin: '0 auto 16px',
-             position: 'relative',
-+            width: '100%',
-+            height: 450,
-             overflow: 'hidden',
-+            borderRadius: 24,
-           }}>
--            {/* Background Video */}
--            <video
--              autoPlay
--              loop
--              muted={isMuted}
--              playsInline
--              style={{
--                position: 'absolute',
--                top: 0,
--                left: 0,
--                width: '100%',
--                height: '100%',
--                objectFit: 'cover',
--                zIndex: 0,
--              }}
--              src="/window-rain.mov"
--            />
--            
--            {/* Window frame */}
-+            {/* LAYER 1: Wall Background (full width) */}
-             <div style={{
-               position: 'absolute',
-               top: 0,
--              left: '50%',
--              width: 6,
-+              left: 0,
-+              width: '100%',
-               height: '100%',
--              background: '#5D4037',
--              transform: 'translateX(-50%)',
--              zIndex: 1,
-+              backgroundImage: 'url(/wall-background.jpeg)',
-+              backgroundSize: 'cover',
-+              backgroundPosition: 'center',
-+              backgroundRepeat: 'no-repeat',
-+              zIndex: 0,
-             }} />
-+
-+            {/* Rainy Window on Wall */}
-             <div style={{
-               position: 'absolute',
--              top: '50%',
--              left: 0,
--              width: '100%',
--              height: 6,
--              background: '#5D4037',
--              transform: 'translateY(-50%)',
-+              top: 20,
-+              right: 30,
-+              width: 120,
-+              height: 90,
-+              background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
-+              border: '4px solid #5D4037',
-+              borderRadius: 8,
-+              overflow: 'hidden',
-               zIndex: 1,
--            }} />
--          </div>
--          
--          {/* Floor Scene Container */}
--          <div style={{
--            position: 'relative',
--            width: '100%',
--            height: 200,
--            display: 'flex',
--            alignItems: 'flex-end',
--            justifyContent: 'center',
--            borderRadius: 16,
--            overflow: 'hidden',
--          }}>
--            {/* Real Cartoon Floor Background from Attached Image */}
-+            }}>
-+              {/* Looping rain video inside window */}
-+              <video
-+                autoPlay
-+                loop
-+                muted={isMuted}
-+                playsInline
-+                style={{
-+                  position: 'absolute',
-+                  top: 0,
-+                  left: 0,
-+                  width: '100%',
-+                  height: '100%',
-+                  objectFit: 'cover',
-+                  zIndex: 0,
-+                }}
-+                src="/window-rain.mov"
-+              />
-+              
-+              {/* Window frame overlays */}
-+              <div style={{
-+                position: 'absolute',
-+                top: 0,
-+                left: '50%',
-+                width: 4,
-+                height: '100%',
-+                background: '#5D4037',
-+                transform: 'translateX(-50%)',
-+                zIndex: 1,
-+              }} />
-+              <div style={{
-+                position: 'absolute',
-+                top: '50%',
-+                left: 0,
-+                width: '100%',
-+                height: 4,
-+                background: '#5D4037',
-+                transform: 'translateY(-50%)',
-+                zIndex: 1,
-+              }} />
-+            </div>
-+
-+            {/* LAYER 2: Floor/Base Surface */}
-             <div style={{
-               position: 'absolute',
-               bottom: 0,
-+              left: 0,
-               width: '100%',
--              height: '100%',
-+              height: '50%',
-               backgroundImage: 'url(/floor.jpeg)',
-               backgroundSize: 'cover',
-               backgroundPosition: 'center bottom',
-               backgroundRepeat: 'no-repeat',
--              zIndex: 0,
-+              zIndex: 1,
-             }} />
-+
-+            {/* LAYER 3: Rug (centered, below characters) */}
-+            <div style={{
-+              position: 'absolute',
-+              bottom: 40,
-+              left: '50%',
-+              transform: 'translateX(-50%)',
-+              width: '70%',
-+              maxWidth: 350,
-+              height: 140,
-+              backgroundImage: 'url(/rug.png)',
-+              backgroundSize: 'contain',
-+              backgroundPosition: 'center',
-+              backgroundRepeat: 'no-repeat',
-+              zIndex: 2,
-+            }} />
-+
-+            {/* LAYER 4: Furniture Props */}
-+            {/* Small couch/bean bag - left side */}
-+            <div style={{
-+              position: 'absolute',
-+              bottom: 60,
-+              left: 20,
-+              width: 80,
-+              height: 70,
-+              background: 'linear-gradient(135deg, #8B7355 0%, #6B5644 100%)',
-+              borderRadius: '45% 45% 20% 20%',
-+              border: '3px solid #5D4037',
-+              zIndex: 2,
-+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-+            }}>
-+              {/* Couch cushion detail */}
-+              <div style={{
-+                position: 'absolute',
-+                top: 10,
-+                left: '50%',
-+                transform: 'translateX(-50%)',
-+                width: '60%',
-+                height: 25,
-+                background: 'rgba(255,255,255,0.1)',
-+                borderRadius: 12,
-+              }} />
-+            </div>
-+
-+            {/* Toy box - right side */}
-+            <div style={{
-+              position: 'absolute',
-+              bottom: 55,
-+              right: 25,
-+              width: 70,
-+              height: 60,
-+              background: 'linear-gradient(135deg, #E8A5C0 0%, #D88BA5 100%)',
-+              borderRadius: 8,
-+              border: '3px solid #B86080',
-+              zIndex: 2,
-+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-+            }}>
-+              {/* Toy sticking out */}
-+              <div style={{
-+                position: 'absolute',
-+                top: -15,
-+                right: 10,
-+                fontSize: 24,
-+              }}>
-+                🧸
-+              </div>
-+            </div>
-+
-+            {/* Wall shelf - top left */}
-+            <div style={{
-+              position: 'absolute',
-+              top: 120,
-+              left: 30,
-+              width: 90,
-+              height: 8,
-+              background: '#8B6F47',
-+              borderRadius: 4,
-+              zIndex: 1,
-+              boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
-+            }}>
-+              {/* Tiny plant on shelf */}
-+              <div style={{
-+                position: 'absolute',
-+                top: -25,
-+                left: 15,
-+                fontSize: 20,
-+              }}>
-+                🪴
-+              </div>
-+              {/* Tiny frame on shelf */}
-+              <div style={{
-+                position: 'absolute',
-+                top: -20,
-+                right: 15,
-+                width: 18,
-+                height: 18,
-+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-+                border: '2px solid #8B6914',
-+                borderRadius: 3,
-+              }} />
-+            </div>
-+
-+            {/* Small lamp - top right */}
-+            <div style={{
-+              position: 'absolute',
-+              top: 130,
-+              right: 40,
-+              zIndex: 1,
-+            }}>
-+              {/* Lamp shade */}
-+              <div style={{
-+                width: 0,
-+                height: 0,
-+                borderLeft: '20px solid transparent',
-+                borderRight: '20px solid transparent',
-+                borderBottom: '30px solid #FFE4B5',
-+                margin: '0 auto',
-+              }} />
-+              {/* Lamp base */}
-+              <div style={{
-+                width: 12,
-+                height: 25,
-+                background: '#8B7355',
-+                margin: '0 auto',
-+                borderRadius: '0 0 6px 6px',
-+              }} />
-+            </div>
+@@ -859,7 +859,8 @@ export default function VirtualBed() {
+               }} />
+             </div>
              
--            {/* Sehaj Cat (Left - Ginger) */}
-+            {/* LAYER 5: Sehaj Cat (Left - Ginger) */}
+-            {/* LAYER 5: Sehaj Cat (Left - Ginger) */}
++            {/* LAYER 5: Cat Sprites */}
++            {/* Sehaj Cat (Left - Ginger) */}
              <motion.div
                animate={{
                  y: sehaj.action === 'nudge' || sehaj.action === 'kick' ? [0, -3, 0] : 0,
-@@ -724,9 +867,9 @@ export default function VirtualBed() {
+@@ -867,7 +868,7 @@ export default function VirtualBed() {
                transition={{ duration: 0.3, ease: 'easeOut' }}
                style={{
                  position: 'absolute',
--                left: '18%',
--                bottom: 55,
--                zIndex: 2,
-+                left: '25%',
-+                bottom: 180,
-+                zIndex: 3,
+-                left: '25%',
++                left: '28%',
+                 bottom: 180,
+                 zIndex: 3,
                }}
-             >
-               <Sprite
-@@ -766,7 +909,7 @@ export default function VirtualBed() {
+@@ -909,7 +910,7 @@ export default function VirtualBed() {
                )}
              </motion.div>
              
--            {/* Prabh Cat (Right - Grey) */}
-+            {/* LAYER 6: Prabh Cat (Right - Grey) */}
+-            {/* LAYER 6: Prabh Cat (Right - Grey) */}
++            {/* Prabh Cat (Right - Grey) */}
              <motion.div
                animate={{
                  y: prabh.action === 'nudge' || prabh.action === 'kick' ? [0, -3, 0] : 0,
-@@ -774,9 +917,9 @@ export default function VirtualBed() {
+@@ -917,7 +918,7 @@ export default function VirtualBed() {
                transition={{ duration: 0.3, ease: 'easeOut' }}
                style={{
                  position: 'absolute',
--                right: '18%',
--                bottom: 55,
--                zIndex: 2,
-+                right: '25%',
-+                bottom: 180,
-+                zIndex: 3,
+-                right: '25%',
++                right: '28%',
+                 bottom: 180,
+                 zIndex: 3,
                }}
-             >
-               <Sprite
-@@ -816,19 +959,21 @@ export default function VirtualBed() {
+@@ -958,8 +959,36 @@ export default function VirtualBed() {
+                 </motion.div>
                )}
              </motion.div>
-             
--            {/* Blanket Overlay */}
-+            {/* LAYER 7: Blanket Overlay */}
+-            
+-            {/* LAYER 7: Blanket Overlay */}
++
++            {/* LAYER 6: Foreground Props */}
++            {/* Pillow on floor - left */}
++            <div style={{
++              position: 'absolute',
++              bottom: 120,
++              left: 70,
++              width: 50,
++              height: 35,
++              background: 'linear-gradient(135deg, #FF6B9D 0%, #E91E63 100%)',
++              borderRadius: '45%',
++              border: '2px solid #C2185B',
++              zIndex: 4,
++              boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
++              transform: 'rotate(-15deg)',
++            }} />
++
++            {/* Toy on floor - right */}
++            <div style={{
++              position: 'absolute',
++              bottom: 130,
++              right: 80,
++              fontSize: 28,
++              zIndex: 4,
++              transform: 'rotate(20deg)',
++            }}>
++              🎾
++            </div>
++
++            {/* Blanket Overlay (between cats) */}
              <motion.div
                animate={{ x: `${blanketOffset - 50}%` }}
                transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-               style={{
-                 position: 'absolute',
--                bottom: 15,
--                width: '70%',
--                height: 50,
-+                bottom: 160,
-+                left: '50%',
-+                transform: 'translateX(-50%)',
-+                width: '60%',
-+                height: 40,
+@@ -968,8 +997,8 @@ export default function VirtualBed() {
+                 bottom: 160,
+                 left: '50%',
+                 transform: 'translateX(-50%)',
+-                width: '60%',
+-                height: 40,
++                width: '50%',
++                height: 60,
                  background: 'linear-gradient(180deg, #E8A5C0 0%, #D88BA5 50%, #C87090 100%)',
                  borderRadius: '18px 18px 8px 8px',
                  border: '3px solid #B86080',
--                zIndex: 3,
-+                zIndex: 4,
-                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-               }}
-             >
 diff --git a/model.patch b/model.patch
-index 4c5f2ab..e0eb3c1 100644
+index cf619fa..e69de29 100644
 --- a/model.patch
 +++ b/model.patch
-@@ -1,270 +0,0 @@
+@@ -1,635 +0,0 @@
 -diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
--index e352115..e1ca8c3 100644
+-index e1ca8c3..3a2749d 100644
 ---- a/frontend_web/src/pages/VirtualBed.tsx
 -+++ b/frontend_web/src/pages/VirtualBed.tsx
--@@ -655,7 +655,7 @@ export default function VirtualBed() {
--             <video
--               autoPlay
--               loop
---              muted
--+              muted={isMuted}
--               playsInline
+-@@ -629,94 +629,237 @@ export default function VirtualBed() {
+-           Mr & Mrs 🐱💕🐱
+-         </h1>
+-         
+--        {/* Room Scene */}
+-+        {/* Room Scene Container */}
+-         <motion.div
+-           style={{
+-             background: colors.glass,
+-             backdropFilter: 'blur(20px)',
+-             border: `1px solid ${colors.border}`,
+-             borderRadius: 24,
+--            padding: 20,
+-+            padding: 0,
+-             position: 'relative',
+-             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
+-+            overflow: 'hidden',
+-           }}
+-         >
+--          {/* Rainy Window - Real Video Loop */}
+-+          {/* Room Environment - Full Scene */}
+-           <div style={{
+--            width: 180,
+--            height: 130,
+--            border: '6px solid #5D4037',
+--            borderRadius: 12,
+--            margin: '0 auto 16px',
+-             position: 'relative',
+-+            width: '100%',
+-+            height: 450,
+-             overflow: 'hidden',
+-+            borderRadius: 24,
+-           }}>
+--            {/* Background Video */}
+--            <video
+--              autoPlay
+--              loop
+--              muted={isMuted}
+--              playsInline
+--              style={{
+--                position: 'absolute',
+--                top: 0,
+--                left: 0,
+--                width: '100%',
+--                height: '100%',
+--                objectFit: 'cover',
+--                zIndex: 0,
+--              }}
+--              src="/window-rain.mov"
+--            />
+--            
+--            {/* Window frame */}
+-+            {/* LAYER 1: Wall Background (full width) */}
+-             <div style={{
+-               position: 'absolute',
+-               top: 0,
+--              left: '50%',
+--              width: 6,
+-+              left: 0,
+-+              width: '100%',
+-               height: '100%',
+--              background: '#5D4037',
+--              transform: 'translateX(-50%)',
+--              zIndex: 1,
+-+              backgroundImage: 'url(/wall-background.jpeg)',
+-+              backgroundSize: 'cover',
+-+              backgroundPosition: 'center',
+-+              backgroundRepeat: 'no-repeat',
+-+              zIndex: 0,
+-             }} />
+-+
+-+            {/* Rainy Window on Wall */}
+-             <div style={{
+-               position: 'absolute',
+--              top: '50%',
+--              left: 0,
+--              width: '100%',
+--              height: 6,
+--              background: '#5D4037',
+--              transform: 'translateY(-50%)',
+-+              top: 20,
+-+              right: 30,
+-+              width: 120,
+-+              height: 90,
+-+              background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
+-+              border: '4px solid #5D4037',
+-+              borderRadius: 8,
+-+              overflow: 'hidden',
+-               zIndex: 1,
+--            }} />
+--          </div>
+--          
+--          {/* Floor Scene Container */}
+--          <div style={{
+--            position: 'relative',
+--            width: '100%',
+--            height: 200,
+--            display: 'flex',
+--            alignItems: 'flex-end',
+--            justifyContent: 'center',
+--            borderRadius: 16,
+--            overflow: 'hidden',
+--          }}>
+--            {/* Real Cartoon Floor Background from Attached Image */}
+-+            }}>
+-+              {/* Looping rain video inside window */}
+-+              <video
+-+                autoPlay
+-+                loop
+-+                muted={isMuted}
+-+                playsInline
+-+                style={{
+-+                  position: 'absolute',
+-+                  top: 0,
+-+                  left: 0,
+-+                  width: '100%',
+-+                  height: '100%',
+-+                  objectFit: 'cover',
+-+                  zIndex: 0,
+-+                }}
+-+                src="/window-rain.mov"
+-+              />
+-+              
+-+              {/* Window frame overlays */}
+-+              <div style={{
+-+                position: 'absolute',
+-+                top: 0,
+-+                left: '50%',
+-+                width: 4,
+-+                height: '100%',
+-+                background: '#5D4037',
+-+                transform: 'translateX(-50%)',
+-+                zIndex: 1,
+-+              }} />
+-+              <div style={{
+-+                position: 'absolute',
+-+                top: '50%',
+-+                left: 0,
+-+                width: '100%',
+-+                height: 4,
+-+                background: '#5D4037',
+-+                transform: 'translateY(-50%)',
+-+                zIndex: 1,
+-+              }} />
+-+            </div>
+-+
+-+            {/* LAYER 2: Floor/Base Surface */}
+-             <div style={{
+-               position: 'absolute',
+-               bottom: 0,
+-+              left: 0,
+-               width: '100%',
+--              height: '100%',
+-+              height: '50%',
+-               backgroundImage: 'url(/floor.jpeg)',
+-               backgroundSize: 'cover',
+-               backgroundPosition: 'center bottom',
+-               backgroundRepeat: 'no-repeat',
+--              zIndex: 0,
+-+              zIndex: 1,
+-             }} />
+-+
+-+            {/* LAYER 3: Rug (centered, below characters) */}
+-+            <div style={{
+-+              position: 'absolute',
+-+              bottom: 40,
+-+              left: '50%',
+-+              transform: 'translateX(-50%)',
+-+              width: '70%',
+-+              maxWidth: 350,
+-+              height: 140,
+-+              backgroundImage: 'url(/rug.png)',
+-+              backgroundSize: 'contain',
+-+              backgroundPosition: 'center',
+-+              backgroundRepeat: 'no-repeat',
+-+              zIndex: 2,
+-+            }} />
+-+
+-+            {/* LAYER 4: Furniture Props */}
+-+            {/* Small couch/bean bag - left side */}
+-+            <div style={{
+-+              position: 'absolute',
+-+              bottom: 60,
+-+              left: 20,
+-+              width: 80,
+-+              height: 70,
+-+              background: 'linear-gradient(135deg, #8B7355 0%, #6B5644 100%)',
+-+              borderRadius: '45% 45% 20% 20%',
+-+              border: '3px solid #5D4037',
+-+              zIndex: 2,
+-+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+-+            }}>
+-+              {/* Couch cushion detail */}
+-+              <div style={{
+-+                position: 'absolute',
+-+                top: 10,
+-+                left: '50%',
+-+                transform: 'translateX(-50%)',
+-+                width: '60%',
+-+                height: 25,
+-+                background: 'rgba(255,255,255,0.1)',
+-+                borderRadius: 12,
+-+              }} />
+-+            </div>
+-+
+-+            {/* Toy box - right side */}
+-+            <div style={{
+-+              position: 'absolute',
+-+              bottom: 55,
+-+              right: 25,
+-+              width: 70,
+-+              height: 60,
+-+              background: 'linear-gradient(135deg, #E8A5C0 0%, #D88BA5 100%)',
+-+              borderRadius: 8,
+-+              border: '3px solid #B86080',
+-+              zIndex: 2,
+-+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+-+            }}>
+-+              {/* Toy sticking out */}
+-+              <div style={{
+-+                position: 'absolute',
+-+                top: -15,
+-+                right: 10,
+-+                fontSize: 24,
+-+              }}>
+-+                🧸
+-+              </div>
+-+            </div>
+-+
+-+            {/* Wall shelf - top left */}
+-+            <div style={{
+-+              position: 'absolute',
+-+              top: 120,
+-+              left: 30,
+-+              width: 90,
+-+              height: 8,
+-+              background: '#8B6F47',
+-+              borderRadius: 4,
+-+              zIndex: 1,
+-+              boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
+-+            }}>
+-+              {/* Tiny plant on shelf */}
+-+              <div style={{
+-+                position: 'absolute',
+-+                top: -25,
+-+                left: 15,
+-+                fontSize: 20,
+-+              }}>
+-+                🪴
+-+              </div>
+-+              {/* Tiny frame on shelf */}
+-+              <div style={{
+-+                position: 'absolute',
+-+                top: -20,
+-+                right: 15,
+-+                width: 18,
+-+                height: 18,
+-+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+-+                border: '2px solid #8B6914',
+-+                borderRadius: 3,
+-+              }} />
+-+            </div>
+-+
+-+            {/* Small lamp - top right */}
+-+            <div style={{
+-+              position: 'absolute',
+-+              top: 130,
+-+              right: 40,
+-+              zIndex: 1,
+-+            }}>
+-+              {/* Lamp shade */}
+-+              <div style={{
+-+                width: 0,
+-+                height: 0,
+-+                borderLeft: '20px solid transparent',
+-+                borderRight: '20px solid transparent',
+-+                borderBottom: '30px solid #FFE4B5',
+-+                margin: '0 auto',
+-+              }} />
+-+              {/* Lamp base */}
+-+              <div style={{
+-+                width: 12,
+-+                height: 25,
+-+                background: '#8B7355',
+-+                margin: '0 auto',
+-+                borderRadius: '0 0 6px 6px',
+-+              }} />
+-+            </div>
+-             
+--            {/* Sehaj Cat (Left - Ginger) */}
+-+            {/* LAYER 5: Sehaj Cat (Left - Ginger) */}
+-             <motion.div
+-               animate={{
+-                 y: sehaj.action === 'nudge' || sehaj.action === 'kick' ? [0, -3, 0] : 0,
+-@@ -724,9 +867,9 @@ export default function VirtualBed() {
+-               transition={{ duration: 0.3, ease: 'easeOut' }}
 -               style={{
 -                 position: 'absolute',
--@@ -666,9 +666,8 @@ export default function VirtualBed() {
--                 objectFit: 'cover',
--                 zIndex: 0,
+--                left: '18%',
+--                bottom: 55,
+--                zIndex: 2,
+-+                left: '25%',
+-+                bottom: 180,
+-+                zIndex: 3,
 -               }}
---            >
---              <source src="/window-rain.mov" type="video/mp4" />
---            </video>
--+              src="/window-rain.mov"
--+            />
+-             >
+-               <Sprite
+-@@ -766,7 +909,7 @@ export default function VirtualBed() {
+-               )}
+-             </motion.div>
 -             
--             {/* Window frame */}
--             <div style={{
+--            {/* Prabh Cat (Right - Grey) */}
+-+            {/* LAYER 6: Prabh Cat (Right - Grey) */}
+-             <motion.div
+-               animate={{
+-                 y: prabh.action === 'nudge' || prabh.action === 'kick' ? [0, -3, 0] : 0,
+-@@ -774,9 +917,9 @@ export default function VirtualBed() {
+-               transition={{ duration: 0.3, ease: 'easeOut' }}
+-               style={{
+-                 position: 'absolute',
+--                right: '18%',
+--                bottom: 55,
+--                zIndex: 2,
+-+                right: '25%',
+-+                bottom: 180,
+-+                zIndex: 3,
+-               }}
+-             >
+-               <Sprite
+-@@ -816,19 +959,21 @@ export default function VirtualBed() {
+-               )}
+-             </motion.div>
+-             
+--            {/* Blanket Overlay */}
+-+            {/* LAYER 7: Blanket Overlay */}
+-             <motion.div
+-               animate={{ x: `${blanketOffset - 50}%` }}
+-               transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+-               style={{
+-                 position: 'absolute',
+--                bottom: 15,
+--                width: '70%',
+--                height: 50,
+-+                bottom: 160,
+-+                left: '50%',
+-+                transform: 'translateX(-50%)',
+-+                width: '60%',
+-+                height: 40,
+-                 background: 'linear-gradient(180deg, #E8A5C0 0%, #D88BA5 50%, #C87090 100%)',
+-                 borderRadius: '18px 18px 8px 8px',
+-                 border: '3px solid #B86080',
+--                zIndex: 3,
+-+                zIndex: 4,
+-                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+-               }}
+-             >
 -diff --git a/model.patch b/model.patch
--index e084416..e69de29 100644
+-index 4c5f2ab..e0eb3c1 100644
 ---- a/model.patch
 -+++ b/model.patch
--@@ -1,240 +0,0 @@
+-@@ -1,270 +0,0 @@
 --diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
---index 0a7cb7a..e352115 100644
+--index e352115..e1ca8c3 100644
 ----- a/frontend_web/src/pages/VirtualBed.tsx
 --+++ b/frontend_web/src/pages/VirtualBed.tsx
---@@ -641,17 +641,35 @@ export default function VirtualBed() {
---             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
---           }}
---         >
----          {/* Rainy Window - Always rainy GIF style */}
---+          {/* Rainy Window - Real Video Loop */}
---           <div style={{
---             width: 180,
---             height: 130,
----            background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
---             border: '6px solid #5D4037',
---             borderRadius: 12,
---             margin: '0 auto 16px',
---             position: 'relative',
---             overflow: 'hidden',
---           }}>
---+            {/* Background Video */}
---+            <video
---+              autoPlay
---+              loop
---+              muted
---+              playsInline
---+              style={{
---+                position: 'absolute',
---+                top: 0,
---+                left: 0,
---+                width: '100%',
---+                height: '100%',
---+                objectFit: 'cover',
---+                zIndex: 0,
---+              }}
---+            >
---+              <source src="/window-rain.mov" type="video/mp4" />
---+            </video>
---+            
+--@@ -655,7 +655,7 @@ export default function VirtualBed() {
+--             <video
+--               autoPlay
+--               loop
+---              muted
+--+              muted={isMuted}
+--               playsInline
+--               style={{
+--                 position: 'absolute',
+--@@ -666,9 +666,8 @@ export default function VirtualBed() {
+--                 objectFit: 'cover',
+--                 zIndex: 0,
+--               }}
+---            >
+---              <source src="/window-rain.mov" type="video/mp4" />
+---            </video>
+--+              src="/window-rain.mov"
+--+            />
+--             
 --             {/* Window frame */}
 --             <div style={{
---               position: 'absolute',
---@@ -661,6 +679,7 @@ export default function VirtualBed() {
---               height: '100%',
---               background: '#5D4037',
---               transform: 'translateX(-50%)',
---+              zIndex: 1,
---             }} />
---             <div style={{
---               position: 'absolute',
---@@ -670,46 +689,8 @@ export default function VirtualBed() {
---               height: 6,
---               background: '#5D4037',
---               transform: 'translateY(-50%)',
---+              zIndex: 1,
---             }} />
----            
----            {/* Rain animation - always on */}
----            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
----              {[...Array(40)].map((_, i) => (
----                <motion.div
----                  key={i}
----                  initial={{ y: -20, x: `${Math.random() * 100}%`, opacity: 0.7 }}
----                  animate={{ y: 150, opacity: [0.7, 0.4, 0.7] }}
----                  transition={{
----                    duration: 0.6 + Math.random() * 0.4,
----                    repeat: Infinity,
----                    delay: Math.random() * 0.6,
----                    ease: 'linear',
----                  }}
----                  style={{
----                    position: 'absolute',
----                    width: 2,
----                    height: 12,
----                    background: 'linear-gradient(180deg, rgba(150, 200, 255, 0.8), rgba(150, 200, 255, 0.2))',
----                    borderRadius: 2,
----                  }}
----                />
----              ))}
----            </div>
----            
----            {/* Distant lightning flash occasionally */}
----            <motion.div
----              animate={{ opacity: [0, 0, 0, 0, 0.3, 0, 0.1, 0] }}
----              transition={{ duration: 8, repeat: Infinity, repeatDelay: 5 }}
----              style={{
----                position: 'absolute',
----                top: 0,
----                left: 0,
----                right: 0,
----                bottom: 0,
----                background: 'white',
----                pointerEvents: 'none',
----              }}
----            />
---           </div>
---           
---           {/* Floor Scene Container */}
---@@ -723,49 +704,18 @@ export default function VirtualBed() {
---             borderRadius: 16,
---             overflow: 'hidden',
---           }}>
----            {/* Cartoon Floor Background */}
---+            {/* Real Cartoon Floor Background from Attached Image */}
---             <div style={{
---               position: 'absolute',
---               bottom: 0,
---               width: '100%',
---               height: '100%',
----              background: `
----                linear-gradient(180deg, 
----                  transparent 0%, 
----                  rgba(139, 90, 43, 0.1) 40%,
----                  rgba(139, 90, 43, 0.3) 60%,
----                  #DEB887 70%,
----                  #D2A679 85%,
----                  #C4956A 100%
----                )
----              `,
---+              backgroundImage: 'url(/floor.jpeg)',
---+              backgroundSize: 'cover',
---+              backgroundPosition: 'center bottom',
---+              backgroundRepeat: 'no-repeat',
---               zIndex: 0,
----            }}>
----              {/* Wood grain pattern */}
----              <div style={{
----                position: 'absolute',
----                bottom: 0,
----                left: 0,
----                right: 0,
----                height: '40%',
----                background: `
----                  repeating-linear-gradient(
----                    90deg,
----                    transparent,
----                    transparent 60px,
----                    rgba(139, 69, 19, 0.15) 60px,
----                    rgba(139, 69, 19, 0.15) 62px
----                  ),
----                  repeating-linear-gradient(
----                    0deg,
----                    transparent,
----                    transparent 15px,
----                    rgba(139, 69, 19, 0.08) 15px,
----                    rgba(139, 69, 19, 0.08) 16px
----                  )
----                `,
----              }} />
----            </div>
---+            }} />
---             
---             {/* Sehaj Cat (Left - Ginger) */}
---             <motion.div
 --diff --git a/model.patch b/model.patch
---index d4077ef..a7d585b 100644
+--index e084416..e69de29 100644
 ----- a/model.patch
 --+++ b/model.patch
---@@ -1,81 +0,0 @@
----diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
----index fdd16db..5cc8e72 100644
------- a/frontend_web/src/pages/TortureChamber.tsx
----+++ b/frontend_web/src/pages/TortureChamber.tsx
----@@ -193,20 +193,22 @@ export default function TortureChamber() {
+--@@ -1,240 +0,0 @@
+---diff --git a/frontend_web/src/pages/VirtualBed.tsx b/frontend_web/src/pages/VirtualBed.tsx
+---index 0a7cb7a..e352115 100644
+------ a/frontend_web/src/pages/VirtualBed.tsx
+---+++ b/frontend_web/src/pages/VirtualBed.tsx
+---@@ -641,17 +641,35 @@ export default function VirtualBed() {
+---             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
+---           }}
+---         >
+----          {/* Rainy Window - Always rainy GIF style */}
+---+          {/* Rainy Window - Real Video Loop */}
 ---           <div style={{
----             width: '100%',
----             height: 28,
-----            background: 'rgba(255,255,255,0.1)',
----+            background: 'rgba(255,255,255,0.05)',
----+            backdropFilter: 'blur(10px)',
----             borderRadius: 14,
----             overflow: 'hidden',
+---             width: 180,
+---             height: 130,
+----            background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
+---             border: '6px solid #5D4037',
+---             borderRadius: 12,
+---             margin: '0 auto 16px',
 ---             position: 'relative',
-----            border: hp > 100 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
-----            boxShadow: hp > 100 ? '0 0 15px rgba(255,105,180,0.5)' : 'none',
----+            border: hp > 1500 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
----+            boxShadow: hp > 1500 ? '0 0 25px rgba(255,105,180,0.5)' : '0 4px 20px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.05)',
+---             overflow: 'hidden',
 ---           }}>
+---+            {/* Background Video */}
+---+            <video
+---+              autoPlay
+---+              loop
+---+              muted
+---+              playsInline
+---+              style={{
+---+                position: 'absolute',
+---+                top: 0,
+---+                left: 0,
+---+                width: '100%',
+---+                height: '100%',
+---+                objectFit: 'cover',
+---+                zIndex: 0,
+---+              }}
+---+            >
+---+              <source src="/window-rain.mov" type="video/mp4" />
+---+            </video>
+---+            
+---             {/* Window frame */}
+---             <div style={{
+---               position: 'absolute',
+---@@ -661,6 +679,7 @@ export default function VirtualBed() {
+---               height: '100%',
+---               background: '#5D4037',
+---               transform: 'translateX(-50%)',
+---+              zIndex: 1,
+---             }} />
+---             <div style={{
+---               position: 'absolute',
+---@@ -670,46 +689,8 @@ export default function VirtualBed() {
+---               height: 6,
+---               background: '#5D4037',
+---               transform: 'translateY(-50%)',
+---+              zIndex: 1,
+---             }} />
+----            
+----            {/* Rain animation - always on */}
+----            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
+----              {[...Array(40)].map((_, i) => (
+----                <motion.div
+----                  key={i}
+----                  initial={{ y: -20, x: `${Math.random() * 100}%`, opacity: 0.7 }}
+----                  animate={{ y: 150, opacity: [0.7, 0.4, 0.7] }}
+----                  transition={{
+----                    duration: 0.6 + Math.random() * 0.4,
+----                    repeat: Infinity,
+----                    delay: Math.random() * 0.6,
+----                    ease: 'linear',
+----                  }}
+----                  style={{
+----                    position: 'absolute',
+----                    width: 2,
+----                    height: 12,
+----                    background: 'linear-gradient(180deg, rgba(150, 200, 255, 0.8), rgba(150, 200, 255, 0.2))',
+----                    borderRadius: 2,
+----                  }}
+----                />
+----              ))}
+----            </div>
+----            
+----            {/* Distant lightning flash occasionally */}
+----            <motion.div
+----              animate={{ opacity: [0, 0, 0, 0, 0.3, 0, 0.1, 0] }}
+----              transition={{ duration: 8, repeat: Infinity, repeatDelay: 5 }}
+----              style={{
+----                position: 'absolute',
+----                top: 0,
+----                left: 0,
+----                right: 0,
+----                bottom: 0,
+----                background: 'white',
+----                pointerEvents: 'none',
+----              }}
+----            />
+---           </div>
+---           
+---           {/* Floor Scene Container */}
+---@@ -723,49 +704,18 @@ export default function VirtualBed() {
+---             borderRadius: 16,
+---             overflow: 'hidden',
+---           }}>
+----            {/* Cartoon Floor Background */}
+---+            {/* Real Cartoon Floor Background from Attached Image */}
+---             <div style={{
+---               position: 'absolute',
+---               bottom: 0,
+---               width: '100%',
+---               height: '100%',
+----              background: `
+----                linear-gradient(180deg, 
+----                  transparent 0%, 
+----                  rgba(139, 90, 43, 0.1) 40%,
+----                  rgba(139, 90, 43, 0.3) 60%,
+----                  #DEB887 70%,
+----                  #D2A679 85%,
+----                  #C4956A 100%
+----                )
+----              `,
+---+              backgroundImage: 'url(/floor.jpeg)',
+---+              backgroundSize: 'cover',
+---+              backgroundPosition: 'center bottom',
+---+              backgroundRepeat: 'no-repeat',
+---               zIndex: 0,
+----            }}>
+----              {/* Wood grain pattern */}
+----              <div style={{
+----                position: 'absolute',
+----                bottom: 0,
+----                left: 0,
+----                right: 0,
+----                height: '40%',
+----                background: `
+----                  repeating-linear-gradient(
+----                    90deg,
+----                    transparent,
+----                    transparent 60px,
+----                    rgba(139, 69, 19, 0.15) 60px,
+----                    rgba(139, 69, 19, 0.15) 62px
+----                  ),
+----                  repeating-linear-gradient(
+----                    0deg,
+----                    transparent,
+----                    transparent 15px,
+----                    rgba(139, 69, 19, 0.08) 15px,
+----                    rgba(139, 69, 19, 0.08) 16px
+----                  )
+----                `,
+----              }} />
+----            </div>
+---+            }} />
+---             
+---             {/* Sehaj Cat (Left - Ginger) */}
 ---             <motion.div
----               animate={{ width: `${Math.min((hp / maxHp) * 100, 120)}%` }}
----               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
----               style={{
----                 height: '100%',
-----                background: getHpColor(),
----+                background: `linear-gradient(90deg, ${getHpColor()}, ${getHpColor()}cc)`,
----                 borderRadius: 14,
----+                boxShadow: `0 0 20px ${getHpColor()}50`,
----               }}
----             />
----             <span style={{
----@@ -217,7 +219,7 @@ export default function TortureChamber() {
----               color: '#fff',
----               fontWeight: 'bold',
----               fontSize: 14,
-----              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
----+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
----             }}>
----               {hp} / {maxHp} HP
----             </span>
 ---diff --git a/model.patch b/model.patch
----index 30e44ec..e69de29 100644
+---index d4077ef..a7d585b 100644
 ------ a/model.patch
 ---+++ b/model.patch
----@@ -1,36 +0,0 @@
-----diff --git a/frontend/app/index.tsx b/frontend/app/index.tsx
-----index cd5666a..ae7ecd1 100644
-------- a/frontend/app/index.tsx
-----+++ b/frontend/app/index.tsx
-----@@ -101,7 +101,7 @@ export default function EntryGate() {
-----         }),
-----       ])
-----     ).start();
------  }, []);
-----+  }, [checkingIntro]);
----- 
-----   const heartTranslateY = heartAnim.interpolate({
-----     inputRange: [0, 1],
+---@@ -1,81 +0,0 @@
+----diff --git a/frontend_web/src/pages/TortureChamber.tsx b/frontend_web/src/pages/TortureChamber.tsx
+----index fdd16db..5cc8e72 100644
+------- a/frontend_web/src/pages/TortureChamber.tsx
+----+++ b/frontend_web/src/pages/TortureChamber.tsx
+----@@ -193,20 +193,22 @@ export default function TortureChamber() {
+----           <div style={{
+----             width: '100%',
+----             height: 28,
+-----            background: 'rgba(255,255,255,0.1)',
+----+            background: 'rgba(255,255,255,0.05)',
+----+            backdropFilter: 'blur(10px)',
+----             borderRadius: 14,
+----             overflow: 'hidden',
+----             position: 'relative',
+-----            border: hp > 100 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
+-----            boxShadow: hp > 100 ? '0 0 15px rgba(255,105,180,0.5)' : 'none',
+----+            border: hp > 1500 ? '2px solid #ff69b4' : '1px solid rgba(255,255,255,0.2)',
+----+            boxShadow: hp > 1500 ? '0 0 25px rgba(255,105,180,0.5)' : '0 4px 20px rgba(0,0,0,0.2), inset 0 0 20px rgba(255,255,255,0.05)',
+----           }}>
+----             <motion.div
+----               animate={{ width: `${Math.min((hp / maxHp) * 100, 120)}%` }}
+----               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+----               style={{
+----                 height: '100%',
+-----                background: getHpColor(),
+----+                background: `linear-gradient(90deg, ${getHpColor()}, ${getHpColor()}cc)`,
+----                 borderRadius: 14,
+----+                boxShadow: `0 0 20px ${getHpColor()}50`,
+----               }}
+----             />
+----             <span style={{
+----@@ -217,7 +219,7 @@ export default function TortureChamber() {
+----               color: '#fff',
+----               fontWeight: 'bold',
+----               fontSize: 14,
+-----              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+----+              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+----             }}>
+----               {hp} / {maxHp} HP
+----             </span>
 ----diff --git a/model.patch b/model.patch
-----index 5d9f76b..e69de29 100644
+----index 30e44ec..e69de29 100644
 ------- a/model.patch
 ----+++ b/model.patch
-----@@ -1,18 +0,0 @@
------diff --git a/frontend/app/memories.tsx b/frontend/app/memories.tsx
------index 51ca983..e6cac96 100644
--------- a/frontend/app/memories.tsx
------+++ b/frontend/app/memories.tsx
------@@ -306,6 +306,13 @@ const styles = StyleSheet.create({
------     flex: 1,
------     backgroundColor: '#FFF5F7',
------   },
------+  backButton: {
------+    position: 'absolute',
------+    top: 50,
------+    left: 16,
------+    zIndex: 10,
------+    padding: 8,
------+  },
------   content: {
------     flex: 1,
------     padding: 24,
+----@@ -1,36 +0,0 @@
+-----diff --git a/frontend/app/index.tsx b/frontend/app/index.tsx
+-----index cd5666a..ae7ecd1 100644
+-------- a/frontend/app/index.tsx
+-----+++ b/frontend/app/index.tsx
+-----@@ -101,7 +101,7 @@ export default function EntryGate() {
+-----         }),
+-----       ])
+-----     ).start();
+------  }, []);
+-----+  }, [checkingIntro]);
+----- 
+-----   const heartTranslateY = heartAnim.interpolate({
+-----     inputRange: [0, 1],
+-----diff --git a/model.patch b/model.patch
+-----index 5d9f76b..e69de29 100644
+-------- a/model.patch
+-----+++ b/model.patch
+-----@@ -1,18 +0,0 @@
+------diff --git a/frontend/app/memories.tsx b/frontend/app/memories.tsx
+------index 51ca983..e6cac96 100644
+--------- a/frontend/app/memories.tsx
+------+++ b/frontend/app/memories.tsx
+------@@ -306,6 +306,13 @@ const styles = StyleSheet.create({
+------     flex: 1,
+------     backgroundColor: '#FFF5F7',
+------   },
+------+  backButton: {
+------+    position: 'absolute',
+------+    top: 50,
+------+    left: 16,
+------+    zIndex: 10,
+------+    padding: 8,
+------+  },
+------   content: {
+------     flex: 1,
+------     padding: 24,
