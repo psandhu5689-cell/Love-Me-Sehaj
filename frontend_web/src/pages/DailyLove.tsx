@@ -1092,8 +1092,8 @@ export default function DailyLove() {
     
     const handleNextSadMessageNav = () => {
       haptics.light()
-      setSadMessageIndex((prev) => (prev + 1) % SAD_MODE_MESSAGES.length)
-      setSadMessage(SAD_MODE_MESSAGES[(sadMessageIndex + 1) % SAD_MODE_MESSAGES.length])
+      setSadMessageIndex((prev) => (prev + 1) % SAD_MESSAGES.length)
+      setSadMessage(SAD_MESSAGES[(sadMessageIndex + 1) % SAD_MESSAGES.length])
     }
 
     return (
