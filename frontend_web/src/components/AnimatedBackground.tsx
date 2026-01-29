@@ -99,13 +99,14 @@ export default function AnimatedBackground({
         }}
       />
 
-      {/* Static twinkling particles */}
+      {/* Static twinkling particles - HEARTS NOW TWINKLE, NO DRIFTING */}
       {particles.map((particle) => (
         <motion.div
           key={particle.id}
           animate={{
             opacity: [0.2, 0.9, 0.2],
             scale: [0.8, 1.2, 0.8],
+            // REMOVED: No x/y movement - hearts twinkle in place
           }}
           transition={{
             duration: particle.duration,
