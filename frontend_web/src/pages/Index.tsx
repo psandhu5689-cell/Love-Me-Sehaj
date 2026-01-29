@@ -170,43 +170,17 @@ export default function Index() {
         position: 'relative',
       }}
     >
-      {/* Music Prompt - shown when autoplay is blocked */}
-      <AnimatePresence>
-        {needsUserInteraction && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            style={{
-              position: 'fixed',
-              bottom: 100,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: colors.glass,
-              backdropFilter: 'blur(10px)',
-              border: `1px solid ${colors.border}`,
-              borderRadius: 20,
-              padding: '12px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              zIndex: 100,
-              cursor: 'pointer',
-            }}
-            onClick={enableMusic}
-          >
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <IoMusicalNotes size={20} color={colors.primary} />
-            </motion.div>
-            <span style={{ color: colors.textPrimary, fontSize: 14 }}>
-              Tap to start music 🎵
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Music Widget - Fixed position bottom left - replaces tap to play overlay */}
+      <div style={{
+        position: 'fixed',
+        bottom: 20,
+        left: 20,
+        zIndex: 100,
+      }}>
+        <MusicJukebox compact style={{ minWidth: 180 }} />
+      </div>
+
+      {/* REMOVED: Music Prompt overlay - music is controlled via widget only */}
 
       {/* Yellow Heart */}
       <motion.button
