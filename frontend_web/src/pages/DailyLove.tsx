@@ -1197,26 +1197,7 @@ export default function DailyLove() {
             zIndex: 2,
           }}
         >
-          {/* Shimmer Highlight */}
-          <motion.div
-            animate={{
-              x: [-200, 500],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              repeatDelay: 10,
-            }}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: 100,
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-              pointerEvents: 'none',
-            }}
-          />
+          {/* REMOVED: diagonal shimmer - it was distracting */}
 
           {/* Static Heart Icon - NOT spinning */}
           <IoHeart size={50} color={colors.primary} style={{ display: 'block', margin: '0 auto 16px' }} />
@@ -1224,62 +1205,124 @@ export default function DailyLove() {
             I'm here for you 💗
           </h1>
 
-          {/* Message with Navigation */}
+          {/* FIXED: Scrollable Wheel Picker for Messages */}
           <div style={{ position: 'relative', marginBottom: 24 }}>
-            <motion.div
-              key={sadMessage}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+            <div 
+              ref={wheelRef}
               style={{
                 background: colors.card,
                 border: `1px solid ${colors.border}`,
                 borderRadius: 20,
-                padding: 24,
-                paddingRight: 50,
+                padding: 16,
+                height: 180,
+                overflow: 'hidden',
+                position: 'relative',
               }}
             >
-              <p style={{
-                color: colors.textPrimary,
-                fontSize: 19,
-                textAlign: 'center',
-                lineHeight: 1.7,
-                fontStyle: 'italic',
-              }}>
-                {sadMessage}
-              </p>
-            </motion.div>
-            
-            {/* Next Message Button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleNextSadMessageNav}
-              style={{
+              {/* Gradient overlays for wheel effect */}
+              <div style={{
                 position: 'absolute',
-                right: 10,
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 50,
+                background: `linear-gradient(to bottom, ${colors.card}, transparent)`,
+                zIndex: 2,
+                pointerEvents: 'none',
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 50,
+                background: `linear-gradient(to top, ${colors.card}, transparent)`,
+                zIndex: 2,
+                pointerEvents: 'none',
+              }} />
+              
+              {/* Wheel items */}
+              <motion.div
+                animate={{ y: -wheelIndex * 60 + 60 }}
+                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                style={{ paddingTop: 60 }}
+              >
+                {SAD_MODE_MESSAGES.map((msg, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      height: 60,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: i === wheelIndex ? 1 : 0.3,
+                      transform: i === wheelIndex ? 'scale(1.05)' : 'scale(0.9)',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    <p style={{
+                      color: colors.textPrimary,
+                      fontSize: i === wheelIndex ? 17 : 14,
+                      textAlign: 'center',
+                      lineHeight: 1.5,
+                      fontStyle: 'italic',
+                      fontWeight: i === wheelIndex ? 600 : 400,
+                      padding: '0 16px',
+                    }}>
+                      {msg}
+                    </p>
+                  </div>
+                ))}
+              </motion.div>
+              
+              {/* Center highlight bar */}
+              <div style={{
+                position: 'absolute',
                 top: '50%',
+                left: 10,
+                right: 10,
+                height: 60,
                 transform: 'translateY(-50%)',
                 background: colors.glass,
                 border: `1px solid ${colors.border}`,
+                borderRadius: 12,
+                pointerEvents: 'none',
+                zIndex: 1,
+              }} />
+            </div>
+            
+            {/* Spin Wheel Button */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleWheelSpin}
+              style={{
+                position: 'absolute',
+                right: -20,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                border: 'none',
                 borderRadius: '50%',
-                width: 36,
-                height: 36,
+                width: 50,
+                height: 50,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
+                boxShadow: `0 4px 12px ${colors.primaryGlow}`,
               }}
             >
-              <IoChevronForward size={20} color={colors.primary} />
+              <IoRefresh size={24} color="white" />
             </motion.button>
           </div>
 
-          {/* Quick Kiss Button */}
+          {/* Quick Kiss Button - FIXED: Now vibrates */}
           <div style={{ position: 'relative', marginBottom: 16 }}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleQuickKiss}
+              onClick={handleQuickKissVibrate}
               style={{
                 width: '100%',
                 background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
