@@ -55,7 +55,7 @@ export default function TortureChamber() {
   const [hp, setHp] = useState(stats.currentHp)
   const [maxHp] = useState(3000)
   const [currentMessage, setCurrentMessage] = useState('')
-  const [floatingDamage, setFloatingDamage] = useState<{ value: number; isHeal: boolean } | null>(null)
+  const [floatingMessages, setFloatingMessages] = useState<{ id: string; value: number; isHeal: boolean; timestamp: number }[]>([])
   const [isShaking, setIsShaking] = useState(false)
   const [isDead, setIsDead] = useState(false)
   const [showJustKidding, setShowJustKidding] = useState(false)
