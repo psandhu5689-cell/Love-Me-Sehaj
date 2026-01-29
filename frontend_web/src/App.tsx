@@ -63,6 +63,15 @@ export default function App() {
           <Route path="/us-forever" element={<UsForever />} />
           <Route path="/card-match" element={<CardMatch />} />
           <Route path="/hold-reveal" element={<HoldReveal />} />
+          
+          {/* Daily Love Hub Routes */}
+          <Route path="/daily-love-hub" element={<DailyLoveHub />} />
+          <Route path="/daily-compliments" element={<DailyCompliments />} />
+          <Route path="/why-i-love-you" element={<WhyILoveYou />} />
+          <Route path="/daily-questions" element={<DailyQuestions />} />
+          <Route path="/daily-challenges" element={<DailyChallenges />} />
+          <Route path="/special-moments" element={<SpecialMoments />} />
+          
           <Route path="/quiet-stars" element={<QuietStars />} />
           <Route path="/question" element={<Question />} />
           <Route path="/celebration" element={<Celebration />} />
