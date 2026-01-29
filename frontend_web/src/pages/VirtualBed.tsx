@@ -564,10 +564,8 @@ export default function VirtualBed() {
         break
         
       case 'sleep':
-        // Play soft purr/night sound for sleep
-        if (userInteracted && catMeowNightRef.current && !isMuted) {
-          catMeowNightRef.current.play()
-        }
+        // Play soft purr/night sound for sleep with cooldown
+        playCatSound(catMeowNightRef)
         setCat(prev => ({ ...prev, isAwake: false, action: 'sleep', mood: Math.min(100, prev.mood + 5) }))
         setShowEffect({ type: 'z', x: isLeft ? 35 : 65, y: 35 })
         break
