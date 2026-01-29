@@ -1919,8 +1919,8 @@ export default function VirtualBed() {
             {/* Sehaj Cat (Left - Ginger) - ROAMING with smooth transitions - TAP TO PET */}
             <motion.div
               animate={{
-                left: cuddleMode ? '40%' : `${sehajRoam.xPercent}%`,
-                bottom: cuddleMode ? 110 : `${100 - sehajRoam.yPercent}%`,
+                left: cuddleMode ? '42%' : `${sehajRoam.xPercent}%`,
+                bottom: cuddleMode ? '30%' : `${100 - sehajRoam.yPercent}%`,
                 y: sehaj.action === 'nudge' || sehaj.action === 'kick' ? [0, -5, 0] : 0,
               }}
               transition={{ 
