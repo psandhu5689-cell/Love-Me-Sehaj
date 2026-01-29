@@ -67,20 +67,18 @@ interface AnimationDef {
 }
 
 /**
- * ANIMATION MAP FOR PRABH (Grey/Black Cat)
- * Based on sprite sheet analysis - cat1_sheet.png
- * Rows are 0-indexed, 14 cols, 72 rows total
- * Using conservative row numbers for reliable animation
+ * ANIMATION MAP FOR PRABH (Gray Cat)
+ * UPDATED: Default to STATIC single frame, not looping
  */
 const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
-  // Default calm sitting - use row 0 (first row, always safe)
-  sitIdle: { startRow: 0, frameCount: 8, fps: 2, loop: true },
-  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: true },
-  // Sleep states - typically in lower rows
-  sleep: { startRow: 5, frameCount: 4, fps: 1.5, loop: true },
-  sleepCurled: { startRow: 6, frameCount: 4, fps: 1.5, loop: true },
+  // STATIC default - single frozen frame
+  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
+  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
+  // Sleep states
+  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
+  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
   // Grooming
-  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: true },
+  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
   // Vocalizations
   meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
   yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
@@ -92,24 +90,24 @@ const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
   // Eating
   eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
   // Cuddle state
-  cuddle: { startRow: 5, frameCount: 4, fps: 2, loop: true },
+  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static
   // Gaming
-  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: true },
+  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
 }
 
 /**
  * ANIMATION MAP FOR SEHAJ (Brown/Ginger Cat)
- * Based on sprite sheet analysis - cat2_sheet.png
+ * UPDATED: Default to STATIC single frame, not looping
  */
 const SEHAJ_ANIMATIONS: Record<string, AnimationDef> = {
-  // Default calm sitting
-  sitIdle: { startRow: 0, frameCount: 8, fps: 2, loop: true },
-  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: true },
+  // STATIC default - single frozen frame
+  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
+  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
   // Sleep states
-  sleep: { startRow: 5, frameCount: 4, fps: 1.5, loop: true },
-  sleepCurled: { startRow: 6, frameCount: 4, fps: 1.5, loop: true },
+  sleep: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
+  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false }, // Static sleep frame
   // Grooming
-  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: true },
+  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
   // Vocalizations  
   meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
   yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
@@ -121,9 +119,9 @@ const SEHAJ_ANIMATIONS: Record<string, AnimationDef> = {
   // Eating
   eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
   // Cuddle state
-  cuddle: { startRow: 5, frameCount: 4, fps: 2, loop: true },
+  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false }, // Static
   // Gaming
-  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: true },
+  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
 }
 
 type AnimationState = keyof typeof PRABH_ANIMATIONS
