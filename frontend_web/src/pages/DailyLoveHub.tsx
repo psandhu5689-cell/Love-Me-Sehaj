@@ -98,8 +98,9 @@ export default function DailyLoveHub() {
       {/* Content */}
       <div style={{
         maxWidth: 600,
-        margin: '80px auto 0',
+        margin: '60px auto 0',
         width: '100%',
+        paddingTop: 20,
       }}>
         {/* Title */}
         <motion.div
