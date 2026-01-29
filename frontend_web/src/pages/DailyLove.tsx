@@ -285,12 +285,15 @@ export default function DailyLove() {
   // New states for activities
   const [showWouldYouRather, setShowWouldYouRather] = useState(false)
   const [wyrIndex, setWyrIndex] = useState(0)
+  const [wyrMyChoice, setWyrMyChoice] = useState<'a' | 'b' | null>(null)
+  const [wyrOtherChoice, setWyrOtherChoice] = useState<'a' | 'b' | null>(null)
   const [showHeartToHeart, setShowHeartToHeart] = useState(false)
   const [hthIndex, setHthIndex] = useState(0)
   const [showHTHHistory, setShowHTHHistory] = useState(false)
   const [showCoinFlip, setShowCoinFlip] = useState(false)
   const [coinResult, setCoinResult] = useState<string | null>(null)
   const [isFlipping, setIsFlipping] = useState(false)
+  const [coinTally, setCoinTally] = useState({ prabh: 0, sehaj: 0 })
   const [showTimeTogether, setShowTimeTogether] = useState(false)
   
   // Sad mode states - MUST be at top level (Rules of Hooks)
