@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IoChevronBackOutline, IoHelp, IoCheckmarkCircle, IoClose } from 'react-icons/io5'
+import { IoChevronBackOutline, IoHelp, IoCheckmarkCircle } from 'react-icons/io5'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import haptics from '../utils/haptics'
@@ -57,6 +57,7 @@ const createBlackSquares = (): boolean[][] => {
 export default function Crossword() {
   const navigate = useNavigate()
   const { colors } = useTheme()
+  const inputRef = useRef<HTMLInputElement>(null)
   
   const [userGrid, setUserGrid] = useState<(string | null)[][]>(() => {
     const saved = localStorage.getItem('crossword_progress')
@@ -68,7 +69,6 @@ export default function Crossword() {
   const [selectedDirection, setSelectedDirection] = useState<'across' | 'down'>('across')
   const [revealCount, setRevealCount] = useState(3)
   const [showConfetti, setShowConfetti] = useState(false)
-  const [showKeyboard, setShowKeyboard] = useState(false)
 
   // Save progress
   useEffect(() => {
@@ -95,6 +95,13 @@ export default function Crossword() {
     }
   }, [userGrid])
 
+  // Focus the hidden input when a cell is selected
+  useEffect(() => {
+    if (selectedCell && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [selectedCell])
+
   const handleCellClick = (row: number, col: number) => {
     if (blackSquares[row][col]) return
     
@@ -106,21 +113,10 @@ export default function Crossword() {
     } else {
       setSelectedCell({ row, col })
     }
-    
-    setShowKeyboard(true)
   }
 
-  const handleLetterInput = (letter: string) => {
-    if (!selectedCell) return
-    
-    haptics.light()
-    
-    const { row, col } = selectedCell
-    const newGrid = userGrid.map(r => [...r])
-    newGrid[row][col] = letter
-    setUserGrid(newGrid)
-    
-    // Move to next cell
+  // Move to next valid cell
+  const moveToNextCell = (row: number, col: number) => {
     if (selectedDirection === 'across') {
       let nextCol = col + 1
       while (nextCol < GRID_SIZE && blackSquares[row][nextCol]) nextCol++
@@ -136,15 +132,113 @@ export default function Crossword() {
     }
   }
 
-  const handleBackspace = () => {
+  // Move to previous valid cell
+  const moveToPrevCell = (row: number, col: number) => {
+    if (selectedDirection === 'across') {
+      let prevCol = col - 1
+      while (prevCol >= 0 && blackSquares[row][prevCol]) prevCol--
+      if (prevCol >= 0) {
+        setSelectedCell({ row, col: prevCol })
+      }
+    } else {
+      let prevRow = row - 1
+      while (prevRow >= 0 && blackSquares[prevRow][col]) prevRow--
+      if (prevRow >= 0) {
+        setSelectedCell({ row: prevRow, col })
+      }
+    }
+  }
+
+  // Handle keyboard input from the hidden input
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!selectedCell) return
     
-    haptics.light()
-    
     const { row, col } = selectedCell
-    const newGrid = userGrid.map(r => [...r])
-    newGrid[row][col] = null
-    setUserGrid(newGrid)
+    
+    if (e.key === 'Backspace') {
+      e.preventDefault()
+      haptics.light()
+      
+      const newGrid = userGrid.map(r => [...r])
+      if (newGrid[row][col]) {
+        newGrid[row][col] = null
+      } else {
+        // Move back and delete
+        moveToPrevCell(row, col)
+      }
+      setUserGrid(newGrid)
+      return
+    }
+    
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (row > 0 && !blackSquares[row - 1][col]) {
+        setSelectedCell({ row: row - 1, col })
+      }
+      return
+    }
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      if (row < GRID_SIZE - 1 && !blackSquares[row + 1][col]) {
+        setSelectedCell({ row: row + 1, col })
+      }
+      return
+    }
+    
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      if (col > 0 && !blackSquares[row][col - 1]) {
+        setSelectedCell({ row, col: col - 1 })
+      }
+      return
+    }
+    
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      if (col < GRID_SIZE - 1 && !blackSquares[row][col + 1]) {
+        setSelectedCell({ row, col: col + 1 })
+      }
+      return
+    }
+    
+    // Handle letter input
+    const letter = e.key.toUpperCase()
+    if (/^[A-Z]$/.test(letter)) {
+      e.preventDefault()
+      haptics.light()
+      
+      const newGrid = userGrid.map(r => [...r])
+      newGrid[row][col] = letter
+      setUserGrid(newGrid)
+      
+      // Move to next cell
+      moveToNextCell(row, col)
+    }
+  }
+
+  // Handle input change for mobile keyboards
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedCell) return
+    
+    const value = e.target.value.toUpperCase()
+    if (value.length > 0) {
+      const letter = value[value.length - 1]
+      if (/^[A-Z]$/.test(letter)) {
+        haptics.light()
+        
+        const { row, col } = selectedCell
+        const newGrid = userGrid.map(r => [...r])
+        newGrid[row][col] = letter
+        setUserGrid(newGrid)
+        
+        // Move to next cell
+        moveToNextCell(row, col)
+      }
+    }
+    
+    // Clear the input
+    e.target.value = ''
   }
 
   const handleRevealLetter = () => {
@@ -255,6 +349,26 @@ export default function Crossword() {
     }}>
       {showConfetti && <Confetti recycle={false} numberOfPieces={200} />}
       
+      {/* Hidden input for capturing keyboard - positioned off-screen but not display:none */}
+      <input
+        ref={inputRef}
+        type="text"
+        autoCapitalize="characters"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        onKeyDown={handleKeyDown}
+        onChange={handleInputChange}
+        style={{
+          position: 'absolute',
+          left: -9999,
+          top: -9999,
+          width: 1,
+          height: 1,
+          opacity: 0,
+        }}
+      />
+      
       {/* Header */}
       <motion.button
         whileTap={{ scale: 0.9 }}
@@ -302,7 +416,7 @@ export default function Crossword() {
             Crossword ✏️
           </h1>
           <p style={{ color: colors.textSecondary, fontSize: 14 }}>
-            {isComplete() ? '🎉 Puzzle Complete!' : 'Fill in all the words'}
+            {isComplete() ? '🎉 Puzzle Complete!' : 'Tap a cell and type to fill in words'}
           </p>
         </div>
 
@@ -322,7 +436,7 @@ export default function Crossword() {
             gap: 2,
             maxWidth: 450,
             margin: '0 auto 24px',
-            touchAction: 'none',
+            touchAction: 'manipulation',
           }}>
             {Array.from({ length: GRID_SIZE }).map((_, row) =>
               Array.from({ length: GRID_SIZE }).map((_, col) => {
@@ -343,19 +457,20 @@ export default function Crossword() {
                         : isSelected
                         ? colors.primary
                         : highlighted
-                        ? colors.primaryLight
+                        ? `${colors.primary}40`
                         : colors.card,
-                      border: `2px solid ${isSelected ? colors.primaryDark : highlighted ? colors.primary : colors.border}`,
+                      border: `2px solid ${isSelected ? colors.primaryDark || colors.primary : highlighted ? colors.primary : colors.border}`,
                       borderRadius: 4,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: 16,
                       fontWeight: 700,
-                      color: isSelected || highlighted ? 'white' : colors.textPrimary,
+                      color: isSelected ? 'white' : highlighted ? colors.textPrimary : colors.textPrimary,
                       cursor: isBlack ? 'default' : 'pointer',
                       position: 'relative',
                       transition: 'all 0.15s',
+                      userSelect: 'none',
                     }}
                   >
                     {clueNum && (
@@ -365,7 +480,7 @@ export default function Crossword() {
                         left: 3,
                         fontSize: 8,
                         fontWeight: 600,
-                        color: isSelected || highlighted ? 'rgba(255,255,255,0.7)' : colors.textMuted,
+                        color: isSelected ? 'rgba(255,255,255,0.8)' : colors.textMuted,
                       }}>
                         {clueNum}
                       </span>
@@ -376,6 +491,31 @@ export default function Crossword() {
               })
             )}
           </div>
+
+          {/* Direction indicator */}
+          {selectedCell && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginBottom: 16,
+            }}>
+              <div style={{
+                background: colors.card,
+                border: `1px solid ${colors.border}`,
+                borderRadius: 20,
+                padding: '6px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}>
+                <span style={{ color: colors.textSecondary, fontSize: 12 }}>Direction:</span>
+                <span style={{ color: colors.primary, fontSize: 12, fontWeight: 600 }}>
+                  {selectedDirection === 'across' ? '→ Across' : '↓ Down'}
+                </span>
+                <span style={{ color: colors.textMuted, fontSize: 10 }}>(tap cell to toggle)</span>
+              </div>
+            </div>
+          )}
 
           {/* Controls */}
           <div style={{
@@ -450,7 +590,7 @@ export default function Crossword() {
                 color: colors.textPrimary,
                 marginBottom: 12,
               }}>
-                Across
+                Across →
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {acrossClues.map((clue) => (
@@ -472,7 +612,7 @@ export default function Crossword() {
                 color: colors.textPrimary,
                 marginBottom: 12,
               }}>
-                Down
+                Down ↓
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {downClues.map((clue) => (
@@ -489,94 +629,6 @@ export default function Crossword() {
           </div>
         </div>
       </div>
-
-      {/* On-Screen Keyboard */}
-      <AnimatePresence>
-        {showKeyboard && (
-          <motion.div
-            initial={{ y: 300 }}
-            animate={{ y: 0 }}
-            exit={{ y: 300 }}
-            style={{
-              position: 'fixed',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: colors.card,
-              borderTop: `2px solid ${colors.border}`,
-              padding: 16,
-              zIndex: 1000,
-            }}
-          >
-            <div style={{
-              maxWidth: 500,
-              margin: '0 auto',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                <p style={{ color: colors.textPrimary, fontSize: 14, fontWeight: 600 }}>
-                  Enter Letter
-                </p>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowKeyboard(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <IoClose size={24} color={colors.textMuted} />
-                </motion.button>
-              </div>
-              
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, 1fr)',
-                gap: 8,
-                marginBottom: 8,
-              }}>
-                {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => (
-                  <motion.button
-                    key={letter}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleLetterInput(letter)}
-                    style={{
-                      padding: '12px',
-                      borderRadius: 8,
-                      background: colors.glass,
-                      border: `1px solid ${colors.border}`,
-                      color: colors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {letter}
-                  </motion.button>
-                ))}
-              </div>
-              
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleBackspace}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: 8,
-                  background: colors.error,
-                  border: 'none',
-                  color: 'white',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Backspace
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
