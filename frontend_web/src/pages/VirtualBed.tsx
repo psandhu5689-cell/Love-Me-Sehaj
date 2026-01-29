@@ -190,7 +190,7 @@ function Sprite({ sheet, animations, currentAnimation, onAnimationEnd, scale = 1
   }, [currentAnimation, anim.fps, anim.frameCount, anim.loop, onAnimationEnd])
   
   const col = frame % SHEET_COLS
-  const row = anim.startRow + Math.floor(frame / SHEET_COLS)
+  const row = anim.startRow
   const size = FRAME_SIZE * scale
   
   return (
@@ -207,10 +207,10 @@ function Sprite({ sheet, animations, currentAnimation, onAnimationEnd, scale = 1
       }}
     >
       <div style={{
-        width: SHEET_COLS * FRAME_SIZE * scale,
-        height: 72 * FRAME_SIZE * scale,
+        width: SHEET_COLS * size,
+        height: 72 * size,
         backgroundImage: `url(${sheet})`,
-        backgroundSize: `${SHEET_COLS * FRAME_SIZE * scale}px auto`,
+        backgroundSize: `${SHEET_COLS * size}px auto`,
         transform: `translate(-${col * size}px, -${row * size}px)`,
         imageRendering: 'pixelated',
         transition: 'transform 0.08s ease-out',
