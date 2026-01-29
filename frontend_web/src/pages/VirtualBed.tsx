@@ -457,11 +457,10 @@ export default function VirtualBed() {
         break
         
       case 'hog':
+        // REMOVED blanket hogging - no longer using blanket
         haptics.medium()
-        setBlanketOffset(isLeft ? 30 : 70)
         setCat(prev => ({ ...prev, mood: Math.min(100, prev.mood + 10) }))
         setOtherCat(prev => ({ ...prev, action: 'hiss', mood: Math.max(0, prev.mood - 15) }))
-        setTimeout(() => setBlanketOffset(50), 3000)
         break
         
       case 'feed':
