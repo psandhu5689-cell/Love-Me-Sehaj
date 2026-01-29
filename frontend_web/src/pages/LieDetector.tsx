@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { IoChevronBack, IoPlay, IoCreate } from 'react-icons/io5'
+import { IoChevronBack, IoPlay, IoCreate, IoTime } from 'react-icons/io5'
 import { useTheme } from '../context/ThemeContext'
 import { useAudio } from '../context/AudioContext'
+import { lieDetectorStorage } from '../utils/storage'
 
 const STATEMENTS = [
   "I do not miss Prabh.",
