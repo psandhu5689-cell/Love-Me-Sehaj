@@ -361,12 +361,25 @@ export default function DailyLove() {
   const handleOpenWYR = () => {
     playClick()
     setWyrIndex(Math.floor(Math.random() * WOULD_YOU_RATHER.length))
+    setWyrMyChoice(null)
+    setWyrOtherChoice(null)
     setShowWouldYouRather(true)
   }
 
   const handleNextWYR = () => {
     playClick()
     setWyrIndex((prev) => (prev + 1) % WOULD_YOU_RATHER.length)
+    setWyrMyChoice(null)
+    setWyrOtherChoice(null)
+  }
+  
+  const handleWYRChoice = (choice: 'a' | 'b') => {
+    playMagic()
+    setWyrMyChoice(choice)
+    // Simulate other person's choice (random for now)
+    setTimeout(() => {
+      setWyrOtherChoice(Math.random() > 0.5 ? 'a' : 'b')
+    }, 800)
   }
 
   const handleOpenHTH = () => {
