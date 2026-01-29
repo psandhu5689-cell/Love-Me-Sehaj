@@ -1076,11 +1076,11 @@ export default function VirtualBed() {
               )}
             </motion.div>
 
-            {/* LAYER 6: Foreground Props */}
+            {/* LAYER 6: Foreground Props - moved lower */}
             {/* Pillow on floor - left */}
             <div style={{
               position: 'absolute',
-              bottom: 120,
+              bottom: 80,
               left: 70,
               width: 50,
               height: 35,
@@ -1095,7 +1095,7 @@ export default function VirtualBed() {
             {/* Toy on floor - right */}
             <div style={{
               position: 'absolute',
-              bottom: 130,
+              bottom: 90,
               right: 80,
               fontSize: 28,
               zIndex: 4,
@@ -1104,34 +1104,7 @@ export default function VirtualBed() {
               🎾
             </div>
 
-            {/* Blanket Overlay (between cats) */}
-            <motion.div
-              animate={{ x: `${blanketOffset - 50}%` }}
-              transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-              style={{
-                position: 'absolute',
-                bottom: 160,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '50%',
-                height: 60,
-                background: 'linear-gradient(180deg, #E8A5C0 0%, #D88BA5 50%, #C87090 100%)',
-                borderRadius: '18px 18px 8px 8px',
-                border: '3px solid #B86080',
-                zIndex: 4,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              }}
-            >
-              <div style={{
-                position: 'absolute',
-                top: 8,
-                left: 15,
-                right: 15,
-                bottom: 8,
-                background: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.1) 8px, rgba(255,255,255,0.1) 16px)',
-                borderRadius: 8,
-              }} />
-            </motion.div>
+            {/* REMOVED: Blanket overlay - now using rug instead */}
             
             {/* Effects */}
             <AnimatePresence>
