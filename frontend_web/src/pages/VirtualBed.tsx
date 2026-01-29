@@ -346,6 +346,16 @@ export default function VirtualBed() {
     }
   }, [prabhMeter, sehajMeter])
   
+  // Gradually decrease horniness meters over time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPrabhMeter(prev => Math.max(0, prev - 1))
+      setSehajMeter(prev => Math.max(0, prev - 1))
+    }, 30000) // Decrease by 1 every 30 seconds
+    
+    return () => clearInterval(interval)
+  }, [])
+  
   useEffect(() => {
     if (showEffect) {
       const timeout = setTimeout(() => setShowEffect(null), 1500)
