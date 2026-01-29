@@ -127,6 +127,26 @@ export default function WordSearch() {
   const [hintedCells, setHintedCells] = useState<Set<string>>(new Set())
 
   const isCompleted = foundWords.size === WORD_BANKS[bankIndex].length
+  
+  // Reference for tracking touch position
+  const gridRef = useRef<HTMLDivElement>(null)
+  const lastTouchCell = useRef<string | null>(null)
+
+  const getCellFromTouch = (touch: Touch): { row: number; col: number } | null => {
+    if (!gridRef.current) return null
+    const rect = gridRef.current.getBoundingClientRect()
+    const x = touch.clientX - rect.left
+    const y = touch.clientY - rect.top
+    const cellWidth = rect.width / puzzle.grid[0].length
+    const cellHeight = rect.height / puzzle.grid.length
+    const col = Math.floor(x / cellWidth)
+    const row = Math.floor(y / cellHeight)
+    
+    if (row >= 0 && row < puzzle.grid.length && col >= 0 && col < puzzle.grid[0].length) {
+      return { row, col }
+    }
+    return null
+  }
 
   const handleCellMouseDown = (row: number, col: number) => {
     haptics.selection()
@@ -143,25 +163,60 @@ export default function WordSearch() {
     }
   }
 
+  // FIXED: Real touch drag support for mobile
+  const handleTouchStart = (e: React.TouchEvent, row: number, col: number) => {
+    e.preventDefault()
+    haptics.selection()
+    setIsSelecting(true)
+    const key = `${row},${col}`
+    setCurrentSelection([key])
+    lastTouchCell.current = key
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSelecting || e.touches.length === 0) return
+    e.preventDefault()
+    
+    const touch = e.touches[0]
+    const cell = getCellFromTouch(touch)
+    if (cell) {
+      const key = `${cell.row},${cell.col}`
+      if (key !== lastTouchCell.current && !currentSelection.includes(key)) {
+        setCurrentSelection(prev => [...prev, key])
+        lastTouchCell.current = key
+      }
+    }
+  }
+
+  const handleTouchEnd = () => {
+    handleMouseUp()
+  }
+
   const handleMouseUp = () => {
     if (!isSelecting) return
     setIsSelecting(false)
+    lastTouchCell.current = null
     
-    // Check if selection matches any word
+    // Check if selection matches any word (forward or reverse)
     const selectedWord = currentSelection.map(key => {
       const [r, c] = key.split(',').map(Number)
       return puzzle.grid[r][c]
     }).join('')
     
-    if (WORD_BANKS[bankIndex].includes(selectedWord) && !foundWords.has(selectedWord)) {
+    const reversedWord = selectedWord.split('').reverse().join('')
+    
+    if ((WORD_BANKS[bankIndex].includes(selectedWord) && !foundWords.has(selectedWord)) ||
+        (WORD_BANKS[bankIndex].includes(reversedWord) && !foundWords.has(reversedWord))) {
       haptics.success()
-      setFoundWords(prev => new Set([...prev, selectedWord]))
+      const foundWord = WORD_BANKS[bankIndex].includes(selectedWord) ? selectedWord : reversedWord
+      setFoundWords(prev => new Set([...prev, foundWord]))
       setSelectedCells(prev => new Set([...prev, ...currentSelection]))
     }
     
     setCurrentSelection([])
   }
 
+  // FIXED: Hints reveal TWO letters from a random unsolved word
   const handleHint = () => {
     if (hintCount <= 0) return
     
@@ -169,10 +224,24 @@ export default function WordSearch() {
     const remainingWords = WORD_BANKS[bankIndex].filter(w => !foundWords.has(w))
     if (remainingWords.length === 0) return
     
-    const word = remainingWords[0]
+    // Pick random unsolved word
+    const word = remainingWords[Math.floor(Math.random() * remainingWords.length)]
     const placed = puzzle.placedWords.find(p => p.word === word)
+    
     if (placed && placed.cells.length > 0) {
-      setHintedCells(prev => new Set([...prev, placed.cells[0]]))
+      // Get cells that aren't already hinted
+      const unhintedCells = placed.cells.filter(c => !hintedCells.has(c))
+      if (unhintedCells.length >= 2) {
+        // Reveal TWO letters
+        const cell1 = unhintedCells[0]
+        const cell2 = unhintedCells[Math.min(1, unhintedCells.length - 1)]
+        setHintedCells(prev => new Set([...prev, cell1, cell2]))
+      } else if (unhintedCells.length === 1) {
+        setHintedCells(prev => new Set([...prev, unhintedCells[0]]))
+      } else {
+        // All cells already hinted, reveal first two anyway
+        setHintedCells(prev => new Set([...prev, placed.cells[0], placed.cells[1]]))
+      }
       setHintCount(prev => prev - 1)
     }
   }
