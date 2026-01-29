@@ -100,30 +100,33 @@ export default function DailyLoveHub() {
         maxWidth: 600,
         margin: '0 auto',
         width: '100%',
-        paddingTop: 70,
+        paddingTop: 60,
         paddingLeft: 16,
         paddingRight: 16,
       }}>
-        {/* Title */}
+        {/* Title - MUST BE VISIBLE AT TOP */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           style={{
             textAlign: 'center',
-            marginBottom: 24,
+            marginBottom: 20,
+            marginTop: 0,
           }}
         >
           <h1 style={{
             color: colors.textPrimary,
-            fontSize: 28,
-            fontWeight: 600,
-            marginBottom: 6,
+            fontSize: 26,
+            fontWeight: 700,
+            marginBottom: 4,
+            marginTop: 0,
           }}>
             Personal Library
           </h1>
           <p style={{
             color: colors.textSecondary,
-            fontSize: 14,
+            fontSize: 13,
+            margin: 0,
           }}>
             Everything for my girl
           </p>
