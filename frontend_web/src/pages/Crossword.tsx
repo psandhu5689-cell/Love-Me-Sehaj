@@ -94,9 +94,13 @@ export default function Crossword() {
     if (isComplete()) {
       haptics.success()
       setShowConfetti(true)
-      setTimeout(() => setShowConfetti(false), 5000)
+      setTimeout(() => {
+        setShowConfetti(false)
+        // Navigate to the next page in Valentines pathway
+        navigate('/card-match')
+      }, 3000)
     }
-  }, [userGrid])
+  }, [userGrid, navigate])
 
   // Focus the hidden input when a cell is selected
   useEffect(() => {
