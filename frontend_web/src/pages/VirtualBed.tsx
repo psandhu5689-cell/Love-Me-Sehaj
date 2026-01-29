@@ -789,24 +789,25 @@ export default function VirtualBed() {
               zIndex: 0,
             }} />
 
-            {/* Rainy Window on Wall */}
+            {/* Rainy Window on Wall - LARGER with WHITE OUTLINE */}
             <div style={{
               position: 'absolute',
-              top: 20,
-              right: 30,
-              width: 120,
-              height: 90,
+              top: 15,
+              right: 25,
+              width: 160,
+              height: 120,
               background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
-              border: '4px solid #5D4037',
-              borderRadius: 8,
+              border: '5px solid #FFFFFF',
+              borderRadius: 10,
               overflow: 'hidden',
               zIndex: 1,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.3)',
             }}>
-              {/* Looping rain video inside window */}
+              {/* Looping rain video inside window - ALWAYS MUTED */}
               <video
                 autoPlay
                 loop
-                muted={isMuted}
+                muted={true}
                 playsInline
                 style={{
                   position: 'absolute',
@@ -820,14 +821,14 @@ export default function VirtualBed() {
                 src="/window-rain.mov"
               />
               
-              {/* Window frame overlays */}
+              {/* Window frame overlays - WHITE */}
               <div style={{
                 position: 'absolute',
                 top: 0,
                 left: '50%',
-                width: 4,
+                width: 5,
                 height: '100%',
-                background: '#5D4037',
+                background: '#FFFFFF',
                 transform: 'translateX(-50%)',
                 zIndex: 1,
               }} />
@@ -836,8 +837,8 @@ export default function VirtualBed() {
                 top: '50%',
                 left: 0,
                 width: '100%',
-                height: 4,
-                background: '#5D4037',
+                height: 5,
+                background: '#FFFFFF',
                 transform: 'translateY(-50%)',
                 zIndex: 1,
               }} />
