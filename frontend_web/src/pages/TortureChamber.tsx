@@ -30,11 +30,19 @@ const HEAL_ACTIONS = [
 ]
 
 const RANDOM_DAMAGE_MESSAGES = [
-  "Prabh took emotional damage.",
-  "Why do you enjoy this.",
-  "He's used to it by now.",
-  "Prabh is questioning his life choices.",
-  "That one really hurt.",
+  "Prabh got a booboo.",
+  "Prabh said ouchie.",
+  "Ouchhhh.",
+  "That looked personal.",
+  "Prabh regrets this.",
+]
+
+const HEAL_MESSAGES = [
+  "Ooo that felt nice.",
+  "Feeling loved again.",
+  "Back in business.",
+  "Warm and happy.",
+  "Okay okay I feel better.",
 ]
 
 export default function TortureChamber() {
