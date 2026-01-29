@@ -450,7 +450,7 @@ export default function TortureChamber() {
                 ref={(el) => (damageButtonRefs.current[index] = el)}
                 whileHover={{ scale: 1.08, boxShadow: '0 0 20px rgba(239,68,68,0.4)' }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => handleDamage(attack, index)}
+                onClick={() => handleAction('damage', attack, index)}
                 disabled={isDead}
                 style={{
                   background: 'rgba(239,68,68,0.15)',
