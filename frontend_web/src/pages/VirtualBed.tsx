@@ -333,6 +333,34 @@ export default function VirtualBed() {
   const [rainMuted] = useState(true) // Rain is PERMANENTLY muted on MR & MRS
   const [userInteracted, setUserInteracted] = useState(false)
   
+  // GLOBAL AUDIO COOLDOWN: 3-5 seconds between cat sounds
+  const lastSoundTimeRef = useRef<number>(0)
+  const SOUND_COOLDOWN_MS = 4000 // 4 seconds between sounds
+  
+  // Helper to play cat sound with cooldown
+  const playCatSound = (soundRef: React.MutableRefObject<Howl | null>) => {
+    if (!userInteracted || isMuted) return false
+    
+    const now = Date.now()
+    const timeSinceLastSound = now - lastSoundTimeRef.current
+    
+    // Check cooldown
+    if (timeSinceLastSound < SOUND_COOLDOWN_MS) {
+      console.log('[AUDIO COOLDOWN] Sound skipped, too soon')
+      return false
+    }
+    
+    // Play sound and update timestamp
+    if (soundRef.current) {
+      soundRef.current.volume(0.3) // Keep volumes low
+      soundRef.current.play()
+      lastSoundTimeRef.current = now
+      return true
+    }
+    
+    return false
+  }
+  
   // FIXED: Cats start sitting idle (awake) on load, not sleeping
   const [prabh, setPrabh] = useState<CatState>({
     mood: 75,
