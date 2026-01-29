@@ -57,6 +57,9 @@ export default function App() {
           <Route path="/relationship-emergency" element={<RelationshipEmergency />} />
           <Route path="/torture-chamber" element={<TortureChamber />} />
           <Route path="/try-not-to-smile" element={<TryNotToSmile />} />
+          <Route path="/virtual-bed" element={<VirtualBed />} />
+          <Route path="/future-goals" element={<FutureGoals />} />
+          <Route path="/word-puzzles" element={<WordPuzzles />} />
         </Routes>
       </AnimatePresence>
     </>
