@@ -515,6 +515,34 @@ export default function TortureChamber() {
         >
           ✨ Revive Prabh
         </motion.button>
+
+        {/* Stats Display */}
+        <div style={{
+          marginTop: 20,
+          padding: 16,
+          background: 'rgba(0,0,0,0.3)',
+          borderRadius: 12,
+          display: 'flex',
+          justifyContent: 'space-around',
+          gap: 16,
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: '#ef4444', fontSize: 24, fontWeight: 'bold' }}>
+              {stats.totalDeaths}
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+              Deaths 💀
+            </p>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ color: '#a78bfa', fontSize: 24, fontWeight: 'bold' }}>
+              {stats.totalRevivals}
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
+              Revivals ✨
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
