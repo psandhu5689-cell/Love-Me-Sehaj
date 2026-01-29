@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { IoHeart, IoSparkles, IoImages, IoSkull, IoBed } from 'react-icons/io5'
+import { motion, AnimatePresence } from 'framer-motion'
+import { IoHeart, IoSparkles, IoImages, IoSkull, IoBed, IoMusicalNotes } from 'react-icons/io5'
 import { useTheme } from '../context/ThemeContext'
 import { useAudio } from '../context/AudioContext'
+import { useMusic } from '../context/MusicContext'
 import { PresenceDisplay } from '../components/PresenceModals'
 
 const STICKER_GOLD_DRESS = 'https://customer-assets.emergentagent.com/job_love-adventure-49/artifacts/grh04hmp_IMG_5616.jpeg'
