@@ -151,15 +151,15 @@ export default function TortureChamber() {
       setCurrentMessage("Redemption arc.")
       setWasJustDamaged(false)
     } else {
-      setCurrentMessage(action.message)
+      // Use new playful heal messages
+      setCurrentMessage(HEAL_MESSAGES[Math.floor(Math.random() * HEAL_MESSAGES.length)])
     }
 
     const newHp = Math.min(1800, hp + action.heal) // Cap at 1800 (120% of 1500)
     setHp(newHp)
 
     // Show floating heal
-    setFloatingDamage({ value: action.heal, isHeal: true })
-    setTimeout(() => setFloatingDamage(null), 1000)
+    addFloatingMessage(action.heal, true)
   }
 
   // Revive button
