@@ -334,30 +334,31 @@ export default function Index() {
           Made with love
         </p>
 
-        {/* START Button */}
-        <motion.button
-          whileHover={{ scale: 1.05, boxShadow: `0 12px 40px ${colors.primaryGlow}` }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleBegin}
-          style={{
-            background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-            border: 'none',
-            color: 'white',
-            padding: '18px 50px',
-            borderRadius: 30,
-            fontSize: 18,
-            fontWeight: 600,
-            letterSpacing: 3,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            boxShadow: `0 8px 24px ${colors.primaryGlow}`,
-            backdropFilter: 'blur(10px)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
+        {/* START Button - CENTERED */}
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <motion.button
+            whileHover={{ scale: 1.05, boxShadow: `0 12px 40px ${colors.primaryGlow}` }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleBegin}
+            style={{
+              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+              border: 'none',
+              color: 'white',
+              padding: '18px 50px',
+              borderRadius: 30,
+              fontSize: 18,
+              fontWeight: 600,
+              letterSpacing: 3,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: `0 8px 24px ${colors.primaryGlow}`,
+              backdropFilter: 'blur(10px)',
+              position: 'relative',
+              overflow: 'hidden',
+            }}
+          >
           {/* Shimmer effect */}
           <motion.div
             animate={{ x: ['-100%', '200%'] }}
