@@ -1085,10 +1085,7 @@ export default function DailyLove() {
     // FIXED: Wheel picker handlers - state is defined at component top level
     const handleWheelSpin = () => {
       haptics.light()
-      // Vibrate briefly on scroll
-      if (navigator.vibrate) {
-        navigator.vibrate(20)
-      }
+      // Removed vibration as per user request
       // Random message on spin
       const newIndex = Math.floor(Math.random() * SAD_MODE_MESSAGES.length)
       setWheelIndex(newIndex)
