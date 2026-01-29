@@ -2414,6 +2414,67 @@ export default function VirtualBed() {
             </motion.button>
           </div>
           
+          {/* Petting & Yarn Row */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 8,
+            marginTop: 8,
+          }}>
+            {/* Petting Button - Hold to pet */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onMouseDown={() => startPetting('sehaj')}
+              onMouseUp={stopPetting}
+              onMouseLeave={stopPetting}
+              onTouchStart={() => startPetting('sehaj')}
+              onTouchEnd={stopPetting}
+              style={{
+                padding: '10px 8px',
+                borderRadius: 12,
+                background: pettingProgress > 0 
+                  ? `linear-gradient(90deg, #FF69B4 ${pettingProgress}%, ${colors.card} ${pettingProgress}%)`
+                  : colors.card,
+                border: `1px solid ${colors.border}`,
+                color: colors.textPrimary,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              🐾 Hold to Pet
+              {pettingProgress > 0 && (
+                <span style={{ marginLeft: 4, fontSize: 10 }}>
+                  {pettingProgress}%
+                </span>
+              )}
+            </motion.button>
+            
+            {/* Yarn Roll Button */}
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={rollYarn}
+              disabled={isYarnRolling}
+              style={{
+                padding: '10px 8px',
+                borderRadius: 12,
+                background: isYarnRolling 
+                  ? 'linear-gradient(135deg, #FFA07A, #FF6347)' 
+                  : colors.card,
+                border: `1px solid ${colors.border}`,
+                color: isYarnRolling ? 'white' : colors.textPrimary,
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: isYarnRolling ? 'not-allowed' : 'pointer',
+                opacity: isYarnRolling ? 0.8 : 1,
+              }}
+            >
+              🧶 {isYarnRolling ? 'Rolling...' : 'Roll Yarn'}
+            </motion.button>
+          </div>
+          
           {/* Cat Interaction Row */}
           <div style={{
             display: 'grid',
