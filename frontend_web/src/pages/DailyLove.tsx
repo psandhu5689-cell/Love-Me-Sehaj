@@ -799,17 +799,103 @@ export default function DailyLove() {
 
   // ============ SAD MODE ============
   if (showSadMode) {
+    const [kissDelivered, setKissDelivered] = useState(false)
+    const [hugProgress, setHugProgress] = useState(0)
+    const [isHugging, setIsHugging] = useState(false)
+    const [hugComplete, setHugComplete] = useState(false)
+    const [floatingHearts, setFloatingHearts] = useState<Array<{id: number, x: number, y: number}>>([])
+
+    const handleQuickKiss = () => {
+      haptics.medium()
+      playPop()
+      setKissDelivered(true)
+      
+      // Create floating hearts burst
+      const hearts: Array<{id: number, x: number, y: number}> = []
+      for (let i = 0; i < 8; i++) {
+        hearts.push({
+          id: Date.now() + i,
+          x: Math.random() * 100 - 50,
+          y: Math.random() * 100 - 50
+        })
+      }
+      setFloatingHearts(hearts)
+      
+      setTimeout(() => {
+        setKissDelivered(false)
+        setFloatingHearts([])
+      }, 2000)
+    }
+
+    const handleHoldToHug = (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault()
+      setIsHugging(true)
+      haptics.light()
+      
+      const interval = setInterval(() => {
+        setHugProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(interval)
+            setHugComplete(true)
+            haptics.success()
+            setTimeout(() => {
+              setHugComplete(false)
+              setHugProgress(0)
+            }, 3000)
+            return 100
+          }
+          return prev + 5
+        })
+      }, 100)
+    }
+
+    const handleReleaseHug = () => {
+      setIsHugging(false)
+      if (hugProgress < 100) {
+        setHugProgress(0)
+      }
+    }
+
     return (
       <div style={{
         minHeight: '100vh',
-        background: isDark ? '#1A0D1A' : colors.background,
+        background: 'transparent',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
         position: 'relative',
+        overflow: 'hidden',
       }}>
+        {/* Floating particles inside */}
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{
+              y: [-20, -40, -20],
+              x: [0, Math.random() * 20 - 10, 0],
+              opacity: [0.3, 0.7, 0.3],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              delay: i * 0.2,
+              repeat: Infinity,
+            }}
+            style={{
+              position: 'absolute',
+              left: `${5 + Math.random() * 90}%`,
+              top: `${5 + Math.random() * 90}%`,
+              fontSize: 20 + Math.random() * 10,
+              zIndex: 1,
+              pointerEvents: 'none',
+            }}
+          >
+            💗
+          </motion.div>
+        ))}
+
+        {/* Close Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           onClick={() => setShowSadMode(false)}
@@ -817,73 +903,308 @@ export default function DailyLove() {
             position: 'absolute',
             top: 50,
             right: 20,
-            background: colors.card,
-            border: 'none',
+            background: colors.glass,
+            backdropFilter: 'blur(10px)',
+            border: `1px solid ${colors.border}`,
             borderRadius: 20,
             padding: 8,
             cursor: 'pointer',
+            zIndex: 100,
           }}
         >
           <IoClose size={28} color={colors.primary} />
         </motion.button>
 
-        <IoHeart size={60} color={colors.primary} />
-        <h1 style={{ color: colors.textPrimary, fontSize: 28, fontWeight: 600, marginTop: 16 }}>
-          I'm here for you 💗
-        </h1>
-
+        {/* Main Glass Card */}
         <motion.div
-          key={sadMessage}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          animate={{
+            y: [0, -5, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
           style={{
-            background: colors.card,
-            border: `1px solid ${colors.border}`,
-            borderRadius: 20,
-            padding: 24,
-            margin: '30px 0',
-            maxWidth: 400,
-            boxShadow: `0 0 40px ${colors.primaryGlow}`,
+            background: colors.glass,
+            backdropFilter: 'blur(20px)',
+            border: `2px solid ${colors.border}`,
+            borderRadius: 30,
+            padding: '40px 30px',
+            maxWidth: 450,
+            width: '100%',
+            boxShadow: `0 8px 32px ${colors.primaryGlow}, inset 0 0 60px ${colors.primaryGlow}`,
+            position: 'relative',
+            zIndex: 2,
           }}
         >
-          <p style={{
-            color: colors.textPrimary,
-            fontSize: 20,
-            textAlign: 'center',
-            lineHeight: 1.6,
-            fontStyle: 'italic',
-          }}>
-            {sadMessage}
-          </p>
+          {/* Pulsing Heart Outline */}
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.5, 0.8, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+            }}
+            style={{
+              position: 'absolute',
+              top: -40,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: 80,
+              zIndex: -1,
+            }}
+          >
+            💗
+          </motion.div>
+
+          {/* Shimmer Highlight */}
+          <motion.div
+            animate={{
+              x: [-200, 500],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatDelay: 10,
+            }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: 100,
+              height: '100%',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <IoHeart size={50} color={colors.primary} style={{ display: 'block', margin: '0 auto 16px' }} />
+          <h1 style={{ color: colors.textPrimary, fontSize: 28, fontWeight: 700, marginBottom: 24, textAlign: 'center' }}>
+            I'm here for you 💗
+          </h1>
+
+          {/* Rotating Supportive Lines */}
+          <motion.div
+            key={sadMessage}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: colors.card,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 20,
+              padding: 24,
+              marginBottom: 24,
+              cursor: 'pointer',
+            }}
+            onClick={handleNextSadMessage}
+          >
+            <p style={{
+              color: colors.textPrimary,
+              fontSize: 19,
+              textAlign: 'center',
+              lineHeight: 1.7,
+              fontStyle: 'italic',
+            }}>
+              {sadMessage}
+            </p>
+          </motion.div>
+
+          {/* Quick Kiss Button */}
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleQuickKiss}
+              style={{
+                width: '100%',
+                background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                border: 'none',
+                color: 'white',
+                padding: '16px 24px',
+                borderRadius: 20,
+                fontSize: 18,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                boxShadow: `0 4px 20px ${colors.primaryGlow}`,
+              }}
+            >
+              Quick Kiss 💋
+            </motion.button>
+
+            {/* Kiss Feedback */}
+            <AnimatePresence>
+              {kissDelivered && (
+                <motion.div
+                  initial={{ opacity: 0, y: 0 }}
+                  animate={{ opacity: 1, y: -40 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'absolute',
+                    top: -30,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    color: colors.primary,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  Kiss delivered. 💕
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Floating Hearts Burst */}
+            <AnimatePresence>
+              {floatingHearts.map((heart) => (
+                <motion.div
+                  key={heart.id}
+                  initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+                  animate={{
+                    opacity: 0,
+                    x: heart.x,
+                    y: heart.y - 50,
+                    scale: 1.5,
+                  }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.5 }}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    fontSize: 20,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  💕
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {/* Hold to Hug Button */}
+          <div style={{ position: 'relative' }}>
+            <motion.button
+              onMouseDown={handleHoldToHug}
+              onMouseUp={handleReleaseHug}
+              onMouseLeave={handleReleaseHug}
+              onTouchStart={handleHoldToHug}
+              onTouchEnd={handleReleaseHug}
+              style={{
+                width: '100%',
+                background: colors.card,
+                border: `2px solid ${colors.border}`,
+                color: colors.textPrimary,
+                padding: '16px 24px',
+                borderRadius: 20,
+                fontSize: 18,
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {/* Progress Ring Fill */}
+              <motion.div
+                animate={{ width: `${hugProgress}%` }}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  height: '100%',
+                  background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
+                  borderRadius: 20,
+                  zIndex: 0,
+                }}
+              />
+              
+              <span style={{ position: 'relative', zIndex: 1 }}>
+                {hugComplete ? '🤗 Hug Received!' : isHugging ? `Hold (${Math.floor(hugProgress)}%)` : 'Hold to Hug 🤗'}
+              </span>
+            </motion.button>
+
+            {/* Hug Complete Message */}
+            <AnimatePresence>
+              {hugComplete && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    position: 'absolute',
+                    top: -50,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: colors.primary,
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: 12,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    boxShadow: `0 4px 12px ${colors.primaryGlow}`,
+                  }}
+                >
+                  You're so loved. I've got you. 💕
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Warm Glow on Complete */}
+            <AnimatePresence>
+              {hugComplete && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 0.3, scale: 2 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 2 }}
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    width: 200,
+                    height: 200,
+                    borderRadius: '50%',
+                    background: `radial-gradient(circle, ${colors.primary}, transparent)`,
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none',
+                    zIndex: -1,
+                  }}
+                />
+              )}
+            </AnimatePresence>
+          </div>
         </motion.div>
 
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleNextSadMessage}
+        <motion.p
+          animate={{ opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 3, repeat: Infinity }}
           style={{
-            background: colors.primary,
-            border: 'none',
-            color: 'white',
-            padding: '12px 24px',
-            borderRadius: 25,
-            fontSize: 16,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 40,
+            color: colors.textPrimary,
+            fontSize: 15,
+            textAlign: 'center',
+            fontStyle: 'italic',
+            marginTop: 30,
+            maxWidth: 350,
+            lineHeight: 1.6,
+            zIndex: 2,
           }}
         >
-          Another message
-          <IoRefresh size={18} />
-        </motion.button>
-
-        <p style={{ color: colors.textSecondary, fontSize: 14, textAlign: 'center', fontStyle: 'italic' }}>
           I love you. I'm not going anywhere.<br />
           You're my girl. Forever.
-        </p>
+        </motion.p>
       </div>
     )
   }
