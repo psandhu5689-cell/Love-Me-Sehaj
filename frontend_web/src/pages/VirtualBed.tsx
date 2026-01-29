@@ -959,19 +959,21 @@ export default function VirtualBed() {
               )}
             </motion.div>
             
-            {/* Blanket Overlay */}
+            {/* LAYER 7: Blanket Overlay */}
             <motion.div
               animate={{ x: `${blanketOffset - 50}%` }}
               transition={{ type: 'spring', damping: 20, stiffness: 100 }}
               style={{
                 position: 'absolute',
-                bottom: 15,
-                width: '70%',
-                height: 50,
+                bottom: 160,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '60%',
+                height: 40,
                 background: 'linear-gradient(180deg, #E8A5C0 0%, #D88BA5 50%, #C87090 100%)',
                 borderRadius: '18px 18px 8px 8px',
                 border: '3px solid #B86080',
-                zIndex: 3,
+                zIndex: 4,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
               }}
             >
