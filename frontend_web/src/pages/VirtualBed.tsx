@@ -637,10 +637,8 @@ export default function VirtualBed() {
         break
         
       case 'game':
-        // Play chirp for gaming
-        if (userInteracted && catMeowSoftRef.current && !isMuted) {
-          catMeowSoftRef.current.play()
-        }
+        // Play chirp for gaming with cooldown
+        playCatSound(catMeowSoftRef)
         setCat(prev => ({ ...prev, action: 'gaming', mood: Math.min(100, prev.mood + 15) }))
         setShowEffect({ type: 'sparkle', x: isLeft ? 35 : 65, y: 45 })
         setTimeout(() => {
