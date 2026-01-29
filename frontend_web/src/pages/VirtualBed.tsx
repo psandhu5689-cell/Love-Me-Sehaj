@@ -374,6 +374,313 @@ export default function VirtualBed() {
     isAwake: true,
   })
   
+  // ============ AUTONOMOUS CAT ROAMING SYSTEM ============
+  
+  // Define 12 safe anchor spots in the room (percentages relative to room container)
+  // These positions are carefully chosen to never overlap UI buttons
+  const ANCHOR_SPOTS = [
+    { id: 0, xPercent: 15, yPercent: 65, defaultPose: 'sit' as const },   // Left side, lower
+    { id: 1, xPercent: 25, yPercent: 55, defaultPose: 'lay' as const },   // Left-center
+    { id: 2, xPercent: 35, yPercent: 70, defaultPose: 'sit' as const },   // Center-left, low
+    { id: 3, xPercent: 50, yPercent: 60, defaultPose: 'sit' as const },   // Center
+    { id: 4, xPercent: 65, yPercent: 70, defaultPose: 'lay' as const },   // Center-right, low
+    { id: 5, xPercent: 75, yPercent: 55, defaultPose: 'sit' as const },   // Right-center
+    { id: 6, xPercent: 85, yPercent: 65, defaultPose: 'lay' as const },   // Right side, lower
+    { id: 7, xPercent: 20, yPercent: 45, defaultPose: 'sit' as const },   // Left, upper
+    { id: 8, xPercent: 45, yPercent: 48, defaultPose: 'lay' as const },   // Center, upper
+    { id: 9, xPercent: 70, yPercent: 45, defaultPose: 'sit' as const },   // Right, upper
+    { id: 10, xPercent: 30, yPercent: 62, defaultPose: 'sit' as const },  // Rug left
+    { id: 11, xPercent: 60, yPercent: 62, defaultPose: 'lay' as const },  // Rug right
+  ]
+  
+  // Cat roaming states
+  type RoamState = 'idleSit' | 'idleLay' | 'walkToSpot' | 'reacting'
+  
+  interface CatRoamState {
+    state: RoamState
+    currentSpotId: number
+    targetSpotId: number
+    xPercent: number
+    yPercent: number
+    pose: 'sit' | 'lay'
+    isMoving: boolean
+  }
+  
+  // Sehaj roaming state (starts at left side)
+  const [sehajRoam, setSehajRoam] = useState<CatRoamState>({
+    state: 'idleSit',
+    currentSpotId: 0,
+    targetSpotId: 0,
+    xPercent: 20,
+    yPercent: 65,
+    pose: 'sit',
+    isMoving: false,
+  })
+  
+  // Prabh roaming state (starts at right side)
+  const [prabhRoam, setPrabhRoam] = useState<CatRoamState>({
+    state: 'idleSit',
+    currentSpotId: 6,
+    targetSpotId: 6,
+    xPercent: 80,
+    yPercent: 65,
+    pose: 'sit',
+    isMoving: false,
+  })
+  
+  // Roaming timers
+  const sehajRoamTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const prabhRoamTimerRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Petting meter state
+  const [pettingProgress, setPettingProgress] = useState(0)
+  const [isPettingSehaj, setIsPettingSehaj] = useState(false)
+  const [isPettingPrabh, setIsPettingPrabh] = useState(false)
+  const pettingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Yarn roll state
+  const [yarnPosition, setYarnPosition] = useState(0)
+  const [isYarnRolling, setIsYarnRolling] = useState(false)
+  
+  // Function to get random roam interval (4-10 seconds)
+  const getRandomRoamInterval = () => Math.floor(Math.random() * 6000) + 4000
+  
+  // Function to pick a random different spot
+  const pickRandomSpot = (currentSpotId: number, isLeft: boolean): number => {
+    // Filter spots based on cat's side (Sehaj left, Prabh right) with some overlap in middle
+    const availableSpots = ANCHOR_SPOTS.filter(spot => {
+      if (spot.id === currentSpotId) return false
+      if (isLeft) return spot.xPercent <= 60 // Sehaj can go up to 60%
+      return spot.xPercent >= 40 // Prabh can go down to 40%
+    })
+    
+    if (availableSpots.length === 0) return currentSpotId
+    return availableSpots[Math.floor(Math.random() * availableSpots.length)].id
+  }
+  
+  // Sehaj roaming effect
+  useEffect(() => {
+    const startRoaming = () => {
+      sehajRoamTimerRef.current = setTimeout(() => {
+        // Don't roam if reacting or in cuddle mode
+        if (sehajRoam.state === 'reacting' || cuddleMode) {
+          startRoaming()
+          return
+        }
+        
+        // Pick new spot
+        const newSpotId = pickRandomSpot(sehajRoam.currentSpotId, true)
+        const newSpot = ANCHOR_SPOTS[newSpotId]
+        
+        // Start walking to new spot
+        setSehajRoam(prev => ({
+          ...prev,
+          state: 'walkToSpot',
+          targetSpotId: newSpotId,
+          isMoving: true,
+        }))
+        
+        // After movement duration, arrive at spot
+        setTimeout(() => {
+          const newPose = Math.random() > 0.5 ? 'sit' : 'lay'
+          setSehajRoam({
+            state: newPose === 'sit' ? 'idleSit' : 'idleLay',
+            currentSpotId: newSpotId,
+            targetSpotId: newSpotId,
+            xPercent: newSpot.xPercent,
+            yPercent: newSpot.yPercent,
+            pose: newPose,
+            isMoving: false,
+          })
+          
+          // Update cat animation to match pose
+          setSehaj(prev => ({
+            ...prev,
+            action: newPose === 'lay' ? 'sleep' : 'sitIdle',
+          }))
+          
+          // Schedule next roam
+          startRoaming()
+        }, 2000) // 2 seconds to walk
+        
+      }, getRandomRoamInterval())
+    }
+    
+    startRoaming()
+    
+    return () => {
+      if (sehajRoamTimerRef.current) clearTimeout(sehajRoamTimerRef.current)
+    }
+  }, [cuddleMode])
+  
+  // Prabh roaming effect
+  useEffect(() => {
+    const startRoaming = () => {
+      prabhRoamTimerRef.current = setTimeout(() => {
+        // Don't roam if reacting or in cuddle mode
+        if (prabhRoam.state === 'reacting' || cuddleMode) {
+          startRoaming()
+          return
+        }
+        
+        // Pick new spot
+        const newSpotId = pickRandomSpot(prabhRoam.currentSpotId, false)
+        const newSpot = ANCHOR_SPOTS[newSpotId]
+        
+        // Start walking to new spot
+        setPrabhRoam(prev => ({
+          ...prev,
+          state: 'walkToSpot',
+          targetSpotId: newSpotId,
+          isMoving: true,
+        }))
+        
+        // After movement duration, arrive at spot
+        setTimeout(() => {
+          const newPose = Math.random() > 0.5 ? 'sit' : 'lay'
+          setPrabhRoam({
+            state: newPose === 'sit' ? 'idleSit' : 'idleLay',
+            currentSpotId: newSpotId,
+            targetSpotId: newSpotId,
+            xPercent: newSpot.xPercent,
+            yPercent: newSpot.yPercent,
+            pose: newPose,
+            isMoving: false,
+          })
+          
+          // Update cat animation to match pose
+          setPrabh(prev => ({
+            ...prev,
+            action: newPose === 'lay' ? 'sleep' : 'sitIdle',
+          }))
+          
+          // Schedule next roam
+          startRoaming()
+        }, 2000) // 2 seconds to walk
+        
+      }, getRandomRoamInterval())
+    }
+    
+    startRoaming()
+    
+    return () => {
+      if (prabhRoamTimerRef.current) clearTimeout(prabhRoamTimerRef.current)
+    }
+  }, [cuddleMode])
+  
+  // Function to trigger cat reaction (called when any action button is pressed)
+  const triggerCatReaction = (cat: 'sehaj' | 'prabh', reactionAnim: AnimationState, duration: number = 1500) => {
+    if (cat === 'sehaj') {
+      // Clear roam timer
+      if (sehajRoamTimerRef.current) clearTimeout(sehajRoamTimerRef.current)
+      
+      // Set to reacting state at current position
+      setSehajRoam(prev => ({
+        ...prev,
+        state: 'reacting',
+        isMoving: false,
+      }))
+      
+      // After reaction, return to idle
+      setTimeout(() => {
+        setSehajRoam(prev => ({
+          ...prev,
+          state: prev.pose === 'sit' ? 'idleSit' : 'idleLay',
+        }))
+      }, duration)
+    } else {
+      // Clear roam timer
+      if (prabhRoamTimerRef.current) clearTimeout(prabhRoamTimerRef.current)
+      
+      // Set to reacting state at current position
+      setPrabhRoam(prev => ({
+        ...prev,
+        state: 'reacting',
+        isMoving: false,
+      }))
+      
+      // After reaction, return to idle
+      setTimeout(() => {
+        setPrabhRoam(prev => ({
+          ...prev,
+          state: prev.pose === 'sit' ? 'idleSit' : 'idleLay',
+        }))
+      }, duration)
+    }
+  }
+  
+  // Petting functions
+  const startPetting = (cat: 'sehaj' | 'prabh') => {
+    if (cat === 'sehaj') {
+      setIsPettingSehaj(true)
+    } else {
+      setIsPettingPrabh(true)
+    }
+    
+    // Increase petting meter while holding
+    pettingIntervalRef.current = setInterval(() => {
+      setPettingProgress(prev => {
+        const newVal = Math.min(prev + 5, 100)
+        if (newVal >= 100) {
+          // Full meter - play happy animation
+          if (cat === 'sehaj') {
+            setSehajMoodBubble('😻 Purrrrr!')
+            setSehaj(prev => ({ ...prev, action: 'tailWag' }))
+          } else {
+            setPrabhMoodBubble('😻 Purrrrr!')
+            setPrabh(prev => ({ ...prev, action: 'tailWag' }))
+          }
+          addXP(10)
+          setTimeout(() => {
+            setPettingProgress(0)
+            setSehajMoodBubble(null)
+            setPrabhMoodBubble(null)
+          }, 2000)
+        }
+        return newVal
+      })
+    }, 100)
+  }
+  
+  const stopPetting = () => {
+    setIsPettingSehaj(false)
+    setIsPettingPrabh(false)
+    if (pettingIntervalRef.current) {
+      clearInterval(pettingIntervalRef.current)
+      pettingIntervalRef.current = null
+    }
+  }
+  
+  // Yarn roll function
+  const rollYarn = () => {
+    if (isYarnRolling) return
+    
+    setIsYarnRolling(true)
+    setYarnPosition(0)
+    
+    // Animate yarn rolling left to right
+    let pos = 0
+    const yarnInterval = setInterval(() => {
+      pos += 5
+      setYarnPosition(pos)
+      
+      if (pos >= 100) {
+        clearInterval(yarnInterval)
+        setIsYarnRolling(false)
+        setYarnPosition(0)
+        addXP(3)
+        
+        // Cats react to yarn
+        setSehajMoodBubble('👀 Yarn!')
+        setPrabhMoodBubble('🐾 Chase!')
+        setTimeout(() => {
+          setSehajMoodBubble(null)
+          setPrabhMoodBubble(null)
+        }, 1500)
+      }
+    }, 50)
+  }
+  
   // Freakiness Meters (playful freakiness meter)
   const [prabhMeter, setPrabhMeter] = useState(0)
   const [sehajMeter, setSehajMeter] = useState(0)
