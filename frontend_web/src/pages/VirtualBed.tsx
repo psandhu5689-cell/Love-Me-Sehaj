@@ -723,49 +723,18 @@ export default function VirtualBed() {
             borderRadius: 16,
             overflow: 'hidden',
           }}>
-            {/* Cartoon Floor Background */}
+            {/* Real Cartoon Floor Background from Attached Image */}
             <div style={{
               position: 'absolute',
               bottom: 0,
               width: '100%',
               height: '100%',
-              background: `
-                linear-gradient(180deg, 
-                  transparent 0%, 
-                  rgba(139, 90, 43, 0.1) 40%,
-                  rgba(139, 90, 43, 0.3) 60%,
-                  #DEB887 70%,
-                  #D2A679 85%,
-                  #C4956A 100%
-                )
-              `,
+              backgroundImage: 'url(/floor.jpeg)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center bottom',
+              backgroundRepeat: 'no-repeat',
               zIndex: 0,
-            }}>
-              {/* Wood grain pattern */}
-              <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: '40%',
-                background: `
-                  repeating-linear-gradient(
-                    90deg,
-                    transparent,
-                    transparent 60px,
-                    rgba(139, 69, 19, 0.15) 60px,
-                    rgba(139, 69, 19, 0.15) 62px
-                  ),
-                  repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 15px,
-                    rgba(139, 69, 19, 0.08) 15px,
-                    rgba(139, 69, 19, 0.08) 16px
-                  )
-                `,
-              }} />
-            </div>
+            }} />
             
             {/* Sehaj Cat (Left - Ginger) */}
             <motion.div
