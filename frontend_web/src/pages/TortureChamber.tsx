@@ -186,7 +186,7 @@ export default function TortureChamber() {
   }
 
   return (
-    <div style={{
+    <div id="torture-container" style={{
       minHeight: '100vh',
       background: 'transparent',
       display: 'flex',
