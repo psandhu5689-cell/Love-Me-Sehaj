@@ -69,7 +69,8 @@ const MusicContext = createContext<MusicContextType>({
 export const useMusic = () => useContext(MusicContext)
 
 export const MusicProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
+  // FIXED: Start with random track index for variety on each fresh app load
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(() => Math.floor(Math.random() * PLAYLIST.length))
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const [progress, setProgress] = useState(0)
