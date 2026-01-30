@@ -6,10 +6,34 @@
 import React from 'react'
 import { CatSprite } from '../components/CatSprite'
 import { useCatMovement } from '../hooks/useCatMovement'
+import { CompactCatUI } from '../components/CompactCatUI'
 
 export default function CatDemo() {
   const prabhCat = useCatMovement('prabh')
   const sehajCat = useCatMovement('sehaj')
+
+  const handleAction = (action: string, target: 'prabh' | 'sehaj' | 'both') => {
+    // Map action to state
+    const stateMap: Record<string, any> = {
+      wake: 'wake',
+      sleep: 'sleep',
+      feed: 'eat',
+      pet: 'happy',
+      nudge: 'happy',
+      kick: 'annoyed',
+      cuddle: 'happy',
+      lightsOut: 'annoyed',
+    }
+
+    const state = stateMap[action] || 'sitIdle'
+
+    if (target === 'prabh' || target === 'both') {
+      prabhCat.triggerAction(state)
+    }
+    if (target === 'sehaj' || target === 'both') {
+      sehajCat.triggerAction(state)
+    }
+  }
 
   return (
     <div style={{
