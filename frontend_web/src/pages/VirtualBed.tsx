@@ -2261,19 +2261,90 @@ export default function VirtualBed() {
               </div>
             </div>
 
-            {/* LAYER 2: Floor/Base Surface */}
+            {/* ============ PROPER PLANE SYSTEM ============ */}
+            
+            {/* z0: BACKGROUND - Gradient */}
             <div style={{
               position: 'absolute',
-              bottom: 0,
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(180deg, #87CEEB 0%, #F5DEB3 50%, #D2B48C 100%)',
+              zIndex: 0,
+            }} />
+
+            {/* z10: WALL PLANE */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
               left: 0,
               width: '100%',
               height: '50%',
-              backgroundImage: 'url(/floor.jpeg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center bottom',
-              backgroundRepeat: 'no-repeat',
-              zIndex: 1,
+              background: isDarkMode ? '#2a2a3e' : '#e8d5c4',
+              zIndex: 10,
             }} />
+
+            {/* z20: WALL DECOR - Frames */}
+            <div style={{ position: 'absolute', top: 0, width: '100%', height: '50%', zIndex: 20 }}>
+              {/* Wall shelf - top left */}
+              <div style={{
+                position: 'absolute',
+                top: 120,
+                left: 30,
+                width: 90,
+                height: 8,
+                background: '#8B6F47',
+                borderRadius: 4,
+                boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
+              }}>
+                {/* Tiny plant on shelf */}
+                <div style={{
+                  position: 'absolute',
+                  top: -25,
+                  left: 15,
+                  fontSize: 20,
+                }}>
+                  🪴
+                </div>
+                {/* INTERACTIVE: Tiny frame on shelf */}
+                <motion.div
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => {
+                    setFrameIndex(prev => (prev + 1) % FRAME_IMAGES.length)
+                    addXP(1)
+                    haptics.light()
+                  }}
+                  style={{
+                    position: 'absolute',
+                    top: -22,
+                    right: 12,
+                    width: 22,
+                    height: 22,
+                    background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                    border: '2px solid #8B6914',
+                    borderRadius: 3,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                  }}
+                >
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={frameIndex}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {FRAME_IMAGES[frameIndex]}
+                    </motion.span>
+                  </AnimatePresence>
+                </motion.div>
+              </div>
+            </div>
 
             {/* LAYER 2.5: Couch (against back wall on floor) z60 */}
             <motion.div
