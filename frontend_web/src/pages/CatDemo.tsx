@@ -41,13 +41,14 @@ export default function CatDemo() {
       background: '#1a1a24',
       padding: 40,
       fontFamily: 'system-ui',
+      paddingBottom: 140, // Space for bottom UI
     }}>
       <h1 style={{ color: 'white', textAlign: 'center', marginBottom: 20 }}>
-        🐱 NO SLIDING Demo - Auto Roaming
+        🐱 Compact UI Demo - NO SLIDING
       </h1>
       
       <p style={{ color: '#888', textAlign: 'center', marginBottom: 40, fontSize: 14 }}>
-        ✅ Cats roam autonomously every 6-12s | ✅ Walk animations drive movement | ✅ NO SLIDING
+        ✅ New Game-Style UI | ✅ Auto Roaming | ✅ NO SLIDING
       </p>
 
       {/* Room Scene */}
@@ -124,105 +125,12 @@ export default function CatDemo() {
         </div>
       </div>
 
-      {/* Minimal 5-Button UI */}
-      <div style={{
-        maxWidth: 800,
-        margin: '30px auto 0',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: 12,
-      }}>
-        <button
-          onClick={() => {
-            prabhCat.triggerAction('wake')
-            sehajCat.triggerAction('wake')
-          }}
-          style={{
-            padding: '14px 10px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: 'white',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          👁️ Wake
-        </button>
-        <button
-          onClick={() => {
-            prabhCat.triggerAction('sleep')
-            sehajCat.triggerAction('sleep')
-          }}
-          style={{
-            padding: '14px 10px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: 'white',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          😴 Sleep
-        </button>
-        <button
-          onClick={() => {
-            prabhCat.triggerAction('eat')
-            sehajCat.triggerAction('eat')
-          }}
-          style={{
-            padding: '14px 10px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: 'white',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          🍖 Feed
-        </button>
-        <button
-          onClick={() => {
-            prabhCat.triggerAction('happy')
-            sehajCat.triggerAction('happy')
-          }}
-          style={{
-            padding: '14px 10px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: 'white',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          💕 Cuddle
-        </button>
-        <button
-          onClick={() => {
-            prabhCat.triggerAction('annoyed')
-            sehajCat.triggerAction('annoyed')
-          }}
-          style={{
-            padding: '14px 10px',
-            borderRadius: 12,
-            border: 'none',
-            background: 'linear-gradient(135deg, #1a1a24, #2d2d44)',
-            color: '#FFD700',
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          🌙 Lights Out
-        </button>
-      </div>
+      {/* Compact Cat UI */}
+      <CompactCatUI
+        onAction={handleAction}
+        prabhState={prabhCat.position.state}
+        sehajState={sehajCat.position.state}
+      />
 
       <div style={{
         textAlign: 'center',
@@ -230,7 +138,7 @@ export default function CatDemo() {
         fontSize: 12,
         marginTop: 30,
       }}>
-        Position updates ONLY during walk animations. Watch them roam!
+        Game-style UI | Icon-first | Touch-friendly
       </div>
     </div>
   )
