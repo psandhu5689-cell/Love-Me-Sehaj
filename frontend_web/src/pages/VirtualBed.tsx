@@ -2799,436 +2799,213 @@ export default function VirtualBed() {
             </div>
           </div>
           
-          {/* Freakiness Meters */}
+          {/* ============ NEW COMPACT BUTTON UI ============ */}
+          
+          {/* Target Selector - Above action bar */}
           <div style={{
+            position: 'fixed',
+            bottom: 100,
+            left: '50%',
+            transform: 'translateX(-50%)',
             display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: 16,
-            gap: 16,
+            gap: 8,
+            background: 'rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(10px)',
+            padding: '6px 12px',
+            borderRadius: 20,
+            zIndex: 50,
           }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Freakiness</p>
-                <p style={{ color: '#E67E22', fontSize: 11, fontWeight: 600 }}>{sehajMeter}%</p>
-              </div>
-              <div style={{
-                width: '100%',
-                height: 6,
-                background: colors.card,
-                borderRadius: 3,
-                overflow: 'hidden',
-                border: `1px solid ${colors.border}`,
-              }}>
-                <motion.div
-                  animate={{ width: `${sehajMeter}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  style={{
-                    height: '100%',
-                    background: sehajMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #E67E22, #F39C12)',
-                    borderRadius: 3,
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Freakiness</p>
-                <p style={{ color: '#8E44AD', fontSize: 11, fontWeight: 600 }}>{prabhMeter}%</p>
-              </div>
-              <div style={{
-                width: '100%',
-                height: 6,
-                background: colors.card,
-                borderRadius: 3,
-                overflow: 'hidden',
-                border: `1px solid ${colors.border}`,
-              }}>
-                <motion.div
-                  animate={{ width: `${prabhMeter}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  style={{
-                    height: '100%',
-                    background: prabhMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #8E44AD, #9B59B6)',
-                    borderRadius: 3,
-                  }}
-                />
-              </div>
-            </div>
+            {['prabh', 'sehaj', 'both'].map(mode => (
+              <motion.button
+                key={mode}
+                onClick={() => { setTargetMode(mode as any); haptics.light(); }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  padding: '6px 14px',
+                  background: targetMode === mode ? 'rgba(255,255,255,0.4)' : 'transparent',
+                  border: 'none',
+                  borderRadius: 14,
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {mode}
+              </motion.button>
+            ))}
           </div>
-          
-          {/* Control Buttons */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 16,
-            marginTop: 20,
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Sehaj Actions:</p>
-              <ActionButton label="👁️ Wake Up" onClick={() => handleCatAction('sehaj', 'wake')} color="#E67E22" />
-              <ActionButton label="😴 Sleep" onClick={() => handleCatAction('sehaj', 'sleep')} color="#E67E22" />
-              <ActionButton label="💕 Nudge" onClick={() => handleCatAction('sehaj', 'nudge')} color="#E67E22" />
-              <ActionButton label="🦵 Kick" onClick={() => handleCatAction('sehaj', 'kick')} color="#E67E22" />
-              <ActionButton label="🧣 Hog Blanket" onClick={() => handleCatAction('sehaj', 'hog')} color="#E67E22" />
-              <ActionButton label="🍖 Feed" onClick={() => handleCatAction('sehaj', 'feed')} color="#E67E22" />
-              <ActionButton label="🎮 Gaming" onClick={() => handleCatAction('sehaj', 'game')} color="#E67E22" />
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Prabh Actions:</p>
-              <ActionButton label="👁️ Wake Up" onClick={() => handleCatAction('prabh', 'wake')} color="#8E44AD" />
-              <ActionButton label="😴 Sleep" onClick={() => handleCatAction('prabh', 'sleep')} color="#8E44AD" />
-              <ActionButton label="💕 Nudge" onClick={() => handleCatAction('prabh', 'nudge')} color="#8E44AD" />
-              <ActionButton label="🦵 Kick" onClick={() => handleCatAction('prabh', 'kick')} color="#8E44AD" />
-              <ActionButton label="🧣 Hog Blanket" onClick={() => handleCatAction('prabh', 'hog')} color="#8E44AD" />
-              <ActionButton label="🍖 Feed" onClick={() => handleCatAction('prabh', 'feed')} color="#8E44AD" />
-              <ActionButton label="🎮 Gaming" onClick={() => handleCatAction('prabh', 'game')} color="#8E44AD" />
-            </div>
-          </div>
-          
-          {/* NEW: Dim Lights Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setLightsDimmed(prev => !prev)
-              haptics.light()
-            }}
+
+          {/* Bottom Action Bar */}
+          <motion.div
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            transition={{ type: 'spring', damping: 20 }}
             style={{
-              width: '100%',
-              marginTop: 16,
-              padding: '14px 20px',
-              borderRadius: 16,
-              background: lightsDimmed 
-                ? 'linear-gradient(135deg, #4a5568, #2d3748)' 
-                : 'linear-gradient(135deg, #FDB813, #F59E0B)',
-              border: 'none',
-              color: 'white',
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: lightsDimmed 
-                ? '0 4px 16px rgba(0,0,0,0.4)' 
-                : '0 4px 16px rgba(253,184,19,0.3)',
+              position: 'fixed',
+              bottom: 16,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              gap: 10,
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(15px)',
+              padding: '10px 16px',
+              borderRadius: 24,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+              zIndex: 100,
+            }}
+          >
+            <ActionIcon icon="👁️" label="Wake" onClick={() => handleCompactAction('wake')} />
+            <ActionIcon icon="😴" label="Sleep" onClick={() => handleCompactAction('sleep')} />
+            <ActionIcon icon="🍗" label="Feed" onClick={() => handleCompactAction('feed')} />
+            <ActionIcon 
+              icon="⋯" 
+              label="More" 
+              onClick={() => { setShowSecondaryPanel(!showSecondaryPanel); haptics.light(); }}
+            />
+          </motion.div>
+
+          {/* Secondary Action Drawer */}
+          <AnimatePresence>
+            {showSecondaryPanel && (
+              <motion.div
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+                style={{
+                  position: 'fixed',
+                  bottom: 90,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gap: 10,
+                  background: 'rgba(255,255,255,0.25)',
+                  backdropFilter: 'blur(15px)',
+                  padding: 14,
+                  borderRadius: 20,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                  zIndex: 99,
+                  maxWidth: '90vw',
+                }}
+              >
+                <ActionIcon icon="🐾" label="Pet" onClick={() => handleCompactAction('pet')} />
+                <ActionIcon icon="🎮" label="Gaming" onClick={() => handleCompactAction('gaming')} />
+                <ActionIcon icon="💥" label="Kick" onClick={() => handleCompactAction('kick')} />
+                <ActionIcon icon="💕" label="Nudge" onClick={() => handleCompactAction('nudge')} />
+                <ActionIcon icon="❤️" label="Cuddle" onClick={() => handleCompactAction('cuddle')} />
+                <ActionIcon icon="🎭" label="Drama" onClick={() => handleCompactAction('drama')} />
+                <ActionIcon icon="🧣" label="Blanket" onClick={() => handleCompactAction('hogBlanket')} />
+                <ActionIcon icon="🌙" label="Lights" onClick={() => handleCompactAction('lightsOut')} />
+                <ActionIcon icon="🐟" label="Treat" onClick={() => {
+                  setShowEffect({ type: 'food', x: 50, y: 60, value: '🐟' })
+                  setSehajMoodBubble('😋 Yum!')
+                  setPrabhMoodBubble('😋 Treat!')
+                  setTimeout(() => {
+                    setSehajMoodBubble(null)
+                    setPrabhMoodBubble(null)
+                  }, 2000)
+                  addXP(3)
+                  haptics.light()
+                }} />
+                <ActionIcon icon="🪟" label="Curtain" onClick={() => {
+                  const states: ('open' | 'peek' | 'closed')[] = ['open', 'peek', 'closed']
+                  const idx = states.indexOf(curtainState)
+                  setCurtainState(states[(idx + 1) % states.length])
+                  addXP(2)
+                  haptics.light()
+                }} />
+                <ActionIcon icon="📦" label="Toy" onClick={() => {
+                  const toy = TOYS[Math.floor(Math.random() * TOYS.length)]
+                  setSpawnedToy(toy)
+                  setTimeout(() => setSpawnedToy(null), 3000)
+                  addXP(2)
+                  haptics.light()
+                }} />
+                <ActionIcon icon="🧶" label="Yarn" onClick={() => {
+                  setIsYarnRolling(true)
+                  const roll = setInterval(() => {
+                    setYarnPosition(prev => {
+                      if (prev >= 100) {
+                        clearInterval(roll)
+                        setIsYarnRolling(false)
+                        return 0
+                      }
+                      return prev + 2
+                    })
+                  }, 50)
+                  addXP(2)
+                  haptics.light()
+                }} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Room Level & Streak - Compact at top */}
+          <div style={{
+            position: 'fixed',
+            top: 70,
+            left: 20,
+            display: 'flex',
+            gap: 12,
+            zIndex: 40,
+          }}>
+            <div style={{
+              background: colors.glass,
+              padding: '6px 10px',
+              borderRadius: 12,
+              border: `1px solid ${colors.border}`,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-            }}
-          >
-            {lightsDimmed ? '💡 Turn Lights On' : '🌙 Dim Lights'}
-          </motion.button>
-
-          {/* ========== NEW INTERACTIVE BUTTONS ========== */}
-          
-          {/* Room Controls Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 8,
-            marginTop: 16,
-          }}>
-            {/* Curtain Control */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                const states: ('open' | 'peek' | 'closed')[] = ['open', 'peek', 'closed']
-                const idx = states.indexOf(curtainState)
-                setCurtainState(states[(idx + 1) % states.length])
-                addXP(2)
-                haptics.light()
-              }}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🪟 {curtainState === 'open' ? 'Open' : curtainState === 'peek' ? 'Peek' : 'Closed'}
-            </motion.button>
-            
-            {/* Treat Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setShowEffect({ type: 'food', x: 50, y: 60, value: '🐟' })
-                setSehajMoodBubble('😋 Yum!')
-                setPrabhMoodBubble('😋 Treat!')
-                setTimeout(() => {
-                  setSehajMoodBubble(null)
-                  setPrabhMoodBubble(null)
-                }, 2000)
-                addXP(3)
-                haptics.light()
-              }}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🐟 Treat
-            </motion.button>
-            
-            {/* Toy Box */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                const toy = TOYS[Math.floor(Math.random() * TOYS.length)]
-                setSpawnedToy(toy)
-                setTimeout(() => setSpawnedToy(null), 3000)
-                addXP(2)
-                haptics.light()
-              }}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              📦 Toy Box
-            </motion.button>
-          </div>
-          
-          {/* Petting & Yarn Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 8,
-            marginTop: 8,
-          }}>
-            {/* Petting Button - Hold to pet */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onMouseDown={() => startPetting('sehaj')}
-              onMouseUp={stopPetting}
-              onMouseLeave={stopPetting}
-              onTouchStart={() => startPetting('sehaj')}
-              onTouchEnd={stopPetting}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: pettingProgress > 0 
-                  ? `linear-gradient(90deg, #FF69B4 ${pettingProgress}%, ${colors.card} ${pettingProgress}%)`
-                  : colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              🐾 Hold to Pet
-              {pettingProgress > 0 && (
-                <span style={{ marginLeft: 4, fontSize: 10 }}>
-                  {pettingProgress}%
-                </span>
-              )}
-            </motion.button>
-            
-            {/* Yarn Roll Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={rollYarn}
-              disabled={isYarnRolling}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: isYarnRolling 
-                  ? 'linear-gradient(135deg, #FFA07A, #FF6347)' 
-                  : colors.card,
-                border: `1px solid ${colors.border}`,
-                color: isYarnRolling ? 'white' : colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: isYarnRolling ? 'not-allowed' : 'pointer',
-                opacity: isYarnRolling ? 0.8 : 1,
-              }}
-            >
-              🧶 {isYarnRolling ? 'Rolling...' : 'Roll Yarn'}
-            </motion.button>
-          </div>
-          
-          {/* Cat Interaction Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 8,
-            marginTop: 8,
-          }}>
-            {/* Cuddle Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setCuddleMode(true)
-                setSehajMoodBubble('💕 Cuddle time!')
-                setPrabhMoodBubble('🥰 Snuggle!')
-                setShowEffect({ type: 'heart', x: 50, y: 40 })
-                setTimeout(() => {
-                  setCuddleMode(false)
-                  setSehajMoodBubble(null)
-                  setPrabhMoodBubble(null)
-                }, 3000)
-                addXP(5)
-                haptics.medium()
-              }}
-              style={{
-                padding: '12px 10px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #FF6B9D, #C471ED)',
-                border: 'none',
-                color: 'white',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🥰 Cuddle
-            </motion.button>
-            
-            {/* Drama Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setDramaMode(true)
-                setSehajMoodBubble('😤 Hmph!')
-                setPrabhMoodBubble('😾 Grr!')
-                setShowEffect({ type: 'puff', x: 50, y: 40 })
-                setTimeout(() => {
-                  setDramaMode(false)
-                  setSehajMoodBubble(null)
-                  setPrabhMoodBubble(null)
-                }, 2000)
-                addXP(2)
-                haptics.medium()
-              }}
-              style={{
-                padding: '12px 10px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #E74C3C, #C0392B)',
-                border: 'none',
-                color: 'white',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              😤 Drama
-            </motion.button>
-          </div>
-          
-          {/* Lights Out (Chaos) Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setLightsOutMode(true)
-              setChaosMessage(CHAOS_MESSAGES[Math.floor(Math.random() * CHAOS_MESSAGES.length)])
-              haptics.heavy()
-              setTimeout(() => {
-                setLightsOutMode(false)
-                setChaosMessage('')
-              }, 2000)
-              addXP(3)
-            }}
-            style={{
-              width: '100%',
-              marginTop: 8,
-              padding: '12px 16px',
+              gap: 6,
+            }}>
+              <span style={{ fontSize: 14 }}>🏠</span>
+              <span style={{ color: colors.textPrimary, fontSize: 11, fontWeight: 600 }}>
+                Lv.{roomLevel}
+              </span>
+            </div>
+            <div style={{
+              background: colors.glass,
+              padding: '6px 10px',
               borderRadius: 12,
-              background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
               border: `1px solid ${colors.border}`,
-              color: '#FFD700',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            🌑 Lights Out (Chaos)
-          </motion.button>
-          
-          {/* Room Level & Streak Display */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: 16,
-            padding: '10px 14px',
-            background: colors.glass,
-            borderRadius: 12,
-            border: `1px solid ${colors.border}`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🏠</span>
-              <div>
-                <p style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 600, margin: 0 }}>
-                  Room Lv. {roomLevel}
-                </p>
-                <div style={{
-                  width: 60,
-                  height: 4,
-                  background: colors.card,
-                  borderRadius: 2,
-                  marginTop: 3,
-                }}>
-                  <div style={{
-                    width: `${(roomXP / XP_PER_LEVEL) * 100}%`,
-                    height: '100%',
-                    background: colors.primary,
-                    borderRadius: 2,
-                  }} />
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>📅</span>
-              <p style={{ color: colors.textSecondary, fontSize: 12, margin: 0 }}>
-                {dailyStreak} day streak
-              </p>
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}>
+              <span style={{ fontSize: 14 }}>🔥</span>
+              <span style={{ color: colors.textPrimary, fontSize: 11, fontWeight: 600 }}>
+                {dailyStreak}
+              </span>
             </div>
           </div>
 
-          {/* Special Button */}
+          {/* Special Button - Compact at bottom center */}
           <motion.button
             whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${colors.primary}` }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSpecialButton}
             style={{
-              width: '100%',
-              marginTop: 20,
-              padding: '16px 24px',
+              position: 'fixed',
+              bottom: 16,
+              right: 20,
+              padding: '12px 20px',
               borderRadius: 20,
               background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
               border: 'none',
               color: 'white',
-              fontSize: 18,
+              fontSize: 14,
               fontWeight: 700,
               cursor: 'pointer',
               boxShadow: `0 4px 20px ${colors.primaryGlow}`,
-              letterSpacing: 2,
+              zIndex: 100,
             }}
           >
             fuck 💕
           </motion.button>
-          
+
           {/* Lights Out Overlay */}
           <AnimatePresence>
             {lightsOutMode && (
