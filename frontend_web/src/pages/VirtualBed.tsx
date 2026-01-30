@@ -1693,8 +1693,12 @@ export default function VirtualBed() {
           Mr & Mrs 🐱💕🐱
         </h1>
         
-        {/* Room Scene Container */}
+        {/* ============================================ */}
+        {/* ROOM_VIEW: Visual Scene Only */}
+        {/* Locked Plane System - Z-Index Hierarchy */}
+        {/* ============================================ */}
         <motion.div
+          id="room-view"
           style={{
             background: colors.glass,
             backdropFilter: 'blur(20px)',
@@ -1704,9 +1708,10 @@ export default function VirtualBed() {
             position: 'relative',
             boxShadow: `0 8px 32px ${colors.primaryGlow}`,
             overflow: 'hidden',
+            marginBottom: 20,
           }}
         >
-          {/* Room Environment - Full Scene */}
+          {/* Room Environment - Full Scene with Z-Index Planes */}
           <div style={{
             position: 'relative',
             width: '100%',
