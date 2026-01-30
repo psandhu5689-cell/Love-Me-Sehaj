@@ -355,7 +355,7 @@ const SPECIAL_MESSAGES = [
 
 const FOOD_ITEMS = ['🐟', '🦴', '🍖', '🍣', '🥛']
 
-// ============ ACTION ICON COMPONENT ============
+// ============ ACTION ICON COMPONENT (MOBILE OPTIMIZED) ============
 
 interface ActionIconProps {
   icon: string;
@@ -364,6 +364,8 @@ interface ActionIconProps {
 }
 
 function ActionIcon({ icon, label, onClick }: ActionIconProps) {
+  const isMobile = window.innerWidth < 768;
+  
   return (
     <motion.button
       onClick={onClick}
@@ -373,17 +375,28 @@ function ActionIcon({ icon, label, onClick }: ActionIconProps) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 4,
+        gap: isMobile ? 2 : 4,
         background: 'transparent',
         border: 'none',
         cursor: 'pointer',
-        padding: '8px 10px',
+        padding: isMobile ? '6px 8px' : '8px 10px',
         borderRadius: 12,
-        minWidth: 56,
+        minWidth: isMobile ? 48 : 56,
+        minHeight: isMobile ? 48 : 56,
+        touchAction: 'manipulation',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
-      <span style={{ fontSize: 22 }}>{icon}</span>
-      <span style={{ fontSize: 9, color: '#fff', fontWeight: 600, textAlign: 'center' }}>{label}</span>
+      <span style={{ fontSize: isMobile ? 20 : 22 }}>{icon}</span>
+      <span style={{ 
+        fontSize: isMobile ? 8 : 9, 
+        color: '#fff', 
+        fontWeight: 600, 
+        textAlign: 'center',
+        lineHeight: 1.2,
+      }}>
+        {label}
+      </span>
     </motion.button>
   );
 }
