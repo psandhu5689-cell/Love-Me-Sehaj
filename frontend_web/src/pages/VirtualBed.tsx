@@ -1,3270 +1,889 @@
 /**
- * MR AND MRS - Virtual Cat Scene
+ * MR AND MRS - Virtual Cat Scene (Complete Rewrite)
  * 
- * SPRITE SYSTEM DOCUMENTATION:
- * ----------------------------
- * Sprite sheets are stored in /src/assets/sprites/
- * 
- * Available sprite sheets:
- * - cat1_sheet.png (Grey cat - Prabh)
- * - cat2_sheet.png (Brown cat - Sehaj)  
- * - ginger_cat_labeled.png (Labeled reference - 62 animation rows)
- * - white_cat_labeled.png (White cat reference)
- * - cat3_sheet.png (Additional cat)
- * 
- * Frame size: 64x64 pixels
- * Sheet layout: 14 columns, 72 rows (for unlabeled sheets)
- * 
- * TO ADD NEW ANIMATIONS:
- * 1. Identify the row number in the sprite sheet for the animation
- * 2. Count the number of frames in that row
- * 3. Add entry to ANIMATION_MAP with: { startRow, frameCount, fps, loop }
- * 4. Lower fps = smoother, calmer animation (2-4 for idle, 6-8 for actions)
- * 
- * ANIMATION STATES:
- * - sitIdle: Sitting calmly (default state)
- * - tailWag: Sitting with tail wagging
- * - sleep: Sleeping/curled up
- * - lickPaw: Grooming animation
- * - meow: Meowing
- * - nudge: Gentle paw movement
- * - kick: Quick paw swipe
- * - yawn: Yawning
- * - cuddle: Cuddled together state
- * - eat: Eating animation
- * - hiss: Annoyed hissing
+ * Features:
+ * - Sprite-based animation system with no sliding
+ * - Floor-only autonomous roaming with walking animations
+ * - Direct touch interactions on cat body parts
+ * - Game-style compact bottom action bar
+ * - Interactive room elements (weather, curtains, lamp, etc.)
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { IoChevronBackOutline, IoVolumeHigh, IoVolumeMute } from 'react-icons/io5'
-import { useNavigate } from 'react-router-dom'
-import { useTheme } from '../context/ThemeContext'
-import haptics from '../utils/haptics'
-import { Howl } from 'howler'
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { IoChevronBackOutline, IoVolumeHigh, IoVolumeMute } from 'react-icons/io5';
+import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+import haptics from '../utils/haptics';
+import { Howl } from 'howler';
+import { SpriteAnimator } from '../components/SpriteAnimator';
 
-// Sprite sheets
-import cat1Sheet from '../assets/sprites/cat1_sheet.png'
-import cat2Sheet from '../assets/sprites/cat2_sheet.png'
+// Load sprite metadata
+import prabhMetadata from '../../public/black_cat_sprite.json';
+import sehajMetadata from '../../public/ginger_cat_sprite.json';
 
-// ============ SPRITE ANIMATION SYSTEM ============
+// ============ TYPES ============
 
-const FRAME_SIZE = 64
-const SHEET_COLS = 14
+type AnimationState = 
+  | 'sitIdle' | 'layIdle' | 'walkUp' | 'walkDown' | 'walkLeft' | 'walkRight'
+  | 'sleep' | 'wake' | 'nudge' | 'kick' | 'hogBlanket' | 'feed' | 'gaming'
+  | 'happy' | 'annoyed' | 'surprised';
 
-/**
- * Animation definition interface
- * @property startRow - Row index in sprite sheet (0-based)
- * @property frameCount - Number of frames in animation
- * @property fps - Frames per second (lower = smoother/calmer)
- * @property loop - Whether animation loops
- */
-interface AnimationDef {
-  startRow: number
-  frameCount: number
-  fps: number
-  loop: boolean
+type CatName = 'Prabh' | 'Sehaj';
+type TargetMode = 'Prabh' | 'Sehaj' | 'Both';
+type WeatherMode = 'clear' | 'rain' | 'snow' | 'city';
+
+interface Position {
+  x: number;
+  y: number;
 }
 
-/**
- * ANIMATION MAP FOR PRABH (Gray Cat)
- * UPDATED: Default to STATIC single frame, not looping
- * ADDED: Walk animations for each direction (floor roaming)
- * ADDED: Reaction animations (happy, annoyed, surprised)
- */
-const PRABH_ANIMATIONS: Record<string, AnimationDef> = {
-  // STATIC default - single frozen frame
-  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
-  layIdle: { startRow: 5, frameCount: 1, fps: 1, loop: false },
-  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
-  // Sleep states
-  sleep: { startRow: 5, frameCount: 4, fps: 2, loop: true },
-  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false },
-  wake: { startRow: 0, frameCount: 4, fps: 4, loop: false },
-  // WALK ANIMATIONS - 4 directions (gentle 4fps)
-  walkRight: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  walkLeft: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  walkUp: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  walkDown: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  // Grooming
-  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
-  // Vocalizations
-  meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
-  yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
-  // Actions
-  nudge: { startRow: 7, frameCount: 8, fps: 5, loop: false },
-  kick: { startRow: 8, frameCount: 8, fps: 6, loop: false },
-  hogBlanket: { startRow: 7, frameCount: 6, fps: 4, loop: false },
-  feed: { startRow: 10, frameCount: 8, fps: 4, loop: false },
-  // Reactions - for touch interactions
-  happy: { startRow: 1, frameCount: 6, fps: 5, loop: false },
-  annoyed: { startRow: 9, frameCount: 4, fps: 4, loop: false },
-  surprised: { startRow: 3, frameCount: 3, fps: 6, loop: false },
-  // Reactions (legacy)
-  hiss: { startRow: 9, frameCount: 4, fps: 3, loop: false },
-  // Eating
-  eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
-  // Cuddle state
-  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false },
-  // Gaming
-  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
+interface CatState {
+  position: Position;
+  animation: AnimationState;
+  isMoving: boolean;
+  targetPosition: Position | null;
+  mood: 'neutral' | 'happy' | 'annoyed' | 'sleeping';
 }
 
-/**
- * ANIMATION MAP FOR SEHAJ (Brown/Ginger Cat)
- * UPDATED: Default to STATIC single frame, not looping
- * ADDED: Walk animations for each direction (floor roaming)
- * ADDED: Reaction animations (happy, annoyed, surprised)
- */
-const SEHAJ_ANIMATIONS: Record<string, AnimationDef> = {
-  // STATIC default - single frozen frame
-  sitIdle: { startRow: 0, frameCount: 1, fps: 1, loop: false },
-  layIdle: { startRow: 5, frameCount: 1, fps: 1, loop: false },
-  tailWag: { startRow: 1, frameCount: 8, fps: 3, loop: false },
-  // Sleep states
-  sleep: { startRow: 5, frameCount: 4, fps: 2, loop: true },
-  sleepCurled: { startRow: 6, frameCount: 1, fps: 1, loop: false },
-  wake: { startRow: 0, frameCount: 4, fps: 4, loop: false },
-  // WALK ANIMATIONS - 4 directions (gentle 4fps)
-  walkRight: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  walkLeft: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  walkUp: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  walkDown: { startRow: 1, frameCount: 4, fps: 4, loop: true },
-  // Grooming
-  lickPaw: { startRow: 2, frameCount: 8, fps: 4, loop: false },
-  // Vocalizations  
-  meow: { startRow: 3, frameCount: 4, fps: 4, loop: false },
-  yawn: { startRow: 4, frameCount: 6, fps: 3, loop: false },
-  // Actions
-  nudge: { startRow: 7, frameCount: 8, fps: 5, loop: false },
-  kick: { startRow: 8, frameCount: 8, fps: 6, loop: false },
-  hogBlanket: { startRow: 7, frameCount: 6, fps: 4, loop: false },
-  feed: { startRow: 10, frameCount: 8, fps: 4, loop: false },
-  // Reactions - for touch interactions
-  happy: { startRow: 1, frameCount: 6, fps: 5, loop: false },
-  annoyed: { startRow: 9, frameCount: 4, fps: 4, loop: false },
-  surprised: { startRow: 3, frameCount: 3, fps: 6, loop: false },
-  // Reactions (legacy)
-  hiss: { startRow: 9, frameCount: 4, fps: 3, loop: false },
-  // Eating
-  eat: { startRow: 10, frameCount: 8, fps: 4, loop: false },
-  // Cuddle state
-  cuddle: { startRow: 5, frameCount: 1, fps: 1, loop: false },
-  // Gaming
-  gaming: { startRow: 1, frameCount: 8, fps: 3, loop: false },
-}
+// ============ CONSTANTS ============
 
-type AnimationState = keyof typeof PRABH_ANIMATIONS
+// Floor bounds (cats can only roam here)
+const FLOOR_BOUNDS = {
+  x: 50,
+  y: 450,
+  width: 700,
+  height: 300,
+};
 
-// ============ SPRITE COMPONENT ============
-
-interface SpriteProps {
-  sheet: string
-  animations: Record<string, AnimationDef>
-  currentAnimation: AnimationState
-  onAnimationEnd?: () => void
-  scale?: number
-  flip?: boolean
-}
-
-function Sprite({ sheet, animations, currentAnimation, onAnimationEnd, scale = 1, flip = false }: SpriteProps) {
-  const [frame, setFrame] = useState(0)
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const [lastGoodFrame, setLastGoodFrame] = useState(0)
-  const animRef = useRef<number | null>(null)
-  const lastTimeRef = useRef(0)
-  const animEndCalledRef = useRef(false)
-  const imageRef = useRef<HTMLImageElement | null>(null)
-  
-  // SAFETY 1: Always have a fallback animation
-  const anim = animations[currentAnimation] || animations.sitIdle || { startRow: 0, frameCount: 8, fps: 2, loop: true }
-  
-  // SAFETY 2: Preload image before animation starts
-  useEffect(() => {
-    const img = new Image()
-    img.src = sheet
-    imageRef.current = img
-    
-    const handleLoad = () => {
-      setImageLoaded(true)
-    }
-    
-    if (img.complete) {
-      setImageLoaded(true)
-    } else {
-      img.addEventListener('load', handleLoad)
-    }
-    
-    return () => {
-      img.removeEventListener('load', handleLoad)
-    }
-  }, [sheet])
-  
-  // SAFETY 3: Reset frame on animation change
-  useEffect(() => {
-    setFrame(0)
-    setLastGoodFrame(0)
-    lastTimeRef.current = 0
-    animEndCalledRef.current = false
-  }, [currentAnimation])
-  
-  // SAFETY 4: Animation loop with hard clamping
-  useEffect(() => {
-    if (!imageLoaded) return // Don't start until image loaded
-    
-    const animate = (time: number) => {
-      if (!lastTimeRef.current) lastTimeRef.current = time
-      
-      const delta = time - lastTimeRef.current
-      const frameTime = 1000 / Math.max(1, anim.fps || 2) // SAFETY: Minimum fps
-      
-      if (delta >= frameTime) {
-        setFrame(prev => {
-          const nextFrame = prev + 1
-          const maxFrame = Math.max(0, (anim.frameCount || 8) - 1)
-          
-          // SAFETY: Hard clamp nextFrame
-          let safeFrame = Math.min(Math.max(0, nextFrame), maxFrame)
-          
-          if (nextFrame > maxFrame) {
-            if (anim.loop) {
-              safeFrame = 0 // Loop back to start
-            } else {
-              if (!animEndCalledRef.current) {
-                animEndCalledRef.current = true
-                setTimeout(() => onAnimationEnd?.(), 50)
-              }
-              safeFrame = maxFrame // Stay at last frame
-            }
-          }
-          
-          // SAFETY: Update last good frame only if valid
-          if (safeFrame >= 0 && safeFrame <= maxFrame) {
-            setLastGoodFrame(safeFrame)
-          }
-          
-          return safeFrame
-        })
-        lastTimeRef.current = time
-      }
-      
-      animRef.current = requestAnimationFrame(animate)
-    }
-    
-    animRef.current = requestAnimationFrame(animate)
-    
-    return () => {
-      if (animRef.current) {
-        cancelAnimationFrame(animRef.current)
-      }
-    }
-  }, [currentAnimation, anim.fps, anim.frameCount, anim.loop, onAnimationEnd, imageLoaded])
-  
-  // SAFETY 5: Use last good frame if current frame is invalid
-  const safeFrame = frame >= 0 && frame < (anim.frameCount || 8) ? frame : lastGoodFrame
-  
-  // SAFETY 6: Clamp all rendering values
-  const frameCount = Math.max(1, anim.frameCount || 8)
-  const frameCol = Math.min(Math.max(0, safeFrame), frameCount - 1)
-  const row = Math.max(0, Math.min(71, anim.startRow || 0))
-  const displaySize = Math.max(32, FRAME_SIZE * (scale || 1))
-  
-  // Calculate background position with safety bounds
-  const bgX = -frameCol * FRAME_SIZE * scale
-  const bgY = -row * FRAME_SIZE * scale
-  
-  // SAFETY 7: Don't render if image not loaded - show placeholder
-  if (!imageLoaded) {
-    return (
-      <div style={{
-        width: displaySize,
-        height: displaySize,
-        background: 'rgba(255,255,255,0.1)',
-        borderRadius: 8,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        opacity: 1,
-      }}>
-        <span style={{ fontSize: 24 }}>🐱</span>
-      </div>
-    )
-  }
-  
-  return (
-    <div style={{
-      width: displaySize,
-      height: displaySize,
-      overflow: 'hidden',
-      transform: flip ? 'scaleX(-1)' : 'none',
-      imageRendering: 'pixelated',
-      borderRadius: 8,
-      // SAFETY 8: Force visible with important-like specificity
-      opacity: '1 !important' as any,
-      display: 'block !important' as any,
-      visibility: 'visible !important' as any,
-    }}>
-      <div style={{
-        width: displaySize,
-        height: displaySize,
-        backgroundImage: `url(${sheet})`,
-        backgroundSize: `${SHEET_COLS * FRAME_SIZE * scale}px ${72 * FRAME_SIZE * scale}px`,
-        backgroundPosition: `${bgX}px ${bgY}px`,
-        backgroundRepeat: 'no-repeat',
-        imageRendering: 'pixelated',
-        // SAFETY 9: Ensure sprite is always painted
-        opacity: '1 !important' as any,
-        willChange: 'background-position',
-      }} />
-    </div>
-  )
-}
-
-// ============ AUDIO SETUP ============
-
-const AUDIO = {
-  rain: 'https://assets.mixkit.co/active_storage/sfx/1253/1253-preview.mp3',
-  // Cat sounds - using the uploaded audio files
-  catMeowSoft: '/audio/cats/cat-meow-soft.mp3',
-  catMeowNight: '/audio/cats/cat-meow-night.mp3',
-  catMeowFood: '/audio/cats/cat-meow-food.mp3',
-  catScream: '/audio/cats/cat-scream.mp3',
-  // Generic sounds
-  tussle: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3',
-  rustle: 'https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3',
-}
+// Anchor points for roaming (all within floor bounds)
+const ROAM_ANCHORS: Position[] = [
+  { x: 100, y: 500 },
+  { x: 200, y: 550 },
+  { x: 300, y: 500 },
+  { x: 400, y: 600 },
+  { x: 500, y: 550 },
+  { x: 600, y: 500 },
+  { x: 150, y: 650 },
+  { x: 300, y: 700 },
+  { x: 500, y: 680 },
+  { x: 650, y: 600 },
+  { x: 250, y: 600 },
+  { x: 450, y: 650 },
+];
 
 // ============ MAIN COMPONENT ============
 
-interface CatState {
-  mood: number
-  action: AnimationState
-  isAwake: boolean
-}
-
-const SPECIAL_MESSAGES = [
-  "Rustle in the blankets…",
-  "A suspicious amount of movement…",
-  "Tiny fight. Tiny cuddle. Peace treaty.",
-  "Someone got slapped. Someone purred.",
-  "Private cat business. Do not disturb.",
-  "A couple giggles later…",
-  "Definitely cuddling. Probably.",
-]
-
-const FOOD_ITEMS = ['🐟', '🦴', '🍖', '🍣', '🥛']
-
 export default function VirtualBed() {
-  const navigate = useNavigate()
-  const { colors } = useTheme()
+  const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   
-  // FIXED: Rain audio is always muted on MR & MRS page
-  const [isMuted, setIsMuted] = useState(true)
-  const [rainMuted] = useState(true) // Rain is PERMANENTLY muted on MR & MRS
-  const [userInteracted, setUserInteracted] = useState(false)
-  
-  // GLOBAL AUDIO COOLDOWN: 3-5 seconds between cat sounds
-  const lastSoundTimeRef = useRef<number>(0)
-  const SOUND_COOLDOWN_MS = 4000 // 4 seconds between sounds
-  
-  // Helper to play cat sound with cooldown
-  const playCatSound = (soundRef: React.MutableRefObject<Howl | null>) => {
-    if (!userInteracted || isMuted) return false
-    
-    const now = Date.now()
-    const timeSinceLastSound = now - lastSoundTimeRef.current
-    
-    // Check cooldown
-    if (timeSinceLastSound < SOUND_COOLDOWN_MS) {
-      console.log('[AUDIO COOLDOWN] Sound skipped, too soon')
-      return false
-    }
-    
-    // Play sound and update timestamp
-    if (soundRef.current) {
-      soundRef.current.volume(0.3) // Keep volumes low
-      soundRef.current.play()
-      lastSoundTimeRef.current = now
-      return true
-    }
-    
-    return false
-  }
-  
-  // FIXED: Cats start sitting idle (awake) on load, not sleeping
-  const [prabh, setPrabh] = useState<CatState>({
-    mood: 75,
-    action: 'sitIdle',
-    isAwake: true,
-  })
-  
-  const [sehaj, setSehaj] = useState<CatState>({
-    mood: 75,
-    action: 'sitIdle',
-    isAwake: true,
-  })
-  
-  // ============ AUTONOMOUS CAT ROAMING SYSTEM ============
-  
-  // FLOOR BOUNDING BOX - cats can ONLY roam within this region
-  // Floor starts at ~60% from top and goes to ~85% (leaving room for blanket)
-  const FLOOR_BOUNDS = {
-    minX: 10,    // Left edge of floor
-    maxX: 90,    // Right edge of floor
-    minY: 62,    // Top edge of floor (cats can't go above this)
-    maxY: 78,    // Bottom edge of floor (above blanket)
-  }
-  
-  // Define 10 safe anchor spots - ALL WITHIN FLOOR REGION ONLY
-  // No spots on walls, window, or upper decorations
-  const ANCHOR_SPOTS = [
-    { id: 0, xPercent: 15, yPercent: 70, defaultPose: 'sit' as const },   // Floor left
-    { id: 1, xPercent: 25, yPercent: 65, defaultPose: 'lay' as const },   // Floor left-center
-    { id: 2, xPercent: 35, yPercent: 72, defaultPose: 'sit' as const },   // Floor center-left
-    { id: 3, xPercent: 50, yPercent: 68, defaultPose: 'sit' as const },   // Floor center
-    { id: 4, xPercent: 50, yPercent: 75, defaultPose: 'lay' as const },   // Floor center low
-    { id: 5, xPercent: 65, yPercent: 72, defaultPose: 'sit' as const },   // Floor center-right
-    { id: 6, xPercent: 75, yPercent: 65, defaultPose: 'lay' as const },   // Floor right-center
-    { id: 7, xPercent: 85, yPercent: 70, defaultPose: 'sit' as const },   // Floor right
-    { id: 8, xPercent: 30, yPercent: 68, defaultPose: 'sit' as const },   // Rug left area
-    { id: 9, xPercent: 60, yPercent: 68, defaultPose: 'lay' as const },   // Rug right area
-  ]
-  
-  // Walk direction type
-  type WalkDirection = 'walkUp' | 'walkDown' | 'walkLeft' | 'walkRight'
-  
-  // Cat roaming states - UPDATED with walk direction
-  type RoamState = 'idleSit' | 'idleLay' | 'walkToSpot' | 'reacting'
-  
-  interface CatRoamState {
-    state: RoamState
-    currentSpotId: number
-    targetSpotId: number
-    xPercent: number
-    yPercent: number
-    pose: 'sit' | 'lay'
-    isMoving: boolean
-    walkDirection: WalkDirection
-  }
-  
-  // Sehaj roaming state (starts at left side of floor)
-  const [sehajRoam, setSehajRoam] = useState<CatRoamState>({
-    state: 'idleSit',
-    currentSpotId: 0,
-    targetSpotId: 0,
-    xPercent: 20,
-    yPercent: 70,
-    pose: 'sit',
+  // Audio
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<Howl | null>(null);
+
+  // Cat states
+  const [prabhState, setPrabhState] = useState<CatState>({
+    position: { x: 150, y: 550 },
+    animation: 'sitIdle',
     isMoving: false,
-    walkDirection: 'walkRight',
-  })
-  
-  // Prabh roaming state (starts at right side of floor)
-  const [prabhRoam, setPrabhRoam] = useState<CatRoamState>({
-    state: 'idleSit',
-    currentSpotId: 7,
-    targetSpotId: 7,
-    xPercent: 80,
-    yPercent: 70,
-    pose: 'sit',
+    targetPosition: null,
+    mood: 'neutral',
+  });
+
+  const [sehajState, setSehajState] = useState<CatState>({
+    position: { x: 500, y: 550 },
+    animation: 'sitIdle',
     isMoving: false,
-    walkDirection: 'walkLeft',
-  })
-  
-  // Cuddle mode - MUST be declared before roaming effects that reference it
-  const [cuddleMode, setCuddleMode] = useState(false)
-  
+    targetPosition: null,
+    mood: 'neutral',
+  });
+
+  // UI state
+  const [targetMode, setTargetMode] = useState<TargetMode>('Both');
+  const [showSecondaryPanel, setShowSecondaryPanel] = useState(false);
+  const [weather, setWeather] = useState<WeatherMode>('clear');
+  const [curtainsOpen, setCurtainsOpen] = useState(true);
+  const [lampOn, setLampOn] = useState(true);
+  const [lightsOut, setLightsOut] = useState(false);
+
   // Roaming timers
-  const sehajRoamTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const prabhRoamTimerRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // Petting meter state
-  const [pettingProgress, setPettingProgress] = useState(0)
-  const [isPettingSehaj, setIsPettingSehaj] = useState(false)
-  const [isPettingPrabh, setIsPettingPrabh] = useState(false)
-  const pettingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  
-  // Yarn roll state
-  const [yarnPosition, setYarnPosition] = useState(0)
-  const [isYarnRolling, setIsYarnRolling] = useState(false)
-  
-  // Function to get random roam interval (4-10 seconds)
-  const getRandomRoamInterval = () => Math.floor(Math.random() * 6000) + 4000
-  
-  // Function to calculate walk direction based on movement vector
-  const calculateWalkDirection = (fromX: number, fromY: number, toX: number, toY: number): WalkDirection => {
-    const dx = toX - fromX
-    const dy = toY - fromY
-    
-    // Determine dominant direction
+  const roamTimerPrabh = useRef<NodeJS.Timeout | null>(null);
+  const roamTimerSehaj = useRef<NodeJS.Timeout | null>(null);
+
+  // ============ UTILITY FUNCTIONS ============
+
+  const clampToFloor = (pos: Position): Position => {
+    return {
+      x: Math.max(FLOOR_BOUNDS.x, Math.min(FLOOR_BOUNDS.x + FLOOR_BOUNDS.width - 64, pos.x)),
+      y: Math.max(FLOOR_BOUNDS.y, Math.min(FLOOR_BOUNDS.y + FLOOR_BOUNDS.height - 64, pos.y)),
+    };
+  };
+
+  const getRandomAnchor = (): Position => {
+    return ROAM_ANCHORS[Math.floor(Math.random() * ROAM_ANCHORS.length)];
+  };
+
+  const getWalkDirection = (from: Position, to: Position): 'walkUp' | 'walkDown' | 'walkLeft' | 'walkRight' => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+
     if (Math.abs(dx) > Math.abs(dy)) {
-      // Horizontal movement dominant
-      return dx > 0 ? 'walkRight' : 'walkLeft'
+      return dx > 0 ? 'walkRight' : 'walkLeft';
     } else {
-      // Vertical movement dominant
-      return dy > 0 ? 'walkDown' : 'walkUp'
+      return dy > 0 ? 'walkDown' : 'walkUp';
     }
-  }
-  
-  // Function to pick a random different spot - FLOOR ONLY
-  const pickRandomSpot = (currentSpotId: number, isLeft: boolean): number => {
-    // Filter spots based on cat's side (Sehaj left, Prabh right) with some overlap in middle
-    // ALL spots are already floor-only, just filter by side
-    const availableSpots = ANCHOR_SPOTS.filter(spot => {
-      if (spot.id === currentSpotId) return false
-      if (isLeft) return spot.xPercent <= 60 // Sehaj can go up to 60%
-      return spot.xPercent >= 40 // Prabh can go down to 40%
-    })
-    
-    if (availableSpots.length === 0) return currentSpotId
-    return availableSpots[Math.floor(Math.random() * availableSpots.length)].id
-  }
-  
-  // Sehaj roaming effect
-  useEffect(() => {
-    const startRoaming = () => {
-      sehajRoamTimerRef.current = setTimeout(() => {
-        // Don't roam if reacting or in cuddle mode
-        if (sehajRoam.state === 'reacting' || cuddleMode) {
-          startRoaming()
-          return
-        }
-        
-        // Pick new spot - FLOOR ONLY
-        const newSpotId = pickRandomSpot(sehajRoam.currentSpotId, true)
-        const newSpot = ANCHOR_SPOTS[newSpotId]
-        
-        // Calculate walk direction based on movement vector
-        const walkDir = calculateWalkDirection(
-          sehajRoam.xPercent, 
-          sehajRoam.yPercent, 
-          newSpot.xPercent, 
-          newSpot.yPercent
-        )
-        
-        // Start walking to new spot - play walk animation
-        setSehajRoam(prev => ({
-          ...prev,
-          state: 'walkToSpot',
-          targetSpotId: newSpotId,
-          isMoving: true,
-          walkDirection: walkDir,
-        }))
-        
-        // Set walking animation for direction
-        setSehaj(prev => ({
-          ...prev,
-          action: walkDir,
-        }))
-        
-        // After movement duration, arrive at spot
-        setTimeout(() => {
-          const newPose = Math.random() > 0.5 ? 'sit' : 'lay'
-          
-          // Clamp final position within floor bounds
-          const clampedX = Math.max(FLOOR_BOUNDS.minX, Math.min(FLOOR_BOUNDS.maxX, newSpot.xPercent))
-          const clampedY = Math.max(FLOOR_BOUNDS.minY, Math.min(FLOOR_BOUNDS.maxY, newSpot.yPercent))
-          
-          setSehajRoam({
-            state: newPose === 'sit' ? 'idleSit' : 'idleLay',
-            currentSpotId: newSpotId,
-            targetSpotId: newSpotId,
-            xPercent: clampedX,
-            yPercent: clampedY,
-            pose: newPose,
-            isMoving: false,
-            walkDirection: walkDir,
-          })
-          
-          // STOP walk animation - return to idle/sleep
-          setSehaj(prev => ({
-            ...prev,
-            action: newPose === 'lay' ? 'sleep' : 'sitIdle',
-          }))
-          
-          // Schedule next roam
-          startRoaming()
-        }, 2500) // 2.5 seconds to walk (slow and gentle)
-        
-      }, getRandomRoamInterval())
+  };
+
+  const playSound = (soundPath: string) => {
+    if (!isMuted) {
+      const sound = new Howl({ src: [soundPath], volume: 0.3 });
+      sound.play();
     }
-    
-    startRoaming()
-    
-    return () => {
-      if (sehajRoamTimerRef.current) clearTimeout(sehajRoamTimerRef.current)
-    }
-  }, [cuddleMode])
-  
-  // Prabh roaming effect
-  useEffect(() => {
-    const startRoaming = () => {
-      prabhRoamTimerRef.current = setTimeout(() => {
-        // Don't roam if reacting or in cuddle mode
-        if (prabhRoam.state === 'reacting' || cuddleMode) {
-          startRoaming()
-          return
-        }
-        
-        // Pick new spot - FLOOR ONLY
-        const newSpotId = pickRandomSpot(prabhRoam.currentSpotId, false)
-        const newSpot = ANCHOR_SPOTS[newSpotId]
-        
-        // Calculate walk direction based on movement vector
-        const walkDir = calculateWalkDirection(
-          prabhRoam.xPercent, 
-          prabhRoam.yPercent, 
-          newSpot.xPercent, 
-          newSpot.yPercent
-        )
-        
-        // Start walking to new spot - play walk animation
-        setPrabhRoam(prev => ({
-          ...prev,
-          state: 'walkToSpot',
-          targetSpotId: newSpotId,
-          isMoving: true,
-          walkDirection: walkDir,
-        }))
-        
-        // Set walking animation for direction
-        setPrabh(prev => ({
-          ...prev,
-          action: walkDir,
-        }))
-        
-        // After movement duration, arrive at spot
-        setTimeout(() => {
-          const newPose = Math.random() > 0.5 ? 'sit' : 'lay'
-          
-          // Clamp final position within floor bounds
-          const clampedX = Math.max(FLOOR_BOUNDS.minX, Math.min(FLOOR_BOUNDS.maxX, newSpot.xPercent))
-          const clampedY = Math.max(FLOOR_BOUNDS.minY, Math.min(FLOOR_BOUNDS.maxY, newSpot.yPercent))
-          
-          setPrabhRoam({
-            state: newPose === 'sit' ? 'idleSit' : 'idleLay',
-            currentSpotId: newSpotId,
-            targetSpotId: newSpotId,
-            xPercent: clampedX,
-            yPercent: clampedY,
-            pose: newPose,
-            isMoving: false,
-            walkDirection: walkDir,
-          })
-          
-          // STOP walk animation - return to idle/sleep
-          setPrabh(prev => ({
-            ...prev,
-            action: newPose === 'lay' ? 'sleep' : 'sitIdle',
-          }))
-          
-          // Schedule next roam
-          startRoaming()
-        }, 2500) // 2.5 seconds to walk (slow and gentle)
-        
-      }, getRandomRoamInterval())
-    }
-    
-    startRoaming()
-    
-    return () => {
-      if (prabhRoamTimerRef.current) clearTimeout(prabhRoamTimerRef.current)
-    }
-  }, [cuddleMode])
-  
-  // Function to trigger cat reaction (called when any action button is pressed)
-  const triggerCatReaction = (cat: 'sehaj' | 'prabh', reactionAnim: AnimationState, duration: number = 1500) => {
-    if (cat === 'sehaj') {
-      // Clear roam timer
-      if (sehajRoamTimerRef.current) clearTimeout(sehajRoamTimerRef.current)
-      
-      // Set to reacting state at current position
-      setSehajRoam(prev => ({
-        ...prev,
-        state: 'reacting',
-        isMoving: false,
-      }))
-      
-      // After reaction, return to idle
-      setTimeout(() => {
-        setSehajRoam(prev => ({
-          ...prev,
-          state: prev.pose === 'sit' ? 'idleSit' : 'idleLay',
-        }))
-      }, duration)
-    } else {
-      // Clear roam timer
-      if (prabhRoamTimerRef.current) clearTimeout(prabhRoamTimerRef.current)
-      
-      // Set to reacting state at current position
-      setPrabhRoam(prev => ({
-        ...prev,
-        state: 'reacting',
-        isMoving: false,
-      }))
-      
-      // After reaction, return to idle
-      setTimeout(() => {
-        setPrabhRoam(prev => ({
-          ...prev,
-          state: prev.pose === 'sit' ? 'idleSit' : 'idleLay',
-        }))
-      }, duration)
-    }
-  }
-  
-  // Petting functions
-  const startPetting = (cat: 'sehaj' | 'prabh') => {
-    if (cat === 'sehaj') {
-      setIsPettingSehaj(true)
-    } else {
-      setIsPettingPrabh(true)
-    }
-    
-    // Increase petting meter while holding
-    pettingIntervalRef.current = setInterval(() => {
-      setPettingProgress(prev => {
-        const newVal = Math.min(prev + 5, 100)
-        if (newVal >= 100) {
-          // Full meter - play happy animation
-          if (cat === 'sehaj') {
-            setSehajMoodBubble('😻 Purrrrr!')
-            setSehaj(prev => ({ ...prev, action: 'tailWag' }))
-          } else {
-            setPrabhMoodBubble('😻 Purrrrr!')
-            setPrabh(prev => ({ ...prev, action: 'tailWag' }))
-          }
-          addXP(10)
-          setTimeout(() => {
-            setPettingProgress(0)
-            setSehajMoodBubble(null)
-            setPrabhMoodBubble(null)
-          }, 2000)
-        }
-        return newVal
-      })
-    }, 100)
-  }
-  
-  const stopPetting = () => {
-    setIsPettingSehaj(false)
-    setIsPettingPrabh(false)
-    if (pettingIntervalRef.current) {
-      clearInterval(pettingIntervalRef.current)
-      pettingIntervalRef.current = null
-    }
-  }
-  
-  // ============ TOUCH ZONE INTERACTIONS ============
-  
-  // Tap head - happy blink + heart pop
-  const tapHead = (cat: 'sehaj' | 'prabh') => {
-    haptics.light()
-    playRandomCatSound()
-    
-    if (cat === 'sehaj') {
-      triggerCatReaction('sehaj', 'happy', 1200)
-      setSehaj(prev => ({ ...prev, action: 'happy' }))
-      setSehajMoodBubble('😊 *happy blink*')
-      setShowEffect({ type: 'heart', x: sehajRoam.xPercent, y: sehajRoam.yPercent - 10 })
-    } else {
-      triggerCatReaction('prabh', 'happy', 1200)
-      setPrabh(prev => ({ ...prev, action: 'happy' }))
-      setPrabhMoodBubble('😊 *happy blink*')
-      setShowEffect({ type: 'heart', x: prabhRoam.xPercent, y: prabhRoam.yPercent - 10 })
-    }
-    
-    addXP(2)
-    setTimeout(() => {
-      if (cat === 'sehaj') {
-        setSehajMoodBubble(null)
-        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
-      } else {
-        setPrabhMoodBubble(null)
-        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
-      }
-    }, 1200)
-  }
-  
-  // Tap nose - surprised reaction + tiny squeak
-  const tapNose = (cat: 'sehaj' | 'prabh') => {
-    haptics.light()
-    playRandomCatSound()
-    
-    if (cat === 'sehaj') {
-      triggerCatReaction('sehaj', 'surprised', 1000)
-      setSehaj(prev => ({ ...prev, action: 'surprised' }))
-      setSehajMoodBubble('😮 *boop!*')
-    } else {
-      triggerCatReaction('prabh', 'surprised', 1000)
-      setPrabh(prev => ({ ...prev, action: 'surprised' }))
-      setPrabhMoodBubble('😮 *boop!*')
-    }
-    
-    addXP(2)
-    setTimeout(() => {
-      if (cat === 'sehaj') {
-        setSehajMoodBubble(null)
-        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
-      } else {
-        setPrabhMoodBubble(null)
-        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
-      }
-    }, 1000)
-  }
-  
-  // Tap belly - 70% happy, 30% annoyed
-  const tapBelly = (cat: 'sehaj' | 'prabh') => {
-    haptics.medium()
-    playRandomCatSound()
-    
-    const isHappy = Math.random() > 0.3
-    const reaction = isHappy ? 'happy' : 'annoyed'
-    const bubble = isHappy ? '😻 *belly rubs!*' : '😾 *hey!*'
-    
-    if (cat === 'sehaj') {
-      triggerCatReaction('sehaj', reaction, 1500)
-      setSehaj(prev => ({ ...prev, action: reaction }))
-      setSehajMoodBubble(bubble)
-    } else {
-      triggerCatReaction('prabh', reaction, 1500)
-      setPrabh(prev => ({ ...prev, action: reaction }))
-      setPrabhMoodBubble(bubble)
-    }
-    
-    addXP(isHappy ? 3 : 1)
-    setTimeout(() => {
-      if (cat === 'sehaj') {
-        setSehajMoodBubble(null)
-        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
-      } else {
-        setPrabhMoodBubble(null)
-        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
-      }
-    }, 1500)
-  }
-  
-  // Tap tail - tail flick + annoyed
-  const tapTail = (cat: 'sehaj' | 'prabh') => {
-    haptics.light()
-    playRandomCatSound()
-    
-    if (cat === 'sehaj') {
-      triggerCatReaction('sehaj', 'annoyed', 1200)
-      setSehaj(prev => ({ ...prev, action: 'annoyed' }))
-      setSehajMoodBubble('😤 *tail flick*')
-    } else {
-      triggerCatReaction('prabh', 'annoyed', 1200)
-      setPrabh(prev => ({ ...prev, action: 'annoyed' }))
-      setPrabhMoodBubble('😤 *tail flick*')
-    }
-    
-    addXP(1)
-    setTimeout(() => {
-      if (cat === 'sehaj') {
-        setSehajMoodBubble(null)
-        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
-      } else {
-        setPrabhMoodBubble(null)
-        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
-      }
-    }, 1200)
-  }
-  
-  // Long press cat - lift slightly, wiggle, clingy mood
-  const longPressCat = (cat: 'sehaj' | 'prabh') => {
-    haptics.heavy()
-    playRandomCatSound()
-    
-    if (cat === 'sehaj') {
-      setSehajMoodBubble('🥺 *clingy mode*')
-      setSehaj(prev => ({ ...prev, action: 'tailWag' }))
-    } else {
-      setPrabhMoodBubble('🥺 *clingy mode*')
-      setPrabh(prev => ({ ...prev, action: 'tailWag' }))
-    }
-    
-    addXP(5)
-    setTimeout(() => {
-      if (cat === 'sehaj') {
-        setSehajMoodBubble(null)
-        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
-      } else {
-        setPrabhMoodBubble(null)
-        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
-      }
-    }, 3000)
-  }
-  
-  // Double tap floor - spawn treat and cats walk toward it
-  const [treatPosition, setTreatPosition] = useState<{ x: number, y: number } | null>(null)
-  
-  const handleFloorDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault()
-    haptics.medium()
-    
-    // Get tap position relative to room container
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-    
-    const xPercent = ((clientX - rect.left) / rect.width) * 100
-    const yPercent = ((clientY - rect.top) / rect.height) * 100
-    
-    // Clamp to floor bounds
-    const clampedX = Math.max(FLOOR_BOUNDS.minX, Math.min(FLOOR_BOUNDS.maxX, xPercent))
-    const clampedY = Math.max(FLOOR_BOUNDS.minY, Math.min(FLOOR_BOUNDS.maxY, yPercent))
-    
-    // Spawn treat
-    setTreatPosition({ x: clampedX, y: clampedY })
-    setShowEffect({ type: 'food', x: clampedX, y: clampedY, value: '🐟' })
-    
-    // Make cats walk toward treat
-    const sehajWalkDir = calculateWalkDirection(sehajRoam.xPercent, sehajRoam.yPercent, clampedX, clampedY)
-    const prabhWalkDir = calculateWalkDirection(prabhRoam.xPercent, prabhRoam.yPercent, clampedX, clampedY)
-    
-    setSehaj(prev => ({ ...prev, action: sehajWalkDir }))
-    setPrabh(prev => ({ ...prev, action: prabhWalkDir }))
-    setSehajRoam(prev => ({ ...prev, isMoving: true, walkDirection: sehajWalkDir }))
-    setPrabhRoam(prev => ({ ...prev, isMoving: true, walkDirection: prabhWalkDir }))
-    
-    // Move cats toward treat
-    setTimeout(() => {
-      setSehajRoam(prev => ({ ...prev, xPercent: clampedX - 5, yPercent: clampedY, isMoving: false }))
-      setPrabhRoam(prev => ({ ...prev, xPercent: clampedX + 5, yPercent: clampedY, isMoving: false }))
-      setSehaj(prev => ({ ...prev, action: 'eat' }))
-      setPrabh(prev => ({ ...prev, action: 'eat' }))
-      setSehajMoodBubble('😋 Yum!')
-      setPrabhMoodBubble('😋 Treat!')
-      
-      // Clear treat and return to idle
-      setTimeout(() => {
-        setTreatPosition(null)
-        setSehajMoodBubble(null)
-        setPrabhMoodBubble(null)
-        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
-        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
-      }, 2000)
-    }, 2000)
-    
-    addXP(5)
-  }
-  
-  // Yarn roll function
-  const rollYarn = () => {
-    if (isYarnRolling) return
-    
-    setIsYarnRolling(true)
-    setYarnPosition(0)
-    
-    // Animate yarn rolling left to right
-    let pos = 0
-    const yarnInterval = setInterval(() => {
-      pos += 5
-      setYarnPosition(pos)
-      
-      if (pos >= 100) {
-        clearInterval(yarnInterval)
-        setIsYarnRolling(false)
-        setYarnPosition(0)
-        addXP(3)
-        
-        // Cats react to yarn
-        setSehajMoodBubble('👀 Yarn!')
-        setPrabhMoodBubble('🐾 Chase!')
-        setTimeout(() => {
-          setSehajMoodBubble(null)
-          setPrabhMoodBubble(null)
-        }, 1500)
-      }
-    }, 50)
-  }
-  
-  // Freakiness Meters (playful freakiness meter)
-  const [prabhMeter, setPrabhMeter] = useState(0)
-  const [sehajMeter, setSehajMeter] = useState(0)
-  const [showUnlovedMessage, setShowUnlovedMessage] = useState<'prabh' | 'sehaj' | null>(null)
-  
-  // NEW: Blanket position state ('left', 'center', 'right')
-  const [blanketPosition, setBlanketPosition] = useState<'left' | 'center' | 'right'>('center')
-  
-  // NEW: Dim lights state
-  const [lightsDimmed, setLightsDimmed] = useState(false)
-  
-  // ============ NEW INTERACTIVE FEATURES ============
-  
-  // Lamp Toggle (warm/cool)
-  const [lampMode, setLampMode] = useState<'warm' | 'cool' | 'off'>('warm')
-  const [lampFlicker, setLampFlicker] = useState(false)
-  
-  // Weather modes for window
-  const [weatherMode, setWeatherMode] = useState<'rain' | 'snow' | 'city' | 'sunrise'>('rain')
-  
-  // Curtain state
-  const [curtainState, setCurtainState] = useState<'open' | 'closed' | 'peek'>('open')
-  
-  // Wall frame gallery
-  const [frameIndex, setFrameIndex] = useState(0)
-  const FRAME_IMAGES = ['💕', '🐱🐱', '🌸', '✨', '🏠', '💝', '🌙', '☀️']
-  
-  // Cat mood bubbles
-  const [prabhMoodBubble, setPrabhMoodBubble] = useState<string | null>(null)
-  const [sehajMoodBubble, setSehajMoodBubble] = useState<string | null>(null)
-  
-  // Petting meter
-  const [pettingMeter, setPettingMeter] = useState(0)
-  const [isPetting, setIsPetting] = useState(false)
-  
-  // Toy spawn
-  const [spawnedToy, setSpawnedToy] = useState<string | null>(null)
-  const TOYS = ['🧶', '🧸', '👑', '🎮', '🎾', '🐟']
-  
-  // Yarn rolling
-  const [yarnRolling, setYarnRolling] = useState(false)
-  
-  // Lights out chaos
-  const [lightsOutMode, setLightsOutMode] = useState(false)
-  const [chaosMessage, setChaosMessage] = useState('')
-  const CHAOS_MESSAGES = [
-    "...suspicious rustling...",
-    "WHO TURNED OFF THE LIGHTS?!",
-    "*mischief intensifies*",
-    "🐱💨 *zoom*",
-    "something fell...",
-  ]
-  
-  // Drama mode
-  const [dramaMode, setDramaMode] = useState(false)
-  
-  // Room level & streak
-  const [roomLevel, setRoomLevel] = useState(() => {
-    const saved = localStorage.getItem('mrMrsRoomLevel')
-    return saved ? parseInt(saved) : 1
-  })
-  const [roomXP, setRoomXP] = useState(() => {
-    const saved = localStorage.getItem('mrMrsRoomXP')
-    return saved ? parseInt(saved) : 0
-  })
-  const [dailyStreak, setDailyStreak] = useState(() => {
-    const saved = localStorage.getItem('mrMrsDailyStreak')
-    return saved ? parseInt(saved) : 0
-  })
-  
-  // XP for level up
-  const XP_PER_LEVEL = 50
-  
-  // Add XP helper
-  const addXP = (amount: number) => {
-    setRoomXP(prev => {
-      const newXP = prev + amount
-      if (newXP >= XP_PER_LEVEL) {
-        setRoomLevel(l => {
-          const newLevel = l + 1
-          localStorage.setItem('mrMrsRoomLevel', String(newLevel))
-          return newLevel
-        })
-        localStorage.setItem('mrMrsRoomXP', String(newXP - XP_PER_LEVEL))
-        return newXP - XP_PER_LEVEL
-      }
-      localStorage.setItem('mrMrsRoomXP', String(newXP))
-      return newXP
-    })
-  }
-  
-  // NEW: Cat sound refs for the uploaded audio files
-  const catMeowSoftRef = useRef<Howl | null>(null)
-  const catMeowNightRef = useRef<Howl | null>(null)
-  const catMeowFoodRef = useRef<Howl | null>(null)
-  const catScreamRef = useRef<Howl | null>(null)
-  
-  const [showEffect, setShowEffect] = useState<{
-    type: 'heart' | 'z' | 'puff' | 'sparkle' | 'food'
-    x: number
-    y: number
-    value?: string
-  } | null>(null)
-  
-  const [specialMode, setSpecialMode] = useState(false)
-  const [specialMessage, setSpecialMessage] = useState('')
-  const [specialMessageIndex, setSpecialMessageIndex] = useState(0)
-  
-  const rainSoundRef = useRef<Howl | null>(null)
-  const tussleRef = useRef<Howl | null>(null)
-  
-  // Initialize sounds
-  useEffect(() => {
-    rainSoundRef.current = new Howl({
-      src: [AUDIO.rain],
-      loop: true,
-      volume: 0.25,
-    })
-    
-    tussleRef.current = new Howl({
-      src: [AUDIO.tussle],
-      volume: 0.3,
-    })
-    
-    // NEW: Initialize cat sound effects
-    catMeowSoftRef.current = new Howl({
-      src: [AUDIO.catMeowSoft],
-      volume: 0.4,
-    })
-    
-    catMeowNightRef.current = new Howl({
-      src: [AUDIO.catMeowNight],
-      volume: 0.4,
-    })
-    
-    catMeowFoodRef.current = new Howl({
-      src: [AUDIO.catMeowFood],
-      volume: 0.4,
-    })
-    
-    catScreamRef.current = new Howl({
-      src: [AUDIO.catScream],
-      volume: 0.5,
-    })
-    
-    return () => {
-      rainSoundRef.current?.unload()
-      tussleRef.current?.unload()
-      catMeowSoftRef.current?.unload()
-      catMeowNightRef.current?.unload()
-      catMeowFoodRef.current?.unload()
-      catScreamRef.current?.unload()
-    }
-  }, [])
-  
-  // Auto-start rain after user interaction
-  useEffect(() => {
-    if (userInteracted && !isMuted && rainSoundRef.current) {
-      rainSoundRef.current.play()
-    }
-    
-    return () => {
-      rainSoundRef.current?.pause()
-    }
-  }, [userInteracted, isMuted])
-  
-  // Monitor freakiness meters
-  useEffect(() => {
-    let prabhTimer: NodeJS.Timeout | null = null
-    let sehajTimer: NodeJS.Timeout | null = null
-    
-    // Check Prabh meter
-    if (prabhMeter >= 100) {
-      prabhTimer = setTimeout(() => {
-        setShowUnlovedMessage('prabh')
-        setTimeout(() => setShowUnlovedMessage(null), 4000)
-      }, 10000) // Show after 10 seconds at 100
-    }
-    
-    // Check Sehaj meter
-    if (sehajMeter >= 100) {
-      sehajTimer = setTimeout(() => {
-        setShowUnlovedMessage('sehaj')
-        setTimeout(() => setShowUnlovedMessage(null), 4000)
-      }, 10000) // Show after 10 seconds at 100
-    }
-    
-    return () => {
-      if (prabhTimer) clearTimeout(prabhTimer)
-      if (sehajTimer) clearTimeout(sehajTimer)
-    }
-  }, [prabhMeter, sehajMeter])
-  
-  // Gradually decrease freakiness meters over time
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPrabhMeter(prev => Math.max(0, prev - 1))
-      setSehajMeter(prev => Math.max(0, prev - 1))
-    }, 30000) // Decrease by 1 every 30 seconds
-    
-    return () => clearInterval(interval)
-  }, [])
-  
-  useEffect(() => {
-    if (showEffect) {
-      const timeout = setTimeout(() => setShowEffect(null), 1500)
-      return () => clearTimeout(timeout)
-    }
-  }, [showEffect])
-  
-  const playSound = useCallback((soundUrl: string, volume = 0.3) => {
-    if (!userInteracted || isMuted) return
-    const sound = new Howl({ src: [soundUrl], volume })
-    sound.play()
-  }, [userInteracted, isMuted])
-  
-  const getMoodLabel = (mood: number): string => {
-    if (mood > 80) return 'Happy'
-    if (mood > 60) return 'Cozy'
-    if (mood > 40) return 'Okay'
-    if (mood > 20) return 'Annoyed'
-    return 'Mischievous'
-  }
-  
-  const getMoodColor = (mood: number): string => {
-    if (mood > 80) return '#4CAF50'
-    if (mood > 60) return '#8BC34A'
-    if (mood > 40) return '#FFC107'
-    if (mood > 20) return '#FF9800'
-    return '#F44336'
-  }
-  
-  const handlePrabhAnimEnd = useCallback(() => {
-    setPrabh(prev => ({
-      ...prev,
-      action: prev.isAwake ? 'sitIdle' : 'sleep'
-    }))
-  }, [])
-  
-  const handleSehajAnimEnd = useCallback(() => {
-    setSehaj(prev => ({
-      ...prev,
-      action: prev.isAwake ? 'sitIdle' : 'sleep'
-    }))
-  }, [])
-  
-  const handleCatAction = (
-    cat: 'prabh' | 'sehaj',
-    action: 'wake' | 'sleep' | 'nudge' | 'kick' | 'hog' | 'feed' | 'game'
+  };
+
+  // ============ CAT MOVEMENT ============
+
+  const moveCat = useCallback((
+    catName: CatName,
+    targetPos: Position,
+    onComplete?: () => void
   ) => {
-    if (!userInteracted) setUserInteracted(true)
-    
-    haptics.light()
-    const isLeft = cat === 'sehaj'
-    const setCat = cat === 'prabh' ? setPrabh : setSehaj
-    const setOtherCat = cat === 'prabh' ? setSehaj : setPrabh
-    
-    switch (action) {
-      case 'wake':
-        // Play soft meow for wake up with cooldown
-        playCatSound(catMeowSoftRef)
-        setCat(prev => ({ 
-          ...prev, 
-          isAwake: true, 
-          action: 'yawn', 
-          mood: Math.min(100, prev.mood + 10) 
-        }))
-        break
-        
-      case 'sleep':
-        // Play soft purr/night sound for sleep with cooldown
-        playCatSound(catMeowNightRef)
-        setCat(prev => ({ ...prev, isAwake: false, action: 'sleep', mood: Math.min(100, prev.mood + 5) }))
-        setShowEffect({ type: 'z', x: isLeft ? 35 : 65, y: 35 })
-        break
-        
-      case 'nudge':
-        // Play cute chirp for nudge with cooldown
-        playCatSound(catMeowSoftRef)
-        setCat(prev => ({ ...prev, action: 'nudge', mood: Math.min(100, prev.mood + 15) }))
-        // Increase freakiness meter (Prabh increases faster)
-        if (cat === 'prabh') {
-          setPrabhMeter(prev => Math.min(100, prev + 20))
-        } else {
-          setSehajMeter(prev => Math.min(100, prev + 15))
-        }
-        // Clear unloved message if showing for this cat
-        if (showUnlovedMessage === cat) {
-          setShowUnlovedMessage(null)
-        }
-        setTimeout(() => {
-          setOtherCat(prev => ({ ...prev, action: 'tailWag', mood: Math.min(100, prev.mood + 10) }))
-        }, 400)
-        setShowEffect({ type: 'heart', x: 50, y: 35 })
-        break
-        
-      case 'kick':
-        // Play annoyed meow for kick with cooldown
-        playCatSound(catMeowNightRef)
-        haptics.medium()
-        setCat(prev => ({ ...prev, action: 'kick', mood: Math.max(0, prev.mood - 5) }))
-        setTimeout(() => {
-          setOtherCat(prev => ({ ...prev, action: 'hiss', mood: Math.max(0, prev.mood - 10) }))
-          setShowEffect({ type: 'puff', x: isLeft ? 60 : 40, y: 45 })
-        }, 300)
-        break
-        
-      case 'hog':
-        // NEW: Blanket hogging moves blanket left or right
-        haptics.medium()
-        // Play rustle sound
-        if (userInteracted && !isMuted) {
-          playSound(AUDIO.rustle)
-        }
-        // Move blanket based on which cat is hogging
-        if (cat === 'sehaj') {
-          setBlanketPosition('left')
-        } else {
-          setBlanketPosition('right')
-        }
-        setCat(prev => ({ ...prev, mood: Math.min(100, prev.mood + 10) }))
-        setOtherCat(prev => ({ ...prev, action: 'hiss', mood: Math.max(0, prev.mood - 15) }))
-        break
-        
-      case 'feed':
-        // Play happy meow for food with cooldown
-        playCatSound(catMeowFoodRef)
-        setCat(prev => ({ ...prev, action: 'eat', mood: Math.min(100, prev.mood + 20) }))
-        // Increase meter slightly
-        if (cat === 'prabh') {
-          setPrabhMeter(prev => Math.min(100, prev + 10))
-        } else {
-          setSehajMeter(prev => Math.min(100, prev + 8))
-        }
-        // Clear unloved message if showing for this cat
-        if (showUnlovedMessage === cat) {
-          setShowUnlovedMessage(null)
-        }
-        const food = FOOD_ITEMS[Math.floor(Math.random() * FOOD_ITEMS.length)]
-        setShowEffect({ type: 'food', x: isLeft ? 35 : 65, y: 40, value: food })
-        break
-        
-      case 'game':
-        // Play chirp for gaming with cooldown
-        playCatSound(catMeowSoftRef)
-        setCat(prev => ({ ...prev, action: 'gaming', mood: Math.min(100, prev.mood + 15) }))
-        setShowEffect({ type: 'sparkle', x: isLeft ? 35 : 65, y: 45 })
-        setTimeout(() => {
-          setCat(prev => ({ ...prev, action: prev.isAwake ? 'sitIdle' : 'sleep' }))
-        }, 4000)
-        break
-    }
-  }
-  
-  // Enhanced special button with personality
-  const handleSpecialButton = () => {
-    if (!userInteracted) setUserInteracted(true)
-    
-    haptics.light()
-    setSpecialMode(true)
-    
-    // FIXED: Decrease freakiness meters slightly (not increase)
-    setPrabhMeter(prev => Math.max(0, prev - 15))
-    setSehajMeter(prev => Math.max(0, prev - 12))
-    
-    // Clear any unloved messages since both cats are getting attention
-    setShowUnlovedMessage(null)
-    
-    // NEW: Play cat SCREAM sound for special button with cooldown
-    playCatSound(catScreamRef)
-    
-    // Also play tussle sounds
-    if (!isMuted && tussleRef.current) {
-      setTimeout(() => tussleRef.current?.play(), 500)
-    }
-    
-    // Cycle through messages
-    let msgIndex = 0
-    setSpecialMessage(SPECIAL_MESSAGES[0])
-    
-    const msgInterval = setInterval(() => {
-      msgIndex = (msgIndex + 1) % 3
-      if (msgIndex < SPECIAL_MESSAGES.length) {
-        setSpecialMessage(SPECIAL_MESSAGES[Math.floor(Math.random() * SPECIAL_MESSAGES.length)])
+    const setState = catName === 'Prabh' ? setPrabhState : setSehajState;
+    const currentState = catName === 'Prabh' ? prabhState : sehajState;
+
+    const clampedTarget = clampToFloor(targetPos);
+    const walkAnim = getWalkDirection(currentState.position, clampedTarget);
+
+    // Start walking animation
+    setState(prev => ({
+      ...prev,
+      animation: walkAnim,
+      isMoving: true,
+      targetPosition: clampedTarget,
+    }));
+
+    // Calculate duration based on distance
+    const distance = Math.sqrt(
+      Math.pow(clampedTarget.x - currentState.position.x, 2) +
+      Math.pow(clampedTarget.y - currentState.position.y, 2)
+    );
+    const duration = Math.max(1200, Math.min(2500, distance * 3));
+
+    // Animate position
+    const startTime = Date.now();
+    const startPos = { ...currentState.position };
+
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const newX = startPos.x + (clampedTarget.x - startPos.x) * progress;
+      const newY = startPos.y + (clampedTarget.y - startPos.y) * progress;
+
+      setState(prev => ({
+        ...prev,
+        position: { x: newX, y: newY },
+      }));
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        // Arrival - stop and sit/lay
+        const idleAnim = Math.random() > 0.8 ? 'layIdle' : 'sitIdle';
+        setState(prev => ({
+          ...prev,
+          animation: idleAnim,
+          isMoving: false,
+          targetPosition: null,
+        }));
+        if (onComplete) onComplete();
       }
-    }, 800)
-    
+    };
+
+    requestAnimationFrame(animate);
+  }, [prabhState, sehajState]);
+
+  // ============ AUTONOMOUS ROAMING ============
+
+  const startRoaming = useCallback((catName: CatName) => {
+    const timer = catName === 'Prabh' ? roamTimerPrabh : roamTimerSehaj;
+
+    const roam = () => {
+      const nextAnchor = getRandomAnchor();
+      moveCat(catName, nextAnchor);
+
+      const nextInterval = 5000 + Math.random() * 5000;
+      timer.current = setTimeout(roam, nextInterval);
+    };
+
+    // Start initial roam
+    const initialDelay = 3000 + Math.random() * 3000;
+    timer.current = setTimeout(roam, initialDelay);
+  }, [moveCat]);
+
+  const stopRoaming = (catName: CatName) => {
+    const timer = catName === 'Prabh' ? roamTimerPrabh : roamTimerSehaj;
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  };
+
+  // Start roaming on mount
+  useEffect(() => {
+    startRoaming('Prabh');
+    startRoaming('Sehaj');
+
+    return () => {
+      stopRoaming('Prabh');
+      stopRoaming('Sehaj');
+    };
+  }, [startRoaming]);
+
+  // ============ TOUCH INTERACTIONS ============
+
+  const handleCatPartClick = (catName: CatName, part: 'head' | 'nose' | 'belly' | 'tail') => {
+    haptics.light();
+    playSound('/audio/cats/meow1.mp3');
+
+    const setState = catName === 'Prabh' ? setPrabhState : setSehajState;
+
+    // Stop roaming
+    stopRoaming(catName);
+
+    // Play reaction based on part
+    let reactionAnim: AnimationState = 'happy';
+    if (part === 'tail') reactionAnim = 'annoyed';
+    if (part === 'nose') reactionAnim = 'surprised';
+
+    setState(prev => ({
+      ...prev,
+      animation: reactionAnim,
+      isMoving: false,
+    }));
+
+    // Return to idle after reaction
     setTimeout(() => {
-      clearInterval(msgInterval)
-      haptics.medium()
-      setSpecialMode(false)
+      setState(prev => ({
+        ...prev,
+        animation: 'sitIdle',
+      }));
+      startRoaming(catName);
+    }, 2000);
+
+    console.log(`${catName} ${part} clicked!`);
+  };
+
+  // ============ ACTION BUTTONS ============
+
+  const performAction = (action: string) => {
+    haptics.medium();
+    playSound('/audio/cats/meow2.mp3');
+
+    const targets: CatName[] = 
+      targetMode === 'Both' ? ['Prabh', 'Sehaj'] : [targetMode];
+
+    targets.forEach(catName => {
+      const setState = catName === 'Prabh' ? setPrabhState : setSehajState;
+      stopRoaming(catName);
+
+      switch (action) {
+        case 'wake':
+          setState(prev => ({ ...prev, animation: 'wake', mood: 'neutral' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'sitIdle' }));
+            startRoaming(catName);
+          }, 1500);
+          break;
+
+        case 'sleep':
+          setState(prev => ({ ...prev, animation: 'sleep', mood: 'sleeping', isMoving: false }));
+          break;
+
+        case 'feed':
+          setState(prev => ({ ...prev, animation: 'feed', mood: 'happy' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'sitIdle' }));
+            startRoaming(catName);
+          }, 2000);
+          break;
+
+        case 'nudge':
+          setState(prev => ({ ...prev, animation: 'nudge' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'sitIdle' }));
+            startRoaming(catName);
+          }, 1500);
+          break;
+
+        case 'kick':
+          setState(prev => ({ ...prev, animation: 'kick', mood: 'annoyed' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'sitIdle' }));
+            startRoaming(catName);
+          }, 1500);
+          break;
+
+        case 'hogBlanket':
+          setState(prev => ({ ...prev, animation: 'hogBlanket' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'layIdle' }));
+            startRoaming(catName);
+          }, 2000);
+          break;
+
+        case 'gaming':
+          setState(prev => ({ ...prev, animation: 'gaming', mood: 'happy' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'sitIdle' }));
+            startRoaming(catName);
+          }, 3000);
+          break;
+
+        case 'pet':
+          setState(prev => ({ ...prev, animation: 'happy', mood: 'happy' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'sitIdle' }));
+            startRoaming(catName);
+          }, 2000);
+          break;
+
+        case 'drama':
+          setState(prev => ({ ...prev, animation: 'annoyed', mood: 'annoyed' }));
+          setTimeout(() => {
+            setState(prev => ({ ...prev, animation: 'sitIdle' }));
+            startRoaming(catName);
+          }, 2000);
+          break;
+      }
+    });
+
+    // Special multi-cat actions
+    if (action === 'cuddle' && targetMode === 'Both') {
+      stopRoaming('Prabh');
+      stopRoaming('Sehaj');
       
-      setPrabh(prev => ({ ...prev, action: 'cuddle', mood: Math.min(100, prev.mood + 25) }))
-      setSehaj(prev => ({ ...prev, action: 'cuddle', mood: Math.min(100, prev.mood + 25) }))
+      const meetPoint = { x: 350, y: 600 };
+      
+      moveCat('Prabh', { x: meetPoint.x - 40, y: meetPoint.y }, () => {
+        setPrabhState(prev => ({ ...prev, animation: 'happy' }));
+      });
+      
+      moveCat('Sehaj', { x: meetPoint.x + 40, y: meetPoint.y }, () => {
+        setSehajState(prev => ({ ...prev, animation: 'happy' }));
+      });
+
+      setTimeout(() => {
+        startRoaming('Prabh');
+        startRoaming('Sehaj');
+      }, 4000);
+    }
+
+    if (action === 'lightsOut') {
+      setLightsOut(true);
+      setLampOn(false);
+      playSound('/audio/cats/meow3.mp3');
       
       setTimeout(() => {
-        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
-        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
-      }, 5000)
-    }, 3000)
-  }
-  
-  const ActionButton = ({ label, onClick, color }: { label: string; onClick: () => void; color?: string }) => (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
-      style={{
-        padding: '6px 8px', // SMALLER for mobile
-        borderRadius: 12,
-        background: colors.card,
-        border: `1px solid ${color || colors.border}`,
-        color: colors.textPrimary,
-        fontSize: 11, // Smaller font
-        fontWeight: 600,
-        cursor: 'pointer',
-        textAlign: 'left',
-        transition: 'all 0.2s ease',
-      }}
-    >
-      {label}
-    </motion.button>
-  )
-  
+        setLightsOut(false);
+        setLampOn(true);
+      }, 3000);
+    }
+  };
+
+  // ============ ROOM INTERACTIONS ============
+
+  const cycleWeather = () => {
+    const modes: WeatherMode[] = ['clear', 'rain', 'snow', 'city'];
+    const currentIndex = modes.indexOf(weather);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    setWeather(modes[nextIndex]);
+    haptics.light();
+  };
+
+  // ============ RENDER ============
+
   return (
     <div style={{
-      minHeight: '100vh',
-      width: '100%',
-      background: 'transparent',
-      padding: 24,
+      width: '100vw',
+      height: '100vh',
+      overflow: 'hidden',
       position: 'relative',
-      overflow: 'auto',
+      background: lightsOut ? '#000' : (isDarkMode ? '#1a1a2e' : '#f0f0f0'),
+      transition: 'background 0.5s',
     }}>
-      {/* Special Mode Overlay */}
-      <AnimatePresence>
-        {specialMode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.95)',
-              zIndex: 1000,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 24,
-            }}
-          >
-            <motion.div
-              animate={{ 
-                scale: [1, 1.2, 1],
-                rotate: [0, 5, -5, 0],
-              }}
-              transition={{ duration: 0.5, repeat: Infinity }}
-            >
-              <span style={{ fontSize: 60 }}>💕</span>
-            </motion.div>
-            <motion.p
-              key={specialMessage}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                color: 'white',
-                fontSize: 20,
-                fontStyle: 'italic',
-                textAlign: 'center',
-                padding: '0 20px',
-              }}
-            >
-              {specialMessage}
-            </motion.p>
-            <motion.div
-              animate={{ opacity: [0.3, 0.7, 0.3] }}
-              transition={{ duration: 1, repeat: Infinity }}
-              style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}
-            >
-              🎵 *scuffle sounds* 🎵
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Unloved Message Overlay */}
-      <AnimatePresence>
-        {showUnlovedMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ duration: 0.5 }}
-            style={{
-              position: 'fixed',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'rgba(0,0,0,0.9)',
-              borderRadius: 20,
-              padding: '20px 30px',
-              zIndex: 999,
-              border: `2px solid ${showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'}`,
-              boxShadow: `0 0 30px ${showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'}`,
-            }}
-          >
-            <motion.div
-              animate={{ 
-                scale: [1, 1.1, 1],
-              }}
-              transition={{ duration: 0.8, repeat: Infinity }}
-              style={{
-                textAlign: 'center',
-                color: 'white',
-              }}
-            >
-              <div style={{ fontSize: 40, marginBottom: 10 }}>
-                {showUnlovedMessage === 'prabh' ? '🖤💔' : '🧡💔'}
-              </div>
-              <p style={{ 
-                fontSize: 18, 
-                fontWeight: 600, 
-                margin: 0,
-                color: showUnlovedMessage === 'prabh' ? '#8E44AD' : '#E67E22'
-              }}>
-                {showUnlovedMessage === 'prabh' ? 'Prabh is severely unloved.' : 'Sehaj needs attention.'}
-              </p>
-              <p style={{ 
-                fontSize: 14, 
-                margin: '8px 0 0 0',
-                color: 'rgba(255,255,255,0.8)',
-                fontStyle: 'italic'
-              }}>
-                Show some love! 💕
-              </p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Header Controls */}
+      {/* Back Button */}
       <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={() => {
-          haptics.light()
-          navigate(-1)
-        }}
+        onClick={() => { haptics.light(); navigate(-1); }}
         style={{
-          position: 'fixed',
-          top: 55,
+          position: 'absolute',
+          top: 60,
           left: 20,
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          background: colors.glass,
+          zIndex: 100,
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.2)',
           backdropFilter: 'blur(10px)',
-          border: `1px solid ${colors.border}`,
+          border: 'none',
+          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 100,
         }}
-      >
-        <IoChevronBackOutline size={24} color={colors.textPrimary} />
-      </motion.button>
-      
-      {/* Audio Toggle */}
-      <motion.button
         whileTap={{ scale: 0.9 }}
-        onClick={() => {
-          if (!userInteracted) setUserInteracted(true)
-          setIsMuted(prev => !prev)
-        }}
+      >
+        <IoChevronBackOutline size={24} color="#fff" />
+      </motion.button>
+
+      {/* Mute Button */}
+      <motion.button
+        onClick={() => { setIsMuted(!isMuted); haptics.light(); }}
         style={{
-          position: 'fixed',
-          top: 55,
+          position: 'absolute',
+          top: 60,
           right: 20,
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          background: colors.glass,
+          zIndex: 100,
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.2)',
           backdropFilter: 'blur(10px)',
-          border: `1px solid ${colors.border}`,
+          border: 'none',
+          cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer',
-          zIndex: 100,
         }}
+        whileTap={{ scale: 0.9 }}
       >
-        {isMuted ? (
-          <IoVolumeMute size={20} color={colors.textMuted} />
-        ) : (
-          <IoVolumeHigh size={20} color={colors.primary} />
-        )}
+        {isMuted ? <IoVolumeMute size={24} color="#fff" /> : <IoVolumeHigh size={24} color="#fff" />}
       </motion.button>
-      
+
+      {/* Room Container */}
       <div style={{
-        maxWidth: 600,
-        margin: '70px auto 0',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 20,
+        width: '800px',
+        height: '900px',
+        margin: '50px auto',
+        position: 'relative',
+        background: 'linear-gradient(180deg, #87CEEB 0%, #F5DEB3 50%, #D2B48C 100%)',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        boxShadow: '0 10px 50px rgba(0,0,0,0.3)',
       }}>
-        <h1 style={{
-          fontSize: 28,
-          fontWeight: 700,
-          background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          textAlign: 'center',
-        }}>
-          Mr & Mrs 🐱💕🐱
-        </h1>
-        
-        {/* Room Scene Container */}
+        {/* Wall Background */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '450px',
+          background: isDarkMode ? '#2a2a3e' : '#e8d5c4',
+          borderBottom: '3px solid #8b7355',
+        }} />
+
+        {/* Floor */}
+        <div style={{
+          position: 'absolute',
+          top: '450px',
+          left: 0,
+          width: '100%',
+          height: '450px',
+          background: 'linear-gradient(135deg, #d4a574 0%, #c9965f 100%)',
+        }} />
+
+        {/* Window */}
         <motion.div
+          onClick={cycleWeather}
           style={{
-            background: colors.glass,
-            backdropFilter: 'blur(20px)',
-            border: `1px solid ${colors.border}`,
-            borderRadius: 24,
-            padding: 0,
-            position: 'relative',
-            boxShadow: `0 8px 32px ${colors.primaryGlow}`,
-            overflow: 'hidden',
+            position: 'absolute',
+            top: 100,
+            right: 100,
+            width: 200,
+            height: 250,
+            background: weather === 'rain' ? '#7a9cb5' : 
+                       weather === 'snow' ? '#e0f2ff' :
+                       weather === 'city' ? '#1a1a2e' : '#87CEEB',
+            border: '8px solid #654321',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '48px',
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {weather === 'rain' && '🌧️'}
+          {weather === 'snow' && '❄️'}
+          {weather === 'city' && '🌃'}
+          {weather === 'clear' && '☀️'}
+        </motion.div>
+
+        {/* Curtains */}
+        <AnimatePresence>
+          {!curtainsOpen && (
+            <motion.div
+              initial={{ x: -100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              style={{
+                position: 'absolute',
+                top: 90,
+                right: 90,
+                width: 220,
+                height: 270,
+                background: 'linear-gradient(90deg, #8b4513 0%, #654321 100%)',
+                borderRadius: '8px',
+                zIndex: 10,
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        <motion.button
+          onClick={() => { setCurtainsOpen(!curtainsOpen); haptics.light(); }}
+          style={{
+            position: 'absolute',
+            top: 90,
+            right: 50,
+            zIndex: 11,
+            padding: '8px 12px',
+            background: 'rgba(255,255,255,0.3)',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '12px',
+          }}
+          whileTap={{ scale: 0.9 }}
+        >
+          {curtainsOpen ? 'Close' : 'Open'}
+        </motion.button>
+
+        {/* Lamp */}
+        <motion.div
+          onClick={() => { setLampOn(!lampOn); haptics.light(); }}
+          style={{
+            position: 'absolute',
+            top: 150,
+            left: 100,
+            width: 60,
+            height: 120,
+            cursor: 'pointer',
+          }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          <div style={{
+            width: '100%',
+            height: '60%',
+            background: lampOn ? '#ffe066' : '#555',
+            borderRadius: '50%',
+            boxShadow: lampOn ? '0 0 30px rgba(255,224,102,0.8)' : 'none',
+            transition: 'all 0.3s',
+          }} />
+          <div style={{
+            width: '20%',
+            height: '40%',
+            background: '#333',
+            margin: '0 auto',
+          }} />
+        </motion.div>
+
+        {/* PRABH (Black Cat) */}
+        <div
+          style={{
+            position: 'absolute',
+            left: prabhState.position.x,
+            top: prabhState.position.y,
+            width: 64,
+            height: 64,
+            zIndex: 20,
           }}
         >
-          {/* Room Environment - Full Scene */}
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            height: 450,
-            overflow: 'hidden',
-            borderRadius: 24,
-          }}>
-            {/* NEW: Dim Lights Overlay - dims wall and floor when active */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'rgba(0, 0, 0, 0)',
-              transition: 'background 0.8s ease',
-              ...(lightsDimmed && {
-                background: 'rgba(0, 0, 0, 0.5)',
-              }),
-              zIndex: 5,
-              pointerEvents: 'none',
-            }} />
-            
-            {/* LAYER 1: Wall Background (full width) */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundImage: 'url(/wall-background.jpeg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              zIndex: 0,
-            }} />
+          {/* Touch Zones */}
+          <div style={{ position: 'relative', width: 64, height: 64 }}>
+            {/* Sprite */}
+            <SpriteAnimator
+              spriteSheet="black_cat_sprite.png"
+              metadata={prabhMetadata}
+              animation={prabhState.animation}
+              width={64}
+              height={64}
+              loop={prabhState.animation.includes('walk') || prabhState.animation === 'sleep'}
+            />
 
-            {/* Rainy Window on Wall - LARGER with WHITE OUTLINE - STAYS BRIGHT */}
-            <div style={{
-              position: 'absolute',
-              top: 15,
-              right: 25,
-              width: 160,
-              height: 120,
-              background: 'linear-gradient(180deg, #2a3a5e 0%, #1a2540 100%)',
-              border: '5px solid #FFFFFF',
-              borderRadius: 10,
-              overflow: 'hidden',
-              zIndex: 10, // ABOVE dim overlay (z-index 5) so it stays bright
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.3)',
-            }}>
-              {/* Weather Videos/Backgrounds */}
-              {weatherMode === 'rain' && (
-                <video
-                  autoPlay
-                  loop
-                  muted={true}
-                  playsInline
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    zIndex: 0,
-                  }}
-                  src="/window-rain.mov"
-                />
-              )}
-              {weatherMode === 'snow' && (
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(180deg, #1a2a4e 0%, #0d1a30 100%)',
-                  zIndex: 0,
-                }}>
-                  {/* Snowflakes */}
-                  {[...Array(20)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{
-                        y: [0, 120],
-                        x: [0, Math.sin(i) * 10],
-                        opacity: [0.8, 0.3],
-                      }}
-                      transition={{
-                        duration: 2 + Math.random() * 2,
-                        repeat: Infinity,
-                        delay: Math.random() * 2,
-                      }}
-                      style={{
-                        position: 'absolute',
-                        left: `${Math.random() * 100}%`,
-                        top: -10,
-                        width: 4,
-                        height: 4,
-                        borderRadius: '50%',
-                        background: 'white',
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-              {weatherMode === 'city' && (
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(180deg, #0f0f23 0%, #1a1a2e 100%)',
-                  zIndex: 0,
-                }}>
-                  {/* City lights */}
-                  {[...Array(15)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1 + Math.random(), repeat: Infinity }}
-                      style={{
-                        position: 'absolute',
-                        left: `${5 + Math.random() * 90}%`,
-                        top: `${40 + Math.random() * 50}%`,
-                        width: 2 + Math.random() * 3,
-                        height: 2 + Math.random() * 3,
-                        borderRadius: 1,
-                        background: ['#FFD700', '#FF6B6B', '#4ECDC4', '#FFA500'][Math.floor(Math.random() * 4)],
-                      }}
-                    />
-                  ))}
-                  {/* Stars */}
-                  {[...Array(8)].map((_, i) => (
-                    <motion.div
-                      key={`star-${i}`}
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-                      style={{
-                        position: 'absolute',
-                        left: `${10 + Math.random() * 80}%`,
-                        top: `${5 + Math.random() * 30}%`,
-                        width: 2,
-                        height: 2,
-                        borderRadius: '50%',
-                        background: 'white',
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-              {weatherMode === 'sunrise' && (
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(180deg, #FF9A8B 0%, #FF6B8A 30%, #FF8E53 70%, #FFA726 100%)',
-                  zIndex: 0,
-                }}>
-                  {/* Sun */}
-                  <motion.div
-                    animate={{ y: [20, 10, 20] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                    style={{
-                      position: 'absolute',
-                      bottom: '30%',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 30,
-                      height: 30,
-                      borderRadius: '50%',
-                      background: '#FFF176',
-                      boxShadow: '0 0 20px #FFF176, 0 0 40px rgba(255,241,118,0.5)',
-                    }}
-                  />
-                </div>
-              )}
-              
-              {/* Window frame overlays - WHITE */}
-              <div style={{
+            {/* Head touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Prabh', 'head')}
+              style={{
                 position: 'absolute',
                 top: 0,
-                left: '50%',
-                width: 5,
-                height: '100%',
-                background: '#FFFFFF',
-                transform: 'translateX(-50%)',
-                zIndex: 1,
-              }} />
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: 0,
-                width: '100%',
-                height: 5,
-                background: '#FFFFFF',
-                transform: 'translateY(-50%)',
-                zIndex: 1,
-              }} />
-              
-              {/* Curtains */}
-              <motion.div
-                animate={{
-                  x: curtainState === 'closed' ? 0 : curtainState === 'peek' ? -30 : -80,
-                }}
-                transition={{ duration: 0.5 }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '55%',
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #8B4513 0%, #A0522D 100%)',
-                  zIndex: 2,
-                  borderRight: '2px solid #5D3A1A',
-                }}
-              />
-              <motion.div
-                animate={{
-                  x: curtainState === 'closed' ? 0 : curtainState === 'peek' ? 30 : 80,
-                }}
-                transition={{ duration: 0.5 }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '55%',
-                  height: '100%',
-                  background: 'linear-gradient(270deg, #8B4513 0%, #A0522D 100%)',
-                  zIndex: 2,
-                  borderLeft: '2px solid #5D3A1A',
-                }}
-              />
-              
-              {/* Weather toggle arrows */}
-              <div style={{
-                position: 'absolute',
-                bottom: 5,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                gap: 8,
-                zIndex: 3,
-              }}>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    const modes: ('rain' | 'snow' | 'city' | 'sunrise')[] = ['rain', 'snow', 'city', 'sunrise']
-                    const idx = modes.indexOf(weatherMode)
-                    setWeatherMode(modes[(idx - 1 + modes.length) % modes.length])
-                    addXP(2)
-                  }}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.8)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >◀</motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => {
-                    const modes: ('rain' | 'snow' | 'city' | 'sunrise')[] = ['rain', 'snow', 'city', 'sunrise']
-                    const idx = modes.indexOf(weatherMode)
-                    setWeatherMode(modes[(idx + 1) % modes.length])
-                    addXP(2)
-                  }}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: 'rgba(255,255,255,0.8)',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 10,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >▶</motion.button>
-              </div>
-            </div>
+                left: 16,
+                width: 32,
+                height: 24,
+                cursor: 'pointer',
+                // Debug: background: 'rgba(255,0,0,0.2)',
+              }}
+            />
 
-            {/* LAYER 2: Floor/Base Surface */}
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              width: '100%',
-              height: '50%',
-              backgroundImage: 'url(/floor.jpeg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center bottom',
-              backgroundRepeat: 'no-repeat',
-              zIndex: 1,
-            }} />
+            {/* Nose touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Prabh', 'nose')}
+              style={{
+                position: 'absolute',
+                top: 20,
+                left: 24,
+                width: 16,
+                height: 12,
+                cursor: 'pointer',
+                // Debug: background: 'rgba(0,255,0,0.2)',
+              }}
+            />
 
-            {/* LAYER 3: Rug (centered, below characters) */}
-            <div style={{
-              position: 'absolute',
-              bottom: 40,
+            {/* Belly touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Prabh', 'belly')}
+              style={{
+                position: 'absolute',
+                top: 32,
+                left: 12,
+                width: 40,
+                height: 20,
+                cursor: 'pointer',
+                // Debug: background: 'rgba(0,0,255,0.2)',
+              }}
+            />
+
+            {/* Tail touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Prabh', 'tail')}
+              style={{
+                position: 'absolute',
+                top: 36,
+                left: 48,
+                width: 12,
+                height: 24,
+                cursor: 'pointer',
+                // Debug: background: 'rgba(255,255,0,0.2)',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* SEHAJ (Ginger Cat) */}
+        <div
+          style={{
+            position: 'absolute',
+            left: sehajState.position.x,
+            top: sehajState.position.y,
+            width: 64,
+            height: 64,
+            zIndex: 21,
+          }}
+        >
+          {/* Touch Zones */}
+          <div style={{ position: 'relative', width: 64, height: 64 }}>
+            {/* Sprite */}
+            <SpriteAnimator
+              spriteSheet="ginger_cat_sprite.png"
+              metadata={sehajMetadata}
+              animation={sehajState.animation}
+              width={64}
+              height={64}
+              loop={sehajState.animation.includes('walk') || sehajState.animation === 'sleep'}
+            />
+
+            {/* Head touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Sehaj', 'head')}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 16,
+                width: 32,
+                height: 24,
+                cursor: 'pointer',
+              }}
+            />
+
+            {/* Nose touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Sehaj', 'nose')}
+              style={{
+                position: 'absolute',
+                top: 20,
+                left: 24,
+                width: 16,
+                height: 12,
+                cursor: 'pointer',
+              }}
+            />
+
+            {/* Belly touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Sehaj', 'belly')}
+              style={{
+                position: 'absolute',
+                top: 32,
+                left: 12,
+                width: 40,
+                height: 20,
+                cursor: 'pointer',
+              }}
+            />
+
+            {/* Tail touch zone */}
+            <div
+              onClick={() => handleCatPartClick('Sehaj', 'tail')}
+              style={{
+                position: 'absolute',
+                top: 36,
+                left: 48,
+                width: 12,
+                height: 24,
+                cursor: 'pointer',
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Target Selector */}
+      <div style={{
+        position: 'fixed',
+        bottom: 150,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: '8px',
+        background: 'rgba(255,255,255,0.15)',
+        backdropFilter: 'blur(10px)',
+        padding: '8px',
+        borderRadius: '20px',
+        zIndex: 50,
+      }}>
+        {(['Prabh', 'Sehaj', 'Both'] as TargetMode[]).map(mode => (
+          <motion.button
+            key={mode}
+            onClick={() => { setTargetMode(mode); haptics.light(); }}
+            style={{
+              padding: '8px 16px',
+              background: targetMode === mode ? 'rgba(255,255,255,0.4)' : 'transparent',
+              border: 'none',
+              borderRadius: '12px',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+            }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {mode}
+          </motion.button>
+        ))}
+      </div>
+
+      {/* Bottom Action Bar */}
+      <motion.div
+        style={{
+          position: 'fixed',
+          bottom: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '12px',
+          background: 'rgba(255,255,255,0.2)',
+          backdropFilter: 'blur(15px)',
+          padding: '12px 20px',
+          borderRadius: '25px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          zIndex: 100,
+        }}
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        transition={{ type: 'spring', damping: 20 }}
+      >
+        {/* Primary Actions */}
+        <ActionButton icon="👁️" label="Wake" onClick={() => performAction('wake')} />
+        <ActionButton icon="😴" label="Sleep" onClick={() => performAction('sleep')} />
+        <ActionButton icon="🍗" label="Feed" onClick={() => performAction('feed')} />
+        <ActionButton 
+          icon="⋯" 
+          label="More" 
+          onClick={() => { setShowSecondaryPanel(!showSecondaryPanel); haptics.light(); }}
+        />
+      </motion.div>
+
+      {/* Secondary Action Panel */}
+      <AnimatePresence>
+        {showSecondaryPanel && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            style={{
+              position: 'fixed',
+              bottom: 100,
               left: '50%',
               transform: 'translateX(-50%)',
-              width: '70%',
-              maxWidth: 350,
-              height: 140,
-              backgroundImage: 'url(/rug.png)',
-              backgroundSize: 'contain',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-              zIndex: 2,
-            }} />
-
-            {/* LAYER 4: Furniture Props */}
-            {/* Small couch/bean bag - left side */}
-            <div style={{
-              position: 'absolute',
-              bottom: 60,
-              left: 20,
-              width: 80,
-              height: 70,
-              background: 'linear-gradient(135deg, #8B7355 0%, #6B5644 100%)',
-              borderRadius: '45% 45% 20% 20%',
-              border: '3px solid #5D4037',
-              zIndex: 2,
-              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            }}>
-              {/* Couch cushion detail */}
-              <div style={{
-                position: 'absolute',
-                top: 10,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '60%',
-                height: 25,
-                background: 'rgba(255,255,255,0.1)',
-                borderRadius: 12,
-              }} />
-            </div>
-
-            {/* Toy box - right side */}
-            <div style={{
-              position: 'absolute',
-              bottom: 55,
-              right: 25,
-              width: 70,
-              height: 60,
-              background: 'linear-gradient(135deg, #E8A5C0 0%, #D88BA5 100%)',
-              borderRadius: 8,
-              border: '3px solid #B86080',
-              zIndex: 2,
-              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            }}>
-              {/* Toy sticking out */}
-              <div style={{
-                position: 'absolute',
-                top: -15,
-                right: 10,
-                fontSize: 24,
-              }}>
-                🧸
-              </div>
-            </div>
-
-            {/* Wall shelf - top left */}
-            <div style={{
-              position: 'absolute',
-              top: 120,
-              left: 30,
-              width: 90,
-              height: 8,
-              background: '#8B6F47',
-              borderRadius: 4,
-              zIndex: 1,
-              boxShadow: '0 3px 6px rgba(0,0,0,0.3)',
-            }}>
-              {/* Tiny plant on shelf */}
-              <div style={{
-                position: 'absolute',
-                top: -25,
-                left: 15,
-                fontSize: 20,
-              }}>
-                🪴
-              </div>
-              {/* INTERACTIVE: Tiny frame on shelf - cycles through images */}
-              <motion.div
-                whileTap={{ scale: 0.9 }}
-                onClick={() => {
-                  setFrameIndex(prev => (prev + 1) % FRAME_IMAGES.length)
-                  addXP(1)
-                  haptics.light()
-                }}
-                style={{
-                  position: 'absolute',
-                  top: -22,
-                  right: 12,
-                  width: 22,
-                  height: 22,
-                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                  border: '2px solid #8B6914',
-                  borderRadius: 3,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                }}
-              >
-                <AnimatePresence mode="wait">
-                  <motion.span
-                    key={frameIndex}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {FRAME_IMAGES[frameIndex]}
-                  </motion.span>
-                </AnimatePresence>
-              </motion.div>
-            </div>
-
-            {/* Small lamp - top right - INTERACTIVE */}
-            <motion.div
-              onClick={() => {
-                const modes: ('warm' | 'cool' | 'off')[] = ['warm', 'cool', 'off']
-                const idx = modes.indexOf(lampMode)
-                setLampMode(modes[(idx + 1) % modes.length])
-                setLampFlicker(true)
-                setTimeout(() => setLampFlicker(false), 300)
-                addXP(2)
-                haptics.light()
-              }}
-              style={{
-                position: 'absolute',
-                top: 130,
-                right: 40,
-                zIndex: 1,
-                cursor: 'pointer',
-              }}
-            >
-              {/* Lamp shade */}
-              <motion.div
-                animate={{
-                  opacity: lampFlicker ? [1, 0.3, 1] : 1,
-                }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  width: 0,
-                  height: 0,
-                  borderLeft: '20px solid transparent',
-                  borderRight: '20px solid transparent',
-                  borderBottom: `30px solid ${lampMode === 'warm' ? '#FFE4B5' : lampMode === 'cool' ? '#E0F7FA' : '#666'}`,
-                  margin: '0 auto',
-                  filter: lampMode !== 'off' ? `drop-shadow(0 0 ${lampFlicker ? '20px' : '10px'} ${lampMode === 'warm' ? '#FFD700' : '#00BCD4'})` : 'none',
-                }}
-              />
-              {/* Lamp base */}
-              <div style={{
-                width: 12,
-                height: 25,
-                background: '#8B7355',
-                margin: '0 auto',
-                borderRadius: '0 0 6px 6px',
-              }} />
-              {/* Light glow effect */}
-              {lampMode !== 'off' && (
-                <motion.div
-                  animate={{ opacity: [0.3, 0.5, 0.3] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    top: 15,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 60,
-                    height: 60,
-                    borderRadius: '50%',
-                    background: `radial-gradient(circle, ${lampMode === 'warm' ? 'rgba(255,215,0,0.3)' : 'rgba(0,188,212,0.3)'} 0%, transparent 70%)`,
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
-            </motion.div>
-            
-            {/* Room color overlay based on lamp */}
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: lampMode === 'warm' 
-                ? 'rgba(255, 200, 100, 0.08)' 
-                : lampMode === 'cool' 
-                  ? 'rgba(100, 200, 255, 0.08)' 
-                  : 'transparent',
-              zIndex: 4,
-              pointerEvents: 'none',
-              transition: 'background 0.5s ease',
-            }} />
-            
-            {/* LAYER 5: Cat Sprites - AUTONOMOUS ROAMING */}
-            {/* Sehaj Cat (Left - Ginger) - ROAMING with smooth transitions - TOUCH ZONES */}
-            <motion.div
-              animate={{
-                left: cuddleMode ? '42%' : `${sehajRoam.xPercent}%`,
-                bottom: cuddleMode ? '30%' : `${100 - sehajRoam.yPercent}%`,
-                y: sehaj.action === 'nudge' || sehaj.action === 'kick' ? [0, -5, 0] : 0,
-              }}
-              transition={{ 
-                left: { duration: 2.5, ease: 'easeInOut' },
-                bottom: { duration: 2.5, ease: 'easeInOut' },
-                y: { duration: 0.3, ease: 'easeOut' }
-              }}
-              style={{
-                position: 'absolute',
-                zIndex: 3,
-                opacity: 1,
-                visibility: 'visible',
-                display: 'block',
-                minWidth: 80,
-                minHeight: 80,
-                transform: 'translateX(-50%)',
-                cursor: 'pointer',
-              }}
-            >
-              {/* Touch Zones - Invisible clickable areas */}
-              {/* Head zone (top) */}
-              <div
-                onClick={() => tapHead('sehaj')}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: '25%',
-                  width: '50%',
-                  height: '30%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              {/* Nose zone (center-top) */}
-              <div
-                onClick={() => tapNose('sehaj')}
-                style={{
-                  position: 'absolute',
-                  top: '25%',
-                  left: '35%',
-                  width: '30%',
-                  height: '20%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              {/* Belly zone (center) */}
-              <div
-                onClick={() => tapBelly('sehaj')}
-                onMouseDown={() => startPetting('sehaj')}
-                onMouseUp={stopPetting}
-                onMouseLeave={stopPetting}
-                onTouchStart={() => startPetting('sehaj')}
-                onTouchEnd={stopPetting}
-                style={{
-                  position: 'absolute',
-                  top: '40%',
-                  left: '20%',
-                  width: '60%',
-                  height: '35%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              {/* Tail zone (back) */}
-              <div
-                onClick={() => tapTail('sehaj')}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '0%',
-                  width: '25%',
-                  height: '30%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              
-              {/* Petting indicator */}
-              {isPettingSehaj && (
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    top: -50,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 24,
-                    zIndex: 15,
-                  }}
-                >
-                  💕
-                </motion.div>
-              )}
-              
-              {/* Petting progress bar */}
-              {pettingProgress > 0 && isPettingSehaj && (
-                <div style={{
-                  position: 'absolute',
-                  top: -25,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 50,
-                  height: 6,
-                  background: 'rgba(0,0,0,0.3)',
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                  zIndex: 15,
-                }}>
-                  <motion.div
-                    animate={{ width: `${pettingProgress}%` }}
-                    style={{
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #FF69B4, #FF1493)',
-                      borderRadius: 3,
-                    }}
-                  />
-                </div>
-              )}
-              
-              {/* Mood Bubble */}
-              <AnimatePresence>
-                {sehajMoodBubble && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.8 }}
-                    style={{
-                      position: 'absolute',
-                      top: -40,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: 'rgba(255,255,255,0.95)',
-                      borderRadius: 12,
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                      whiteSpace: 'nowrap',
-                      zIndex: 25,
-                    }}
-                  >
-                    {sehajMoodBubble}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {/* Walking indicator */}
-              {sehajRoam.isMoving && (
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 10,
-                  }}
-                >
-                  🐾
-                </motion.div>
-              )}
-              
-              <Sprite
-                sheet={cat2Sheet}
-                animations={SEHAJ_ANIMATIONS}
-                currentAnimation={sehaj.action}
-                onAnimationEnd={handleSehajAnimEnd}
-                scale={1.8}
-                flip={sehajRoam.xPercent > 40}
-              />
-              
-              {sehaj.action === 'gaming' && (
-                <motion.div
-                  animate={{ y: [0, -3, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 18,
-                  }}
-                >
-                  🎮
-                </motion.div>
-              )}
-            </motion.div>
-            
-            {/* Prabh Cat (Right - Grey) - ROAMING with smooth transitions - TOUCH ZONES */}
-            <motion.div
-              animate={{
-                left: cuddleMode ? '52%' : `${prabhRoam.xPercent}%`,
-                bottom: cuddleMode ? '30%' : `${100 - prabhRoam.yPercent}%`,
-                y: prabh.action === 'nudge' || prabh.action === 'kick' ? [0, -5, 0] : 0,
-              }}
-              transition={{ 
-                left: { duration: 2.5, ease: 'easeInOut' },
-                bottom: { duration: 2.5, ease: 'easeInOut' },
-                y: { duration: 0.3, ease: 'easeOut' }
-              }}
-              style={{
-                position: 'absolute',
-                zIndex: 3,
-                opacity: 1,
-                visibility: 'visible',
-                display: 'block',
-                minWidth: 80,
-                minHeight: 80,
-                transform: 'translateX(-50%)',
-                cursor: 'pointer',
-              }}
-            >
-              {/* Touch Zones - Invisible clickable areas */}
-              {/* Head zone (top) */}
-              <div
-                onClick={() => tapHead('prabh')}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: '25%',
-                  width: '50%',
-                  height: '30%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              {/* Nose zone (center-top) */}
-              <div
-                onClick={() => tapNose('prabh')}
-                style={{
-                  position: 'absolute',
-                  top: '25%',
-                  left: '35%',
-                  width: '30%',
-                  height: '20%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              {/* Belly zone (center) */}
-              <div
-                onClick={() => tapBelly('prabh')}
-                onMouseDown={() => startPetting('prabh')}
-                onMouseUp={stopPetting}
-                onMouseLeave={stopPetting}
-                onTouchStart={() => startPetting('prabh')}
-                onTouchEnd={stopPetting}
-                style={{
-                  position: 'absolute',
-                  top: '40%',
-                  left: '20%',
-                  width: '60%',
-                  height: '35%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              {/* Tail zone (back) */}
-              <div
-                onClick={() => tapTail('prabh')}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: '0%',
-                  width: '25%',
-                  height: '30%',
-                  cursor: 'pointer',
-                  zIndex: 20,
-                }}
-              />
-              
-              {/* Petting indicator */}
-              {isPettingPrabh && (
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    top: -50,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 24,
-                    zIndex: 15,
-                  }}
-                >
-                  💕
-                </motion.div>
-              )}
-              
-              {/* Petting progress bar */}
-              {pettingProgress > 0 && isPettingPrabh && (
-                <div style={{
-                  position: 'absolute',
-                  top: -25,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 50,
-                  height: 6,
-                  background: 'rgba(0,0,0,0.3)',
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                  zIndex: 15,
-                }}>
-                  <motion.div
-                    animate={{ width: `${pettingProgress}%` }}
-                    style={{
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #FF69B4, #FF1493)',
-                      borderRadius: 3,
-                    }}
-                  />
-                </div>
-              )}
-              
-              {/* Mood Bubble */}
-              <AnimatePresence>
-                {prabhMoodBubble && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.8 }}
-                    style={{
-                      position: 'absolute',
-                      top: -40,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: 'rgba(255,255,255,0.95)',
-                      borderRadius: 12,
-                      padding: '6px 10px',
-                      fontSize: 12,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                      whiteSpace: 'nowrap',
-                      zIndex: 25,
-                    }}
-                  >
-                    {prabhMoodBubble}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {/* Walking indicator */}
-              {prabhRoam.isMoving && (
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 10,
-                  }}
-                >
-                  🐾
-                </motion.div>
-              )}
-              
-              <Sprite
-                sheet={cat1Sheet}
-                animations={PRABH_ANIMATIONS}
-                currentAnimation={prabh.action}
-                onAnimationEnd={handlePrabhAnimEnd}
-                scale={1.8}
-                flip={prabhRoam.xPercent < 60}
-              />
-              
-              {prabh.action === 'gaming' && (
-                <motion.div
-                  animate={{ y: [0, -3, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 18,
-                  }}
-                >
-                  🎮
-                </motion.div>
-              )}
-            </motion.div>
-              
-              {/* Mood Bubble for Prabh */}
-              <AnimatePresence>
-                {prabhMoodBubble && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.8 }}
-                    style={{
-                      position: 'absolute',
-                      top: -40,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: 'rgba(255,255,255,0.95)',
-                      borderRadius: 12,
-                      padding: '6px 10px',
-                      fontSize: 14,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                      whiteSpace: 'nowrap',
-                      zIndex: 10,
-                    }}
-                  >
-                    {prabhMoodBubble}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {/* Walking indicator */}
-              {prabhRoam.isMoving && (
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 10,
-                  }}
-                >
-                  🐾
-                </motion.div>
-              )}
-              
-              <Sprite
-                sheet={cat1Sheet}
-                animations={PRABH_ANIMATIONS}
-                currentAnimation={prabh.action}
-                onAnimationEnd={handlePrabhAnimEnd}
-                scale={1.8}
-                flip={prabhRoam.xPercent < 60}
-              />
-              {/* Gaming emoji */}
-              {prabh.action === 'gaming' && (
-                <motion.div
-                  animate={{ y: [0, -3, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 18,
-                  }}
-                >
-                  🎮
-                </motion.div>
-              )}
-            </motion.div>
-            
-            {/* Yarn Ball - Rolling animation */}
-            <AnimatePresence>
-              {isYarnRolling && (
-                <motion.div
-                  initial={{ left: '10%', rotate: 0 }}
-                  animate={{ 
-                    left: `${10 + yarnPosition * 0.8}%`,
-                    rotate: yarnPosition * 10,
-                  }}
-                  exit={{ opacity: 0 }}
-                  style={{
-                    position: 'absolute',
-                    bottom: '25%',
-                    fontSize: 30,
-                    zIndex: 5,
-                  }}
-                >
-                  🧶
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* NEW: LAYER 7: Blanket (moves left/center/right based on hog blanket action) - FOREGROUND */}
-            <motion.div
-              animate={{
-                left: blanketPosition === 'left' ? '15%' : blanketPosition === 'right' ? '60%' : '37.5%',
-              }}
-              transition={{ type: 'spring', stiffness: 120, damping: 15 }}
-              style={{
-                position: 'absolute',
-                bottom: 40,
-                width: 220,
-                height: 80,
-                background: 'linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 50%, #FFD1DC 100%)',
-                borderRadius: '50% 50% 20% 20%',
-                border: '2px solid #FF69B4',
-                zIndex: 7,
-                boxShadow: '0 2px 8px rgba(255,105,180,0.2), inset 0 1px 4px rgba(255,255,255,0.4)',
-                opacity: 0.85,
-                transform: 'perspective(100px) rotateX(15deg)',
-              }}
-            >
-              {/* Blanket texture/pattern - flatter appearance */}
-              <div style={{
-                position: 'absolute',
-                top: 5,
-                left: 5,
-                right: 5,
-                bottom: 5,
-                background: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px)',
-                borderRadius: '45% 45% 15% 15%',
-              }} />
-              {/* Blanket folds for realistic flat appearance */}
-              <div style={{
-                position: 'absolute',
-                top: '30%',
-                left: '20%',
-                right: '20%',
-                height: 2,
-                background: 'rgba(255,105,180,0.3)',
-                borderRadius: 1,
-              }} />
-              <div style={{
-                position: 'absolute',
-                top: '60%',
-                left: '15%',
-                right: '25%',
-                height: 1,
-                background: 'rgba(255,105,180,0.2)',
-                borderRadius: 1,
-              }} />
-            </motion.div>
-
-            {/* LAYER 6: Foreground Props - moved lower */}
-            {/* Pillow on floor - left */}
-            <div style={{
-              position: 'absolute',
-              bottom: 80,
-              left: 70,
-              width: 50,
-              height: 35,
-              background: 'linear-gradient(135deg, #FF6B9D 0%, #E91E63 100%)',
-              borderRadius: '45%',
-              border: '2px solid #C2185B',
-              zIndex: 4,
-              boxShadow: '0 3px 6px rgba(0,0,0,0.2)',
-              transform: 'rotate(-15deg)',
-            }} />
-
-            {/* Toy on floor - right */}
-            <div style={{
-              position: 'absolute',
-              bottom: 90,
-              right: 80,
-              fontSize: 28,
-              zIndex: 4,
-              transform: 'rotate(20deg)',
-            }}>
-              🎾
-            </div>
-
-            {/* REMOVED: Blanket overlay - now using rug instead */}
-            
-            {/* Effects */}
-            <AnimatePresence>
-              {showEffect && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.5, y: 0 }}
-                  animate={{ opacity: 1, scale: 1.2, y: -25 }}
-                  exit={{ opacity: 0, y: -40 }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                  style={{
-                    position: 'absolute',
-                    left: `${showEffect.x}%`,
-                    top: `${showEffect.y}%`,
-                    fontSize: 28,
-                    zIndex: 10,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  {showEffect.type === 'heart' && '💕'}
-                  {showEffect.type === 'z' && '💤'}
-                  {showEffect.type === 'puff' && '💥'}
-                  {showEffect.type === 'sparkle' && '✨'}
-                  {showEffect.type === 'food' && showEffect.value}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-          
-          {/* Mood Bars */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: 20,
-            gap: 16,
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <p style={{ color: colors.textPrimary, fontSize: 13, fontWeight: 600 }}>🧡 Sehaj</p>
-                <p style={{ color: getMoodColor(sehaj.mood), fontSize: 11, fontWeight: 600 }}>{getMoodLabel(sehaj.mood)}</p>
-              </div>
-              <div style={{
-                width: '100%',
-                height: 8,
-                background: colors.card,
-                borderRadius: 4,
-                overflow: 'hidden',
-                border: `1px solid ${colors.border}`,
-              }}>
-                <motion.div
-                  animate={{ width: `${sehaj.mood}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  style={{
-                    height: '100%',
-                    background: `linear-gradient(90deg, ${getMoodColor(sehaj.mood)}, ${colors.primary})`,
-                    borderRadius: 4,
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <p style={{ color: colors.textPrimary, fontSize: 13, fontWeight: 600 }}>🖤 Prabh</p>
-                <p style={{ color: getMoodColor(prabh.mood), fontSize: 11, fontWeight: 600 }}>{getMoodLabel(prabh.mood)}</p>
-              </div>
-              <div style={{
-                width: '100%',
-                height: 8,
-                background: colors.card,
-                borderRadius: 4,
-                overflow: 'hidden',
-                border: `1px solid ${colors.border}`,
-              }}>
-                <motion.div
-                  animate={{ width: `${prabh.mood}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  style={{
-                    height: '100%',
-                    background: `linear-gradient(90deg, ${getMoodColor(prabh.mood)}, ${colors.secondary})`,
-                    borderRadius: 4,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Freakiness Meters */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: 16,
-            gap: 16,
-          }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 600 }}>🧡 Sehaj Freakiness</p>
-                <p style={{ color: '#E67E22', fontSize: 11, fontWeight: 600 }}>{sehajMeter}%</p>
-              </div>
-              <div style={{
-                width: '100%',
-                height: 6,
-                background: colors.card,
-                borderRadius: 3,
-                overflow: 'hidden',
-                border: `1px solid ${colors.border}`,
-              }}>
-                <motion.div
-                  animate={{ width: `${sehajMeter}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  style={{
-                    height: '100%',
-                    background: sehajMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #E67E22, #F39C12)',
-                    borderRadius: 3,
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 600 }}>🖤 Prabh Freakiness</p>
-                <p style={{ color: '#8E44AD', fontSize: 11, fontWeight: 600 }}>{prabhMeter}%</p>
-              </div>
-              <div style={{
-                width: '100%',
-                height: 6,
-                background: colors.card,
-                borderRadius: 3,
-                overflow: 'hidden',
-                border: `1px solid ${colors.border}`,
-              }}>
-                <motion.div
-                  animate={{ width: `${prabhMeter}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  style={{
-                    height: '100%',
-                    background: prabhMeter >= 100 ? 'linear-gradient(90deg, #FF6B9D, #E91E63)' : 'linear-gradient(90deg, #8E44AD, #9B59B6)',
-                    borderRadius: 3,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Control Buttons */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 16,
-            marginTop: 20,
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ color: '#E67E22', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Sehaj Actions:</p>
-              <ActionButton label="👁️ Wake Up" onClick={() => handleCatAction('sehaj', 'wake')} color="#E67E22" />
-              <ActionButton label="😴 Sleep" onClick={() => handleCatAction('sehaj', 'sleep')} color="#E67E22" />
-              <ActionButton label="💕 Nudge" onClick={() => handleCatAction('sehaj', 'nudge')} color="#E67E22" />
-              <ActionButton label="🦵 Kick" onClick={() => handleCatAction('sehaj', 'kick')} color="#E67E22" />
-              <ActionButton label="🧣 Hog Blanket" onClick={() => handleCatAction('sehaj', 'hog')} color="#E67E22" />
-              <ActionButton label="🍖 Feed" onClick={() => handleCatAction('sehaj', 'feed')} color="#E67E22" />
-              <ActionButton label="🎮 Gaming" onClick={() => handleCatAction('sehaj', 'game')} color="#E67E22" />
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ color: '#8E44AD', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>Prabh Actions:</p>
-              <ActionButton label="👁️ Wake Up" onClick={() => handleCatAction('prabh', 'wake')} color="#8E44AD" />
-              <ActionButton label="😴 Sleep" onClick={() => handleCatAction('prabh', 'sleep')} color="#8E44AD" />
-              <ActionButton label="💕 Nudge" onClick={() => handleCatAction('prabh', 'nudge')} color="#8E44AD" />
-              <ActionButton label="🦵 Kick" onClick={() => handleCatAction('prabh', 'kick')} color="#8E44AD" />
-              <ActionButton label="🧣 Hog Blanket" onClick={() => handleCatAction('prabh', 'hog')} color="#8E44AD" />
-              <ActionButton label="🍖 Feed" onClick={() => handleCatAction('prabh', 'feed')} color="#8E44AD" />
-              <ActionButton label="🎮 Gaming" onClick={() => handleCatAction('prabh', 'game')} color="#8E44AD" />
-            </div>
-          </div>
-          
-          {/* NEW: Dim Lights Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setLightsDimmed(prev => !prev)
-              haptics.light()
-            }}
-            style={{
-              width: '100%',
-              marginTop: 16,
-              padding: '14px 20px',
-              borderRadius: 16,
-              background: lightsDimmed 
-                ? 'linear-gradient(135deg, #4a5568, #2d3748)' 
-                : 'linear-gradient(135deg, #FDB813, #F59E0B)',
-              border: 'none',
-              color: 'white',
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: lightsDimmed 
-                ? '0 4px 16px rgba(0,0,0,0.4)' 
-                : '0 4px 16px rgba(253,184,19,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '12px',
+              background: 'rgba(255,255,255,0.25)',
+              backdropFilter: 'blur(15px)',
+              padding: '16px',
+              borderRadius: '20px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+              zIndex: 99,
             }}
           >
-            {lightsDimmed ? '💡 Turn Lights On' : '🌙 Dim Lights'}
-          </motion.button>
-
-          {/* ========== NEW INTERACTIVE BUTTONS ========== */}
-          
-          {/* Room Controls Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 8,
-            marginTop: 16,
-          }}>
-            {/* Curtain Control */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                const states: ('open' | 'peek' | 'closed')[] = ['open', 'peek', 'closed']
-                const idx = states.indexOf(curtainState)
-                setCurtainState(states[(idx + 1) % states.length])
-                addXP(2)
-                haptics.light()
-              }}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🪟 {curtainState === 'open' ? 'Open' : curtainState === 'peek' ? 'Peek' : 'Closed'}
-            </motion.button>
-            
-            {/* Treat Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setShowEffect({ type: 'food', x: 50, y: 60, value: '🐟' })
-                setSehajMoodBubble('😋 Yum!')
-                setPrabhMoodBubble('😋 Treat!')
-                setTimeout(() => {
-                  setSehajMoodBubble(null)
-                  setPrabhMoodBubble(null)
-                }, 2000)
-                addXP(3)
-                haptics.light()
-              }}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🐟 Treat
-            </motion.button>
-            
-            {/* Toy Box */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                const toy = TOYS[Math.floor(Math.random() * TOYS.length)]
-                setSpawnedToy(toy)
-                setTimeout(() => setSpawnedToy(null), 3000)
-                addXP(2)
-                haptics.light()
-              }}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              📦 Toy Box
-            </motion.button>
-          </div>
-          
-          {/* Petting & Yarn Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 8,
-            marginTop: 8,
-          }}>
-            {/* Petting Button - Hold to pet */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onMouseDown={() => startPetting('sehaj')}
-              onMouseUp={stopPetting}
-              onMouseLeave={stopPetting}
-              onTouchStart={() => startPetting('sehaj')}
-              onTouchEnd={stopPetting}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: pettingProgress > 0 
-                  ? `linear-gradient(90deg, #FF69B4 ${pettingProgress}%, ${colors.card} ${pettingProgress}%)`
-                  : colors.card,
-                border: `1px solid ${colors.border}`,
-                color: colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              🐾 Hold to Pet
-              {pettingProgress > 0 && (
-                <span style={{ marginLeft: 4, fontSize: 10 }}>
-                  {pettingProgress}%
-                </span>
-              )}
-            </motion.button>
-            
-            {/* Yarn Roll Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={rollYarn}
-              disabled={isYarnRolling}
-              style={{
-                padding: '10px 8px',
-                borderRadius: 12,
-                background: isYarnRolling 
-                  ? 'linear-gradient(135deg, #FFA07A, #FF6347)' 
-                  : colors.card,
-                border: `1px solid ${colors.border}`,
-                color: isYarnRolling ? 'white' : colors.textPrimary,
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: isYarnRolling ? 'not-allowed' : 'pointer',
-                opacity: isYarnRolling ? 0.8 : 1,
-              }}
-            >
-              🧶 {isYarnRolling ? 'Rolling...' : 'Roll Yarn'}
-            </motion.button>
-          </div>
-          
-          {/* Cat Interaction Row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 8,
-            marginTop: 8,
-          }}>
-            {/* Cuddle Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setCuddleMode(true)
-                setSehajMoodBubble('💕 Cuddle time!')
-                setPrabhMoodBubble('🥰 Snuggle!')
-                setShowEffect({ type: 'heart', x: 50, y: 40 })
-                setTimeout(() => {
-                  setCuddleMode(false)
-                  setSehajMoodBubble(null)
-                  setPrabhMoodBubble(null)
-                }, 3000)
-                addXP(5)
-                haptics.medium()
-              }}
-              style={{
-                padding: '12px 10px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #FF6B9D, #C471ED)',
-                border: 'none',
-                color: 'white',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              🥰 Cuddle
-            </motion.button>
-            
-            {/* Drama Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setDramaMode(true)
-                setSehajMoodBubble('😤 Hmph!')
-                setPrabhMoodBubble('😾 Grr!')
-                setShowEffect({ type: 'puff', x: 50, y: 40 })
-                setTimeout(() => {
-                  setDramaMode(false)
-                  setSehajMoodBubble(null)
-                  setPrabhMoodBubble(null)
-                }, 2000)
-                addXP(2)
-                haptics.medium()
-              }}
-              style={{
-                padding: '12px 10px',
-                borderRadius: 12,
-                background: 'linear-gradient(135deg, #E74C3C, #C0392B)',
-                border: 'none',
-                color: 'white',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              😤 Drama
-            </motion.button>
-          </div>
-          
-          {/* Lights Out (Chaos) Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              setLightsOutMode(true)
-              setChaosMessage(CHAOS_MESSAGES[Math.floor(Math.random() * CHAOS_MESSAGES.length)])
-              haptics.heavy()
-              setTimeout(() => {
-                setLightsOutMode(false)
-                setChaosMessage('')
-              }, 2000)
-              addXP(3)
-            }}
-            style={{
-              width: '100%',
-              marginTop: 8,
-              padding: '12px 16px',
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
-              border: `1px solid ${colors.border}`,
-              color: '#FFD700',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            🌑 Lights Out (Chaos)
-          </motion.button>
-          
-          {/* Room Level & Streak Display */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: 16,
-            padding: '10px 14px',
-            background: colors.glass,
-            borderRadius: 12,
-            border: `1px solid ${colors.border}`,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🏠</span>
-              <div>
-                <p style={{ color: colors.textPrimary, fontSize: 12, fontWeight: 600, margin: 0 }}>
-                  Room Lv. {roomLevel}
-                </p>
-                <div style={{
-                  width: 60,
-                  height: 4,
-                  background: colors.card,
-                  borderRadius: 2,
-                  marginTop: 3,
-                }}>
-                  <div style={{
-                    width: `${(roomXP / XP_PER_LEVEL) * 100}%`,
-                    height: '100%',
-                    background: colors.primary,
-                    borderRadius: 2,
-                  }} />
-                </div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 16 }}>📅</span>
-              <p style={{ color: colors.textSecondary, fontSize: 12, margin: 0 }}>
-                {dailyStreak} day streak
-              </p>
-            </div>
-          </div>
-
-          {/* Special Button */}
-          <motion.button
-            whileHover={{ scale: 1.02, boxShadow: `0 0 30px ${colors.primary}` }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSpecialButton}
-            style={{
-              width: '100%',
-              marginTop: 20,
-              padding: '16px 24px',
-              borderRadius: 20,
-              background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
-              border: 'none',
-              color: 'white',
-              fontSize: 18,
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: `0 4px 20px ${colors.primaryGlow}`,
-              letterSpacing: 2,
-            }}
-          >
-            fuck 💕
-          </motion.button>
-          
-          {/* Lights Out Overlay */}
-          <AnimatePresence>
-            {lightsOutMode && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(0,0,0,0.95)',
-                  zIndex: 1000,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <motion.p
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  style={{
-                    color: '#FFD700',
-                    fontSize: 20,
-                    fontStyle: 'italic',
-                    textAlign: 'center',
-                  }}
-                >
-                  {chaosMessage}
-                </motion.p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {/* Spawned Toy Animation */}
-          <AnimatePresence>
-            {spawnedToy && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0, y: 50 }}
-                animate={{ opacity: 1, scale: 1.5, y: 0 }}
-                exit={{ opacity: 0, scale: 0 }}
-                style={{
-                  position: 'absolute',
-                  bottom: 150,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  fontSize: 40,
-                  zIndex: 20,
-                  pointerEvents: 'none',
-                }}
-              >
-                {spawnedToy}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      </div>
+            <ActionButton icon="🐾" label="Pet" onClick={() => performAction('pet')} />
+            <ActionButton icon="🎮" label="Gaming" onClick={() => performAction('gaming')} />
+            <ActionButton icon="💥" label="Kick" onClick={() => performAction('kick')} />
+            <ActionButton icon="👋" label="Nudge" onClick={() => performAction('nudge')} />
+            <ActionButton icon="❤️" label="Cuddle" onClick={() => performAction('cuddle')} />
+            <ActionButton icon="🎭" label="Drama" onClick={() => performAction('drama')} />
+            <ActionButton icon="🧣" label="Blanket" onClick={() => performAction('hogBlanket')} />
+            <ActionButton icon="🌙" label="Lights" onClick={() => performAction('lightsOut')} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  )
+  );
+}
+
+// ============ ACTION BUTTON COMPONENT ============
+
+interface ActionButtonProps {
+  icon: string;
+  label: string;
+  onClick: () => void;
+}
+
+function ActionButton({ icon, label, onClick }: ActionButtonProps) {
+  return (
+    <motion.button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '8px',
+        borderRadius: '12px',
+        minWidth: '60px',
+      }}
+      whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.2)' }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <span style={{ fontSize: '24px' }}>{icon}</span>
+      <span style={{ fontSize: '10px', color: '#fff', fontWeight: '500' }}>{label}</span>
+    </motion.button>
+  );
 }
