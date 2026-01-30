@@ -355,6 +355,41 @@ const SPECIAL_MESSAGES = [
 
 const FOOD_ITEMS = ['🐟', '🦴', '🍖', '🍣', '🥛']
 
+// ============ ACTION ICON COMPONENT ============
+
+interface ActionIconProps {
+  icon: string;
+  label: string;
+  onClick: () => void;
+}
+
+function ActionIcon({ icon, label, onClick }: ActionIconProps) {
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ scale: 1.1, background: 'rgba(255,255,255,0.3)' }}
+      whileTap={{ scale: 0.95 }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 4,
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '8px 10px',
+        borderRadius: 12,
+        minWidth: 56,
+      }}
+    >
+      <span style={{ fontSize: 22 }}>{icon}</span>
+      <span style={{ fontSize: 9, color: '#fff', fontWeight: 600, textAlign: 'center' }}>{label}</span>
+    </motion.button>
+  );
+}
+
+// ============ MAIN COMPONENT ============
+
 export default function VirtualBed() {
   const navigate = useNavigate()
   const { colors } = useTheme()
