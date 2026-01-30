@@ -3084,10 +3084,10 @@ export default function VirtualBed() {
             </div>
           </div>
 
-          {/* ============ QUICK ACTION BUTTONS (BOTTOM EMPTY SPACE) ============ */}
+          {/* ============ QUICK ACTION BUTTONS (BOTTOM EMPTY SPACE) - REPOSITIONED ============ */}
           <div style={{
             position: 'fixed',
-            bottom: window.innerWidth < 768 ? 144 : 154,
+            bottom: window.innerWidth < 768 ? 244 : 254,
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
