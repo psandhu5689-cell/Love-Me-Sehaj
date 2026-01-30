@@ -55,6 +55,7 @@ const SECONDARY_ACTIONS: ActionButton[] = [
   { id: 'drama', icon: '🎭', label: 'Drama' },
   { id: 'lightsOut', icon: '🌙', label: 'Lights Out' },
   { id: 'treatToss', icon: '🐟', label: 'Treat' },
+  { id: 'chaos', icon: '💀', label: 'fuck' },  // Special chaos button
 ]
 
 export function CompactCatUI({ onAction, prabhState, sehajState, disabled }: CompactCatUIProps) {
