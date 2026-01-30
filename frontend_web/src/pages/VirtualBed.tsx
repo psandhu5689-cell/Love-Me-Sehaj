@@ -1968,6 +1968,16 @@ export default function VirtualBed() {
           }}
         >
           {/* Room Environment - Full Scene */}
+          
+          {/* ============ SECTION A: ROOM_VIEW (NO BUTTONS) ============ */}
+          <div id="room-view" style={{
+            position: 'relative',
+            width: '100%',
+            height: 450,
+            overflow: 'hidden',
+            borderRadius: 24,
+          }}>
+
           <div style={{
             position: 'relative',
             width: '100%',
@@ -3268,7 +3278,164 @@ export default function VirtualBed() {
             </div>
           </div>
           
-          {/* ============ ALL BUTTONS REMOVED ============ */}
+
+          </div>
+          
+        </motion.div>
+        
+        {/* ============ SECTION B: CONTROL_PANEL (ALL BUTTONS HERE) ============ */}
+        <div id="control-panel" style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: 800,
+          margin: '20px auto',
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(15px)',
+          borderRadius: 20,
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
+        }}>
+          {/* Target Selector */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 8,
+          }}>
+            <button style={{
+              padding: '8px 16px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 12,
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              Prabh
+            </button>
+            <button style={{
+              padding: '8px 16px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 12,
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              Sehaj
+            </button>
+            <button style={{
+              padding: '8px 16px',
+              background: 'rgba(255,255,255,0.4)',
+              border: 'none',
+              borderRadius: 12,
+              color: '#fff',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              Both
+            </button>
+          </div>
+          
+          {/* Freakiness Bar */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 8,
+          }}>
+            <span style={{ fontSize: 11, color: '#fff', fontWeight: 600 }}>Freakiness</span>
+            <div style={{
+              width: '100%',
+              maxWidth: 200,
+              height: 10,
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: 5,
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                height: '100%',
+                width: '50%',
+                background: 'linear-gradient(90deg, #FF69B4, #9B59B6)',
+                borderRadius: 5,
+              }} />
+            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}>
+            <button style={{
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 16,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              👁️ Wake
+            </button>
+            <button style={{
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 16,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              😴 Sleep
+            </button>
+            <button style={{
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 16,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              🍗 Feed
+            </button>
+            <button style={{
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 16,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              🐾 Pet
+            </button>
+            <button style={{
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              border: 'none',
+              borderRadius: 16,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}>
+              ❤️ Cuddle
+            </button>
+          </div>
+        </div>
+
           
           {/* Pure living space - no controls, no UI */}
           
