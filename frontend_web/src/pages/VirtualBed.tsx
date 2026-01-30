@@ -3185,7 +3185,7 @@ export default function VirtualBed() {
                 exit={{ y: 100, opacity: 0 }}
                 style={{
                   position: 'fixed',
-                  bottom: 90,
+                  bottom: 390,
                   left: '50%',
                   transform: 'translateX(-50%)',
                   display: 'grid',
