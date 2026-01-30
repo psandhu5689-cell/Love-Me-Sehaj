@@ -54,11 +54,12 @@ export const SpriteAnimator: React.FC<SpriteAnimatorProps> = ({
     const img = new Image();
     img.src = `/${spriteSheet}`;
     img.onload = () => {
+      console.log(`✅ Loaded sprite sheet: ${spriteSheet}`, img.width, 'x', img.height);
       imageRef.current = img;
       setIsImageLoaded(true);
     };
-    img.onerror = () => {
-      console.error(`Failed to load sprite sheet: ${spriteSheet}`);
+    img.onerror = (e) => {
+      console.error(`❌ Failed to load sprite sheet: ${spriteSheet}`, e);
     };
   }, [spriteSheet]);
 
