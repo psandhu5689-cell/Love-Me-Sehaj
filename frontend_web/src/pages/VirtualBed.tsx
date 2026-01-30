@@ -2010,7 +2010,9 @@ export default function VirtualBed() {
               </div>
             </div>
 
-            {/* LAYER 2: Floor/Base Surface */}
+            {/* ============================================ */}
+            {/* Z-PLANE 50: FLOOR BASE */}
+            {/* ============================================ */}
             <div style={{
               position: 'absolute',
               bottom: 0,
@@ -2021,10 +2023,12 @@ export default function VirtualBed() {
               backgroundSize: 'cover',
               backgroundPosition: 'center bottom',
               backgroundRepeat: 'no-repeat',
-              zIndex: 1,
+              zIndex: 50,
             }} />
 
-            {/* LAYER 3: Rug (centered, below characters) */}
+            {/* ============================================ */}
+            {/* Z-PLANE 60: FLOOR DECOR (Rug, Furniture) */}
+            {/* ============================================ */}
             <div style={{
               position: 'absolute',
               bottom: 40,
@@ -2037,7 +2041,7 @@ export default function VirtualBed() {
               backgroundSize: 'contain',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              zIndex: 2,
+              zIndex: 60,
             }} />
 
             {/* LAYER 4: Furniture Props */}
