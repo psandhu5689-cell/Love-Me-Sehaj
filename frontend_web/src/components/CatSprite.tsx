@@ -49,6 +49,13 @@ const PRABH_ANIMATIONS: Record<CatState, AnimationDef> = {
   eat: { start: 864, end: 873, fps: 10, loop: false },
   happy: { start: 504, end: 514, fps: 12, loop: false },
   annoyed: { start: 936, end: 945, fps: 10, loop: false },
+  sad: { start: 936, end: 938, fps: 6, loop: true },        // Use first few annoyed frames looped
+  surprised: { start: 144, end: 145, fps: 12, loop: false }, // Quick blink
+  purr: { start: 504, end: 506, fps: 8, loop: true },       // Subtle happy loop
+  tailFlick: { start: 936, end: 940, fps: 10, loop: false }, // Quick annoyed flick
+  bounce: { start: 504, end: 510, fps: 12, loop: false },   // Happy bounce
+  pickUp: { start: 144, end: 146, fps: 6, loop: true },     // Slight wiggle
+  chaos: { start: 936, end: 945, fps: 14, loop: false },    // Full annoyed/fight
 }
 
 // GINGER CAT (Sehaj) - Same structure
