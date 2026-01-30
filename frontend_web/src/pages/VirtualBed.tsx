@@ -3300,10 +3300,10 @@ export default function VirtualBed() {
 
           {/* ============ NEW COMPACT BUTTON UI ============ */}
           
-          {/* Target Selector - Above action bar - MOBILE OPTIMIZED - REPOSITIONED */}
+          {/* Target Selector - ABSOLUTE BOTTOM ============ */}
           <div style={{
             position: 'fixed',
-            bottom: window.innerWidth < 768 ? 290 : 300,
+            bottom: 110,
             left: '50%',
             transform: 'translateX(-50%)',
             display: 'flex',
