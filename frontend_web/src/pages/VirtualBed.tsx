@@ -2323,130 +2323,8 @@ export default function VirtualBed() {
                 </motion.div>
               )}
             </motion.div>
-                zIndex: 3,
-                // SAFETY: Never allow invisible cats
-                opacity: 1,
-                visibility: 'visible',
-                display: 'block',
-                minWidth: 64,
-                minHeight: 64,
-                transform: 'translateX(-50%)',
-                cursor: 'pointer',
-              }}
-            >
-              {/* Petting indicator - shows when holding on cat */}
-              {isPettingSehaj && (
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    top: -50,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 24,
-                    zIndex: 15,
-                  }}
-                >
-                  💕
-                </motion.div>
-              )}
-              
-              {/* Petting progress bar on cat */}
-              {pettingProgress > 0 && isPettingSehaj && (
-                <div style={{
-                  position: 'absolute',
-                  top: -25,
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 50,
-                  height: 6,
-                  background: 'rgba(0,0,0,0.3)',
-                  borderRadius: 3,
-                  overflow: 'hidden',
-                  zIndex: 15,
-                }}>
-                  <motion.div
-                    animate={{ width: `${pettingProgress}%` }}
-                    style={{
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #FF69B4, #FF1493)',
-                      borderRadius: 3,
-                    }}
-                  />
-                </div>
-              )}
-              
-              {/* Mood Bubble for Sehaj */}
-              <AnimatePresence>
-                {sehajMoodBubble && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.8 }}
-                    style={{
-                      position: 'absolute',
-                      top: -40,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      background: 'rgba(255,255,255,0.95)',
-                      borderRadius: 12,
-                      padding: '6px 10px',
-                      fontSize: 14,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                      whiteSpace: 'nowrap',
-                      zIndex: 10,
-                    }}
-                  >
-                    {sehajMoodBubble}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              {/* Walking indicator */}
-              {sehajRoam.isMoving && (
-                <motion.div
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 10,
-                  }}
-                >
-                  🐾
-                </motion.div>
-              )}
-              
-              <Sprite
-                sheet={cat2Sheet}
-                animations={SEHAJ_ANIMATIONS}
-                currentAnimation={sehaj.action}
-                onAnimationEnd={handleSehajAnimEnd}
-                scale={1.8}
-                flip={sehajRoam.xPercent > 40}
-              />
-              {/* Gaming emoji */}
-              {sehaj.action === 'gaming' && (
-                <motion.div
-                  animate={{ y: [0, -3, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 18,
-                  }}
-                >
-                  🎮
-                </motion.div>
-              )}
-            </motion.div>
             
-            {/* Prabh Cat (Right - Grey) - ROAMING with smooth transitions - TAP TO PET */}
+            {/* Prabh Cat (Right - Grey) - ROAMING with smooth transitions - TOUCH ZONES */}
             <motion.div
               animate={{
                 left: cuddleMode ? '52%' : `${prabhRoam.xPercent}%`,
@@ -2458,25 +2336,78 @@ export default function VirtualBed() {
                 bottom: { duration: 2.5, ease: 'easeInOut' },
                 y: { duration: 0.3, ease: 'easeOut' }
               }}
-              onMouseDown={() => startPetting('prabh')}
-              onMouseUp={stopPetting}
-              onMouseLeave={stopPetting}
-              onTouchStart={() => startPetting('prabh')}
-              onTouchEnd={stopPetting}
               style={{
                 position: 'absolute',
                 zIndex: 3,
-                // SAFETY: Never allow invisible cats
                 opacity: 1,
                 visibility: 'visible',
                 display: 'block',
-                minWidth: 64,
-                minHeight: 64,
+                minWidth: 80,
+                minHeight: 80,
                 transform: 'translateX(-50%)',
                 cursor: 'pointer',
               }}
             >
-              {/* Petting indicator - shows when holding on cat */}
+              {/* Touch Zones - Invisible clickable areas */}
+              {/* Head zone (top) */}
+              <div
+                onClick={() => tapHead('prabh')}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '25%',
+                  width: '50%',
+                  height: '30%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              {/* Nose zone (center-top) */}
+              <div
+                onClick={() => tapNose('prabh')}
+                style={{
+                  position: 'absolute',
+                  top: '25%',
+                  left: '35%',
+                  width: '30%',
+                  height: '20%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              {/* Belly zone (center) */}
+              <div
+                onClick={() => tapBelly('prabh')}
+                onMouseDown={() => startPetting('prabh')}
+                onMouseUp={stopPetting}
+                onMouseLeave={stopPetting}
+                onTouchStart={() => startPetting('prabh')}
+                onTouchEnd={stopPetting}
+                style={{
+                  position: 'absolute',
+                  top: '40%',
+                  left: '20%',
+                  width: '60%',
+                  height: '35%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              {/* Tail zone (back) */}
+              <div
+                onClick={() => tapTail('prabh')}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '0%',
+                  width: '25%',
+                  height: '30%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              
+              {/* Petting indicator */}
               {isPettingPrabh && (
                 <motion.div
                   animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
@@ -2494,7 +2425,7 @@ export default function VirtualBed() {
                 </motion.div>
               )}
               
-              {/* Petting progress bar on cat */}
+              {/* Petting progress bar */}
               {pettingProgress > 0 && isPettingPrabh && (
                 <div style={{
                   position: 'absolute',
@@ -2518,6 +2449,75 @@ export default function VirtualBed() {
                   />
                 </div>
               )}
+              
+              {/* Mood Bubble */}
+              <AnimatePresence>
+                {prabhMoodBubble && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                    style={{
+                      position: 'absolute',
+                      top: -40,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(255,255,255,0.95)',
+                      borderRadius: 12,
+                      padding: '6px 10px',
+                      fontSize: 12,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                      whiteSpace: 'nowrap',
+                      zIndex: 25,
+                    }}
+                  >
+                    {prabhMoodBubble}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Walking indicator */}
+              {prabhRoam.isMoving && (
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  style={{
+                    position: 'absolute',
+                    bottom: -10,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 10,
+                  }}
+                >
+                  🐾
+                </motion.div>
+              )}
+              
+              <Sprite
+                sheet={cat1Sheet}
+                animations={PRABH_ANIMATIONS}
+                currentAnimation={prabh.action}
+                onAnimationEnd={handlePrabhAnimEnd}
+                scale={1.8}
+                flip={prabhRoam.xPercent < 60}
+              />
+              
+              {prabh.action === 'gaming' && (
+                <motion.div
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 18,
+                  }}
+                >
+                  🎮
+                </motion.div>
+              )}
+            </motion.div>
               
               {/* Mood Bubble for Prabh */}
               <AnimatePresence>
