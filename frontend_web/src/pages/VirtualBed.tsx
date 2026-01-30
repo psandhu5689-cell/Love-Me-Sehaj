@@ -42,6 +42,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import haptics from '../utils/haptics'
 import { Howl } from 'howler'
+import { useCatAnimation } from '../hooks/useCatAnimation'
 
 // Sprite sheets
 import cat1Sheet from '../assets/sprites/cat1_sheet.png'
