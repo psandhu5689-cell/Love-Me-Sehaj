@@ -17,10 +17,11 @@ type ActionType =
   | 'kick'
   | 'hogBlanket'
   | 'cuddle'
-  | 'drama'
-  | 'lightsOut'
+  | 'drama'        // NEW
+  | 'lightsOut'    // NEW
   | 'treatToss'
   | 'laser'
+  | 'chaos'        // NEW: special "fuck" button
 
 type Target = 'prabh' | 'sehaj' | 'both'
 
