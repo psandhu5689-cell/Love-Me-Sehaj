@@ -1,0 +1,95 @@
+{
+  "meta": {
+    "image": "black_cat_sprite.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "columns": 18,
+    "totalFrames": 1188
+  },
+  "animations": {
+    "walkDown": { "start": 0, "end": 5, "fps": 8 },
+    "walkUp": { "start": 18, "end": 23, "fps": 8 },
+    "walkRight": { "start": 36, "end": 41, "fps": 8 },
+    "walkLeft": { "start": 54, "end": 59, "fps": 8 },
+    
+    "runDown": { "start": 72, "end": 77, "fps": 12 },
+    "runUp": { "start": 90, "end": 95, "fps": 12 },
+    "runRight": { "start": 108, "end": 113, "fps": 12 },
+    "runLeft": { "start": 126, "end": 131, "fps": 12 },
+    
+    "sitIdle": { "start": 144, "end": 144, "fps": 1 },
+    "layIdle": { "start": 145, "end": 145, "fps": 1 },
+    
+    "lickPawSitFront": { "start": 162, "end": 167, "fps": 10 },
+    "lickPawLieFront": { "start": 180, "end": 185, "fps": 10 },
+    
+    "meowSitFront": { "start": 198, "end": 203, "fps": 10 },
+    "meowLieFront": { "start": 216, "end": 221, "fps": 10 },
+    "meowStandFront": { "start": 234, "end": 239, "fps": 10 },
+    
+    "scratchSitLeft": { "start": 252, "end": 259, "fps": 10 },
+    "scratchSitRight": { "start": 270, "end": 277, "fps": 10 },
+    
+    "tailWagSitFront": { "start": 288, "end": 295, "fps": 10 },
+    "tailWagSitBack": { "start": 306, "end": 313, "fps": 10 },
+    "tailWagSitLeft": { "start": 324, "end": 331, "fps": 10 },
+    "tailWagSitRight": { "start": 342, "end": 349, "fps": 10 },
+    "tailWagStandFront": { "start": 360, "end": 367, "fps": 10 },
+    "tailWagStandBack": { "start": 378, "end": 385, "fps": 10 },
+    "tailWagStandLeft": { "start": 396, "end": 403, "fps": 10 },
+    "tailWagStandRight": { "start": 414, "end": 421, "fps": 10 },
+    "tailWagLieFront": { "start": 432, "end": 439, "fps": 10 },
+    "tailWagLieBack": { "start": 450, "end": 457, "fps": 10 },
+    "tailWagLieLeft": { "start": 468, "end": 475, "fps": 10 },
+    "tailWagLieRight": { "start": 486, "end": 493, "fps": 10 },
+    
+    "pawSwipeStandFront": { "start": 504, "end": 514, "fps": 12 },
+    "pawSwipeStandLeft": { "start": 522, "end": 532, "fps": 12 },
+    "pawSwipeStandBack": { "start": 540, "end": 550, "fps": 12 },
+    "pawSwipeStandRight": { "start": 558, "end": 568, "fps": 12 },
+    
+    "pawSwipeSitFront": { "start": 576, "end": 586, "fps": 12 },
+    "pawSwipeSitLeft": { "start": 594, "end": 604, "fps": 12 },
+    "pawSwipeSitBack": { "start": 612, "end": 622, "fps": 12 },
+    "pawSwipeSitRight": { "start": 630, "end": 640, "fps": 12 },
+    
+    "yarnSitFront": { "start": 648, "end": 657, "fps": 10 },
+    
+    "sleep1LeftFront": { "start": 666, "end": 671, "fps": 6 },
+    "sleep1RightFront": { "start": 684, "end": 689, "fps": 6 },
+    "sleep1LeftBack": { "start": 702, "end": 707, "fps": 6 },
+    "sleep1RightBack": { "start": 720, "end": 725, "fps": 6 },
+    "sleep2LeftFront": { "start": 738, "end": 743, "fps": 6 },
+    "sleep2RightFront": { "start": 756, "end": 761, "fps": 6 },
+    "sleep3LeftFront": { "start": 774, "end": 779, "fps": 6 },
+    "sleep3RightFront": { "start": 792, "end": 797, "fps": 6 },
+    "sleep4LeftFront": { "start": 810, "end": 815, "fps": 6 },
+    "sleep5LeftFront": { "start": 828, "end": 833, "fps": 6 },
+    "sleep6RightFront": { "start": 846, "end": 851, "fps": 6 },
+    
+    "eatFoodStandFront": { "start": 864, "end": 873, "fps": 10 },
+    "eatFoodStandBack": { "start": 882, "end": 891, "fps": 10 },
+    "eatFoodStandLeft": { "start": 900, "end": 909, "fps": 10 },
+    "eatFoodStandRight": { "start": 918, "end": 927, "fps": 10 },
+    
+    "hissFrontLeft": { "start": 936, "end": 945, "fps": 10 },
+    "hissFrontRight": { "start": 954, "end": 963, "fps": 10 },
+    
+    "jumpLeft": { "start": 972, "end": 977, "fps": 10 },
+    "jumpRight": { "start": 990, "end": 995, "fps": 10 },
+    
+    "curlBallLie": { "start": 1008, "end": 1013, "fps": 8 },
+    
+    "happy": { "start": 504, "end": 514, "fps": 12 },
+    "annoyed": { "start": 936, "end": 945, "fps": 10 },
+    "surprised": { "start": 198, "end": 203, "fps": 10 },
+    
+    "wake": { "start": 1008, "end": 144, "fps": 10 },
+    "sleep": { "start": 666, "end": 671, "fps": 6 },
+    "nudge": { "start": 252, "end": 259, "fps": 10 },
+    "kick": { "start": 558, "end": 568, "fps": 12 },
+    "hogBlanket": { "start": 1008, "end": 1013, "fps": 8 },
+    "feed": { "start": 864, "end": 873, "fps": 10 },
+    "gaming": { "start": 504, "end": 514, "fps": 12 }
+  }
+}
