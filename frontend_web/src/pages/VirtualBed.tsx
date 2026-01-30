@@ -755,6 +755,201 @@ export default function VirtualBed() {
     }
   }
   
+  // ============ TOUCH ZONE INTERACTIONS ============
+  
+  // Tap head - happy blink + heart pop
+  const tapHead = (cat: 'sehaj' | 'prabh') => {
+    haptics.light()
+    playRandomCatSound()
+    
+    if (cat === 'sehaj') {
+      triggerCatReaction('sehaj', 'happy', 1200)
+      setSehaj(prev => ({ ...prev, action: 'happy' }))
+      setSehajMoodBubble('😊 *happy blink*')
+      setShowEffect({ type: 'heart', x: sehajRoam.xPercent, y: sehajRoam.yPercent - 10 })
+    } else {
+      triggerCatReaction('prabh', 'happy', 1200)
+      setPrabh(prev => ({ ...prev, action: 'happy' }))
+      setPrabhMoodBubble('😊 *happy blink*')
+      setShowEffect({ type: 'heart', x: prabhRoam.xPercent, y: prabhRoam.yPercent - 10 })
+    }
+    
+    addXP(2)
+    setTimeout(() => {
+      if (cat === 'sehaj') {
+        setSehajMoodBubble(null)
+        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
+      } else {
+        setPrabhMoodBubble(null)
+        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
+      }
+    }, 1200)
+  }
+  
+  // Tap nose - surprised reaction + tiny squeak
+  const tapNose = (cat: 'sehaj' | 'prabh') => {
+    haptics.light()
+    playRandomCatSound()
+    
+    if (cat === 'sehaj') {
+      triggerCatReaction('sehaj', 'surprised', 1000)
+      setSehaj(prev => ({ ...prev, action: 'surprised' }))
+      setSehajMoodBubble('😮 *boop!*')
+    } else {
+      triggerCatReaction('prabh', 'surprised', 1000)
+      setPrabh(prev => ({ ...prev, action: 'surprised' }))
+      setPrabhMoodBubble('😮 *boop!*')
+    }
+    
+    addXP(2)
+    setTimeout(() => {
+      if (cat === 'sehaj') {
+        setSehajMoodBubble(null)
+        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
+      } else {
+        setPrabhMoodBubble(null)
+        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
+      }
+    }, 1000)
+  }
+  
+  // Tap belly - 70% happy, 30% annoyed
+  const tapBelly = (cat: 'sehaj' | 'prabh') => {
+    haptics.medium()
+    playRandomCatSound()
+    
+    const isHappy = Math.random() > 0.3
+    const reaction = isHappy ? 'happy' : 'annoyed'
+    const bubble = isHappy ? '😻 *belly rubs!*' : '😾 *hey!*'
+    
+    if (cat === 'sehaj') {
+      triggerCatReaction('sehaj', reaction, 1500)
+      setSehaj(prev => ({ ...prev, action: reaction }))
+      setSehajMoodBubble(bubble)
+    } else {
+      triggerCatReaction('prabh', reaction, 1500)
+      setPrabh(prev => ({ ...prev, action: reaction }))
+      setPrabhMoodBubble(bubble)
+    }
+    
+    addXP(isHappy ? 3 : 1)
+    setTimeout(() => {
+      if (cat === 'sehaj') {
+        setSehajMoodBubble(null)
+        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
+      } else {
+        setPrabhMoodBubble(null)
+        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
+      }
+    }, 1500)
+  }
+  
+  // Tap tail - tail flick + annoyed
+  const tapTail = (cat: 'sehaj' | 'prabh') => {
+    haptics.light()
+    playRandomCatSound()
+    
+    if (cat === 'sehaj') {
+      triggerCatReaction('sehaj', 'annoyed', 1200)
+      setSehaj(prev => ({ ...prev, action: 'annoyed' }))
+      setSehajMoodBubble('😤 *tail flick*')
+    } else {
+      triggerCatReaction('prabh', 'annoyed', 1200)
+      setPrabh(prev => ({ ...prev, action: 'annoyed' }))
+      setPrabhMoodBubble('😤 *tail flick*')
+    }
+    
+    addXP(1)
+    setTimeout(() => {
+      if (cat === 'sehaj') {
+        setSehajMoodBubble(null)
+        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
+      } else {
+        setPrabhMoodBubble(null)
+        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
+      }
+    }, 1200)
+  }
+  
+  // Long press cat - lift slightly, wiggle, clingy mood
+  const longPressCat = (cat: 'sehaj' | 'prabh') => {
+    haptics.heavy()
+    playRandomCatSound()
+    
+    if (cat === 'sehaj') {
+      setSehajMoodBubble('🥺 *clingy mode*')
+      setSehaj(prev => ({ ...prev, action: 'tailWag' }))
+    } else {
+      setPrabhMoodBubble('🥺 *clingy mode*')
+      setPrabh(prev => ({ ...prev, action: 'tailWag' }))
+    }
+    
+    addXP(5)
+    setTimeout(() => {
+      if (cat === 'sehaj') {
+        setSehajMoodBubble(null)
+        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
+      } else {
+        setPrabhMoodBubble(null)
+        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
+      }
+    }, 3000)
+  }
+  
+  // Double tap floor - spawn treat and cats walk toward it
+  const [treatPosition, setTreatPosition] = useState<{ x: number, y: number } | null>(null)
+  
+  const handleFloorDoubleTap = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
+    haptics.medium()
+    
+    // Get tap position relative to room container
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    
+    const xPercent = ((clientX - rect.left) / rect.width) * 100
+    const yPercent = ((clientY - rect.top) / rect.height) * 100
+    
+    // Clamp to floor bounds
+    const clampedX = Math.max(FLOOR_BOUNDS.minX, Math.min(FLOOR_BOUNDS.maxX, xPercent))
+    const clampedY = Math.max(FLOOR_BOUNDS.minY, Math.min(FLOOR_BOUNDS.maxY, yPercent))
+    
+    // Spawn treat
+    setTreatPosition({ x: clampedX, y: clampedY })
+    setShowEffect({ type: 'food', x: clampedX, y: clampedY, value: '🐟' })
+    
+    // Make cats walk toward treat
+    const sehajWalkDir = calculateWalkDirection(sehajRoam.xPercent, sehajRoam.yPercent, clampedX, clampedY)
+    const prabhWalkDir = calculateWalkDirection(prabhRoam.xPercent, prabhRoam.yPercent, clampedX, clampedY)
+    
+    setSehaj(prev => ({ ...prev, action: sehajWalkDir }))
+    setPrabh(prev => ({ ...prev, action: prabhWalkDir }))
+    setSehajRoam(prev => ({ ...prev, isMoving: true, walkDirection: sehajWalkDir }))
+    setPrabhRoam(prev => ({ ...prev, isMoving: true, walkDirection: prabhWalkDir }))
+    
+    // Move cats toward treat
+    setTimeout(() => {
+      setSehajRoam(prev => ({ ...prev, xPercent: clampedX - 5, yPercent: clampedY, isMoving: false }))
+      setPrabhRoam(prev => ({ ...prev, xPercent: clampedX + 5, yPercent: clampedY, isMoving: false }))
+      setSehaj(prev => ({ ...prev, action: 'eat' }))
+      setPrabh(prev => ({ ...prev, action: 'eat' }))
+      setSehajMoodBubble('😋 Yum!')
+      setPrabhMoodBubble('😋 Treat!')
+      
+      // Clear treat and return to idle
+      setTimeout(() => {
+        setTreatPosition(null)
+        setSehajMoodBubble(null)
+        setPrabhMoodBubble(null)
+        setSehaj(prev => ({ ...prev, action: 'sitIdle' }))
+        setPrabh(prev => ({ ...prev, action: 'sitIdle' }))
+      }, 2000)
+    }, 2000)
+    
+    addXP(5)
+  }
+  
   // Yarn roll function
   const rollYarn = () => {
     if (isYarnRolling) return
