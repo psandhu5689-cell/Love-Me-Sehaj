@@ -3492,6 +3492,7 @@ export default function VirtualBed() {
                 {spawnedToy}
               </motion.div>
             )}
+          </AnimatePresence>
       </div>
     )
   }
