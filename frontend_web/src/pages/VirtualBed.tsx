@@ -18,10 +18,6 @@ import haptics from '../utils/haptics';
 import { Howl } from 'howler';
 import { SpriteAnimator } from '../components/SpriteAnimator';
 
-// Load sprite metadata
-import prabhMetadata from '../../public/black_cat_sprite.json';
-import sehajMetadata from '../../public/ginger_cat_sprite.json';
-
 // ============ TYPES ============
 
 type AnimationState = 
