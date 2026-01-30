@@ -18,6 +18,64 @@ import haptics from '../utils/haptics';
 import { Howl } from 'howler';
 import { SpriteAnimator } from '../components/SpriteAnimator';
 
+// ============ SPRITE METADATA ============
+
+const prabhMetadata = {
+  "meta": {
+    "image": "black_cat_sprite.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "columns": 18,
+    "totalFrames": 1188
+  },
+  "animations": {
+    "walkDown": { "start": 0, "end": 5, "fps": 8 },
+    "walkUp": { "start": 18, "end": 23, "fps": 8 },
+    "walkRight": { "start": 36, "end": 41, "fps": 8 },
+    "walkLeft": { "start": 54, "end": 59, "fps": 8 },
+    "sitIdle": { "start": 144, "end": 144, "fps": 1 },
+    "layIdle": { "start": 145, "end": 145, "fps": 1 },
+    "happy": { "start": 504, "end": 514, "fps": 12 },
+    "annoyed": { "start": 936, "end": 945, "fps": 10 },
+    "surprised": { "start": 198, "end": 203, "fps": 10 },
+    "wake": { "start": 1008, "end": 144, "fps": 10 },
+    "sleep": { "start": 666, "end": 671, "fps": 6 },
+    "nudge": { "start": 252, "end": 259, "fps": 10 },
+    "kick": { "start": 558, "end": 568, "fps": 12 },
+    "hogBlanket": { "start": 1008, "end": 1013, "fps": 8 },
+    "feed": { "start": 864, "end": 873, "fps": 10 },
+    "gaming": { "start": 504, "end": 514, "fps": 12 }
+  }
+};
+
+const sehajMetadata = {
+  "meta": {
+    "image": "ginger_cat_sprite.png",
+    "frameWidth": 64,
+    "frameHeight": 64,
+    "columns": 18,
+    "totalFrames": 1188
+  },
+  "animations": {
+    "walkDown": { "start": 0, "end": 5, "fps": 8 },
+    "walkUp": { "start": 18, "end": 23, "fps": 8 },
+    "walkRight": { "start": 36, "end": 41, "fps": 8 },
+    "walkLeft": { "start": 54, "end": 59, "fps": 8 },
+    "sitIdle": { "start": 144, "end": 144, "fps": 1 },
+    "layIdle": { "start": 145, "end": 145, "fps": 1 },
+    "happy": { "start": 504, "end": 514, "fps": 12 },
+    "annoyed": { "start": 936, "end": 945, "fps": 10 },
+    "surprised": { "start": 198, "end": 203, "fps": 10 },
+    "wake": { "start": 1008, "end": 144, "fps": 10 },
+    "sleep": { "start": 666, "end": 671, "fps": 6 },
+    "nudge": { "start": 252, "end": 259, "fps": 10 },
+    "kick": { "start": 558, "end": 568, "fps": 12 },
+    "hogBlanket": { "start": 1008, "end": 1013, "fps": 8 },
+    "feed": { "start": 864, "end": 873, "fps": 10 },
+    "gaming": { "start": 504, "end": 514, "fps": 12 }
+  }
+};
+
 // ============ TYPES ============
 
 type AnimationState = 
