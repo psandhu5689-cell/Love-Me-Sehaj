@@ -2129,7 +2129,7 @@ export default function VirtualBed() {
             }} />
             
             {/* LAYER 5: Cat Sprites - AUTONOMOUS ROAMING */}
-            {/* Sehaj Cat (Left - Ginger) - ROAMING with smooth transitions - TAP TO PET */}
+            {/* Sehaj Cat (Left - Ginger) - ROAMING with smooth transitions - TOUCH ZONES */}
             <motion.div
               animate={{
                 left: cuddleMode ? '42%' : `${sehajRoam.xPercent}%`,
@@ -2141,13 +2141,188 @@ export default function VirtualBed() {
                 bottom: { duration: 2.5, ease: 'easeInOut' },
                 y: { duration: 0.3, ease: 'easeOut' }
               }}
-              onMouseDown={() => startPetting('sehaj')}
-              onMouseUp={stopPetting}
-              onMouseLeave={stopPetting}
-              onTouchStart={() => startPetting('sehaj')}
-              onTouchEnd={stopPetting}
               style={{
                 position: 'absolute',
+                zIndex: 3,
+                opacity: 1,
+                visibility: 'visible',
+                display: 'block',
+                minWidth: 80,
+                minHeight: 80,
+                transform: 'translateX(-50%)',
+                cursor: 'pointer',
+              }}
+            >
+              {/* Touch Zones - Invisible clickable areas */}
+              {/* Head zone (top) */}
+              <div
+                onClick={() => tapHead('sehaj')}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '25%',
+                  width: '50%',
+                  height: '30%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              {/* Nose zone (center-top) */}
+              <div
+                onClick={() => tapNose('sehaj')}
+                style={{
+                  position: 'absolute',
+                  top: '25%',
+                  left: '35%',
+                  width: '30%',
+                  height: '20%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              {/* Belly zone (center) */}
+              <div
+                onClick={() => tapBelly('sehaj')}
+                onMouseDown={() => startPetting('sehaj')}
+                onMouseUp={stopPetting}
+                onMouseLeave={stopPetting}
+                onTouchStart={() => startPetting('sehaj')}
+                onTouchEnd={stopPetting}
+                style={{
+                  position: 'absolute',
+                  top: '40%',
+                  left: '20%',
+                  width: '60%',
+                  height: '35%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              {/* Tail zone (back) */}
+              <div
+                onClick={() => tapTail('sehaj')}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '0%',
+                  width: '25%',
+                  height: '30%',
+                  cursor: 'pointer',
+                  zIndex: 20,
+                }}
+              />
+              
+              {/* Petting indicator */}
+              {isPettingSehaj && (
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.8, 1, 0.8] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  style={{
+                    position: 'absolute',
+                    top: -50,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 24,
+                    zIndex: 15,
+                  }}
+                >
+                  💕
+                </motion.div>
+              )}
+              
+              {/* Petting progress bar */}
+              {pettingProgress > 0 && isPettingSehaj && (
+                <div style={{
+                  position: 'absolute',
+                  top: -25,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 50,
+                  height: 6,
+                  background: 'rgba(0,0,0,0.3)',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  zIndex: 15,
+                }}>
+                  <motion.div
+                    animate={{ width: `${pettingProgress}%` }}
+                    style={{
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #FF69B4, #FF1493)',
+                      borderRadius: 3,
+                    }}
+                  />
+                </div>
+              )}
+              
+              {/* Mood Bubble */}
+              <AnimatePresence>
+                {sehajMoodBubble && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.8 }}
+                    style={{
+                      position: 'absolute',
+                      top: -40,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(255,255,255,0.95)',
+                      borderRadius: 12,
+                      padding: '6px 10px',
+                      fontSize: 12,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                      whiteSpace: 'nowrap',
+                      zIndex: 25,
+                    }}
+                  >
+                    {sehajMoodBubble}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Walking indicator */}
+              {sehajRoam.isMoving && (
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  style={{
+                    position: 'absolute',
+                    bottom: -10,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 10,
+                  }}
+                >
+                  🐾
+                </motion.div>
+              )}
+              
+              <Sprite
+                sheet={cat2Sheet}
+                animations={SEHAJ_ANIMATIONS}
+                currentAnimation={sehaj.action}
+                onAnimationEnd={handleSehajAnimEnd}
+                scale={1.8}
+                flip={sehajRoam.xPercent > 40}
+              />
+              
+              {sehaj.action === 'gaming' && (
+                <motion.div
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity }}
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    fontSize: 18,
+                  }}
+                >
+                  🎮
+                </motion.div>
+              )}
+            </motion.div>
                 zIndex: 3,
                 // SAFETY: Never allow invisible cats
                 opacity: 1,
