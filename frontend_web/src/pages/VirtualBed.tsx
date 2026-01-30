@@ -1338,6 +1338,58 @@ export default function VirtualBed() {
     }
   }
   
+  // NEW: Compact action handler with target mode support
+  const handleCompactAction = (action: string) => {
+    if (!userInteracted) setUserInteracted(true)
+    haptics.medium()
+    
+    const targets = targetMode === 'both' ? ['prabh', 'sehaj'] : [targetMode]
+    
+    targets.forEach(cat => {
+      const catTyped = cat as 'prabh' | 'sehaj'
+      
+      switch (action) {
+        case 'wake':
+          handleCatAction(catTyped, 'wake')
+          break
+        case 'sleep':
+          handleCatAction(catTyped, 'sleep')
+          break
+        case 'feed':
+          handleCatAction(catTyped, 'feed')
+          break
+        case 'nudge':
+          handleCatAction(catTyped, 'nudge')
+          break
+        case 'kick':
+          handleCatAction(catTyped, 'kick')
+          break
+        case 'hogBlanket':
+          handleCatAction(catTyped, 'hog')
+          break
+        case 'gaming':
+          handleCatAction(catTyped, 'game')
+          break
+        case 'pet':
+          handleCatAction(catTyped, 'nudge') // Pet uses nudge animation
+          break
+        case 'drama':
+          handleCatAction(catTyped, 'kick') // Drama uses kick/annoyed animation
+          break
+      }
+    })
+    
+    // Special multi-cat actions
+    if (action === 'cuddle' && targetMode === 'both') {
+      setCuddleMode(true)
+      setTimeout(() => setCuddleMode(false), 3000)
+    }
+    
+    if (action === 'lightsOut') {
+      setLightsDimmed(prev => !prev)
+    }
+  }
+  
   // Enhanced special button with personality
   const handleSpecialButton = () => {
     if (!userInteracted) setUserInteracted(true)
